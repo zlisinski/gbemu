@@ -140,1095 +140,1213 @@ int Emulator::ProcessOpCode()
     uint8_t opcode = Read8bit();
     DBG("opcode=%02X\n", opcode);
 
-    if ((opcode & 0xC0) == 0x40 && opcode != 0x76)
+    switch (opcode)
     {
-        // 0x40-0x7F, except 0x76, is LD register, register
-        uint8_t destRegBits = (opcode >> 3) & 0x07;
-        uint8_t srcRegBits = opcode & 0x07;
-        uint8_t *dest = regMap8Bit[destRegBits];
-        uint8_t *src = regMap8Bit[srcRegBits];
-        const char *destStr = regNameMap8Bit[destRegBits];
-        const char *srcStr = regNameMap8Bit[srcRegBits];
-        cycles = 4;
+        case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47: // LD B, Register
+        case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F: // LD C, Register
+        case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: // LD D, Register
+        case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F: // LD E, Register
+        case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67: // LD H, Register
+        case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F: // LD L, Register
+        case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: /*case 0x76:*/ case 0x77: // LD (HL), Register
+        case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F: // LD A, Register
+            {
+                // 0x40-0x7F, except 0x76, is LD register, register
+                uint8_t destRegBits = (opcode >> 3) & 0x07;
+                uint8_t srcRegBits = opcode & 0x07;
+                uint8_t *dest = regMap8Bit[destRegBits];
+                uint8_t *src = regMap8Bit[srcRegBits];
+                const char *destStr = regNameMap8Bit[destRegBits];
+                const char *srcStr = regNameMap8Bit[srcRegBits];
+                cycles = 4;
 
-        if (dest == NULL)
-        {
-            dest = &state->memory[state->hl];
-            cycles = 8;
-        }
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-        
-        DBG("%02X: LD %s, %s\n", opcode, destStr, srcStr);
-
-        *dest = *src;
-    }
-    else if ((opcode & 0xC7) == 0x06)
-    {
-        // 0x[0123][6E] is 8bit LD register, immediate
-        uint8_t destRegBits = (opcode >> 3) & 0x07;
-        uint8_t *dest = regMap8Bit[destRegBits];
-        uint8_t x = Read8bit();
-        const char *destStr = regNameMap8Bit[destRegBits];
-        cycles = 8;
-
-        if (dest == NULL)
-        {
-            dest = &state->memory[state->hl];
-            cycles = 12;
-        }
-        
-        DBG("%02X %02X: LD %s, %02X\n", opcode, x, destStr, x);
-
-        *dest = x;
-    }
-    else if ((opcode & 0xCF) == 0x01)
-    {
-        // 0x[0123]1 is 16bit LD register, immediate
-        uint8_t destRegBits = (opcode >> 4) & 0x03;
-        uint16_t *dest = regMap16Bit[destRegBits];
-        uint16_t x = Read16bit();
-        const char *destStr = regNameMap16Bit[destRegBits];
-        
-        DBG("%02X %02X %02X: LD %s, %04X\n", opcode, LowByte(x), HighByte(x), destStr, x);
-
-        *dest = x;
-
-        cycles = 12;
-    }
-    else if ((opcode & 0xCF) == 0xC5)
-    {
-        // 0x[CDEF]5 is PUSH register16
-        uint8_t regBits = (opcode >> 4) & 0x03;
-        uint16_t *src = regMap16BitStack[regBits];
-        const char *srcStr = regNameMap16BitStack[regBits];
-
-        DBG("%02X: PUSH %s\n", opcode, srcStr);
-
-        Push(*src);
-
-        cycles = 16;
-    }
-    else if ((opcode & 0xCF) == 0xC1)
-    {
-        // 0x[CDEF]1 is POP register16
-        uint8_t regBits = (opcode >> 4) & 0x03;
-        uint16_t *dest = regMap16BitStack[regBits];
-        const char *destStr = regNameMap16BitStack[regBits];
-
-        DBG("%02X: POP %s\n", opcode, destStr);
-
-        Pop(dest);
-
-        cycles = 12;
-    }
-    else if ((opcode & 0xF8) == 0x80)
-    {
-        // 0x8[0-7] is ADD A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: ADD A, %s\n", opcode, srcStr);
-
-        state->a = Add8Bit(state->a, *src);
-    }
-    else if ((opcode & 0xF8) == 0x88)
-    {
-        // 0x8[8-F] is ADC A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: ADC A, %s, %d\n", opcode, srcStr, state->flags.c);
-
-        state->a = Add8Bit(state->a, *src, state->flags.c);
-    }
-    else if ((opcode & 0xF8) == 0x90)
-    {
-        // 0x9[0-7] is SUB A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: SUB A, %s\n", opcode, srcStr);
-
-        state->a = Sub8Bit(state->a, *src);
-    }
-    else if ((opcode & 0xF8) == 0x98)
-    {
-        // 0x9[8-F] is SBC A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: SBC A, %s, %d\n", opcode, srcStr, state->flags.c);
-
-        state->a = Sub8Bit(state->a, *src, state->flags.c);
-    }
-    else if ((opcode & 0xF8) == 0xA0)
-    {
-        // 0xA[0-7] is AND A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: AND A, %s\n", opcode, srcStr);
-
-        state->a = state->a & *src;
-
-        state->ClearFlags();
-        state->flags.h = 1;
-        if (state->a == 0)
-            state->flags.z = 1;
-    }
-    else if ((opcode & 0xF8) == 0xA8)
-    {
-        // 0xA[8-F] is XOR A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: XOR A, %s\n", opcode, srcStr);
-
-        state->a = state->a ^ *src;
-
-        state->ClearFlags();
-        if (state->a == 0)
-            state->flags.z = 1;
-    }
-    else if ((opcode & 0xF8) == 0xB0)
-    {
-        // 0xB[8-F] is OR A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: XOR A, %s\n", opcode, srcStr);
-
-        state->a = state->a | *src;
-
-        state->ClearFlags();
-        if (state->a == 0)
-            state->flags.z = 1;
-    }
-    else if ((opcode & 0xF8) == 0xB8)
-    {
-        // 0xB[8-F] is CP A, register
-        uint8_t regBits = opcode & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 8;
-        }
-
-        DBG("%02X: CP A, %s\n", opcode, srcStr);
-
-        //uint8_t oldA = state->a;
-        // Subtract and don't save result.
-        Sub8Bit(state->a, *src);
-        //state->a = oldA;
-    }
-    else if ((opcode & 0xC7) == 0x04)
-    {
-        // 0x[0123][4C] is 8bit INC register
-        uint8_t regBits = (opcode >> 3) & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 12;
-        }
-
-        DBG("%02X: INC %s\n", opcode, srcStr);
-
-        // Carry flag not changed.
-        uint8_t oldCarry = state->flags.c;
-        *src = Add8Bit(*src, 1);
-        state->flags.c = oldCarry;
-    }
-    else if ((opcode & 0xC7) == 0x05)
-    {
-        // 0x[0123][5D] is 8bit DEC register
-        uint8_t regBits = (opcode >> 3) & 0x07;
-        uint8_t *src = regMap8Bit[regBits];
-        const char *srcStr = regNameMap8Bit[regBits];
-        cycles = 4;
-
-        if (src == NULL)
-        {
-            src = &state->memory[state->hl];
-            cycles = 12;
-        }
-
-        DBG("%02X: DEC %s\n", opcode, srcStr);
-
-        (*src)--;
-        
-        // Carry flag not changed.
-        state->flags.n = 1;
-        state->flags.z = (*src == 0) ? 1 : 0;
-        state->flags.h = ((*src & 0x0F) == 0x0F) ? 1 : 0;
-    }
-    else if ((opcode & 0xCF) == 0x09)
-    {
-        // 0x[0123]9 is ADD HL, register16
-        uint8_t regBits = (opcode >> 4) & 0x03;
-        uint16_t *src = regMap16Bit[regBits];
-        const char *srcStr = regNameMap16Bit[regBits];
-        cycles = 8;
-
-        DBG("%02X: ADD HL, %s\n", opcode, srcStr);
-
-        // Zero flag not changed.
-        uint8_t oldZero = state->flags.z;
-        state->hl = Add16Bit(state->hl, *src);
-        state->flags.z = oldZero;
-    }
-    else if ((opcode & 0xCF) == 0x03)
-    {
-        // 0x[0123]3 is 16bit INC register
-        uint8_t regBits = (opcode >> 4) & 0x03;
-        uint16_t *src = regMap16Bit[regBits];
-        const char *srcStr = regNameMap16Bit[regBits];
-        cycles = 8;
-
-        DBG("%02X: INC %s\n", opcode, srcStr);
-
-        // Flags not changed.
-        (*src)++;
-    }
-    else if ((opcode & 0xCF) == 0x0B)
-    {
-        // 0x[0123]B is 16bit DEC register
-        uint8_t regBits = (opcode >> 4) & 0x03;
-        uint16_t *src = regMap16Bit[regBits];
-        const char *srcStr = regNameMap16Bit[regBits];
-        cycles = 8;
-
-        DBG("%02X: DEC %s\n", opcode, srcStr);
-
-        // Flags not changed.
-        (*src)--;
-    }
-    else
-    {
-        switch (opcode)
-        {
-            case 0x00: NotYetImplemented(); break;
-            //case 0x01: NotYetImplemented(); break;
-            case 0x02:
+                if (dest == NULL)
                 {
-                    DBG("%02X: LD (BC), A\n", opcode);
-                    state->memory[state->bc] = state->a;
+                    dest = &state->memory[state->hl];
                     cycles = 8;
                 }
-                break;
-            //case 0x03: NotYetImplemented(); break;
-            //case 0x04: NotYetImplemented(); break;
-            //case 0x05: NotYetImplemented(); break;
-            //case 0x06: NotYetImplemented(); break;
-            case 0x07:
+                if (src == NULL)
                 {
-                    DBG("%02X: RLCA\n", opcode);
-                    state->ClearFlags();
-                    state->flags.c = (state->a & 0x80) ? 1 : 0;
-                    state->a = (state->a << 1) | state->flags.c;
-                    cycles = 4;
-                }
-                break;
-            case 0x08:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: LD (0x%04X), SP\n", opcode, HighByte(x), LowByte(x), x);
-
-                    state->memory[x] = (uint8_t)(state->sp & 0xff);
-                    state->memory[x+1] = (uint8_t)(state->sp >> 8);
-
-                    cycles = 20;
-                }
-                break;
-            //case 0x09: NotYetImplemented(); break;
-            case 0x0A:
-                {
-                    DBG("LD A, (BC)\n");
-                    state->a = state->memory[state->bc];
+                    src = &state->memory[state->hl];
                     cycles = 8;
                 }
-                break;
-            //case 0x0B: NotYetImplemented(); break;
-            //case 0x0C: NotYetImplemented(); break;
-            //case 0x0D: NotYetImplemented(); break;
-            //case 0x0E: NotYetImplemented(); break;
-            case 0x0F:
-                {
-                    DBG("%02X: RRCA\n", opcode);
-                    state->ClearFlags();
-                    state->flags.c = (state->a & 0x01) ? 1 : 0;
-                    state->a = (state->a >> 1) | (state->flags.c << 7);
-                    cycles = 4;
-                }
-                break;
+                
+                DBG("%02X: LD %s, %s\n", opcode, destStr, srcStr);
 
-            case 0x10: NotYetImplemented(); break;
-            //case 0x11: NotYetImplemented(); break;
-            case 0x12:
+                *dest = *src;
+            }
+            break;
+
+        case 0x06: // LD B, immediate
+        case 0x0E: // LD C, immediate
+        case 0x16: // LD D, immediate
+        case 0x1E: // LD E, immediate
+        case 0x26: // LD H, immediate
+        case 0x2E: // LD L, immediate
+        case 0x36: // LD (HL), immediate
+        case 0x3E: // LD A, immediate
+            {
+                uint8_t destRegBits = (opcode >> 3) & 0x07;
+                uint8_t *dest = regMap8Bit[destRegBits];
+                uint8_t x = Read8bit();
+                const char *destStr = regNameMap8Bit[destRegBits];
+                cycles = 8;
+
+                if (dest == NULL)
                 {
-                    DBG("LD (DE), A\n");
-                    state->memory[state->de] = state->a;
+                    dest = &state->memory[state->hl];
+                    cycles = 12;
+                }
+                
+                DBG("%02X %02X: LD %s, %02X\n", opcode, x, destStr, x);
+
+                *dest = x;
+            }
+            break;
+
+        case 0x01: // LD BC, immediate
+        case 0x11: // LD DE, immediate
+        case 0x21: // LD HL, immediate
+        case 0x31: // LD SP, immediate
+            {
+                uint8_t destRegBits = (opcode >> 4) & 0x03;
+                uint16_t *dest = regMap16Bit[destRegBits];
+                uint16_t x = Read16bit();
+                const char *destStr = regNameMap16Bit[destRegBits];
+                
+                DBG("%02X %02X %02X: LD %s, %04X\n", opcode, LowByte(x), HighByte(x), destStr, x);
+
+                *dest = x;
+
+                cycles = 12;
+            }
+            break;
+
+        case 0xC5: // PUSH BC
+        case 0xD5: // PUSH DE
+        case 0xE5: // PUSH HL
+        case 0xF5: // PUSH AF
+            {
+                uint8_t regBits = (opcode >> 4) & 0x03;
+                uint16_t *src = regMap16BitStack[regBits];
+                const char *srcStr = regNameMap16BitStack[regBits];
+
+                DBG("%02X: PUSH %s\n", opcode, srcStr);
+
+                Push(*src);
+
+                cycles = 16;
+            }
+            break;
+
+        case 0xC1: // POP BC
+        case 0xD1: // POP DE
+        case 0xE1: // POP HL
+        case 0xF1: // POP AF
+            {
+                uint8_t regBits = (opcode >> 4) & 0x03;
+                uint16_t *dest = regMap16BitStack[regBits];
+                const char *destStr = regNameMap16BitStack[regBits];
+
+                DBG("%02X: POP %s\n", opcode, destStr);
+
+                Pop(dest);
+
+                cycles = 12;
+            }
+            break;
+
+        case 0x80: // ADD A, B
+        case 0x81: // ADD A, C
+        case 0x82: // ADD A, D
+        case 0x83: // ADD A, E
+        case 0x84: // ADD A, H
+        case 0x85: // ADD A, L
+        case 0x86: // ADD A, (HL)
+        case 0x87: // ADD A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
                     cycles = 8;
                 }
-                break;
-            //case 0x13: NotYetImplemented(); break;
-            //case 0x14: NotYetImplemented(); break;
-            //case 0x15: NotYetImplemented(); break;
-            //case 0x16: NotYetImplemented(); break;
-            case 0x17:
+
+                DBG("%02X: ADD A, %s\n", opcode, srcStr);
+
+                state->a = Add8Bit(state->a, *src);
+            }
+            break;
+
+        case 0x88: // ADC A, B
+        case 0x89: // ADC A, C
+        case 0x8A: // ADC A, D
+        case 0x8B: // ADC A, E
+        case 0x8C: // ADC A, H
+        case 0x8D: // ADC A, L
+        case 0x8E: // ADC A, (HL)
+        case 0x8F: // ADC A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
                 {
-                    DBG("%02X: RLA\n", opcode);
-                    uint8_t oldCarry = state->flags.c;
-                    state->ClearFlags();
-                    state->flags.c = (state->a & 0x80) ? 1 : 0;
-                    state->a = (state->a << 1) | oldCarry;
-                    cycles = 4;
+                    src = &state->memory[state->hl];
+                    cycles = 8;
                 }
-                break;
-            case 0x18:
+
+                DBG("%02X: ADC A, %s, %d\n", opcode, srcStr, state->flags.c);
+
+                state->a = Add8Bit(state->a, *src, state->flags.c);
+            }
+            break;
+
+        case 0x90: // SUB A, B
+        case 0x91: // SUB A, C
+        case 0x92: // SUB A, D
+        case 0x93: // SUB A, E
+        case 0x94: // SUB A, H
+        case 0x95: // SUB A, L
+        case 0x96: // SUB A, (HL)
+        case 0x97: // SUB A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
                 {
-                    int8_t offset = Read8bit();
-                    DBG("JR %d\n", offset);
+                    src = &state->memory[state->hl];
+                    cycles = 8;
+                }
+
+                DBG("%02X: SUB A, %s\n", opcode, srcStr);
+
+                state->a = Sub8Bit(state->a, *src);
+            }
+            break;
+
+        case 0x98: // SBC A, B
+        case 0x99: // SBC A, C
+        case 0x9A: // SBC A, D
+        case 0x9B: // SBC A, E
+        case 0x9C: // SBC A, H
+        case 0x9D: // SBC A, L
+        case 0x9E: // SBC A, (HL)
+        case 0x9F: // SBC A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
+                    cycles = 8;
+                }
+
+                DBG("%02X: SBC A, %s, %d\n", opcode, srcStr, state->flags.c);
+
+                state->a = Sub8Bit(state->a, *src, state->flags.c);
+            }
+            break;
+
+        case 0xA0: // AND A, B
+        case 0xA1: // AND A, C
+        case 0xA2: // AND A, D
+        case 0xA3: // AND A, E
+        case 0xA4: // AND A, H
+        case 0xA5: // AND A, L
+        case 0xA6: // AND A, (HL)
+        case 0xA7: // AND A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
+                    cycles = 8;
+                }
+
+                DBG("%02X: AND A, %s\n", opcode, srcStr);
+
+                state->a = state->a & *src;
+
+                state->ClearFlags();
+                state->flags.h = 1;
+                if (state->a == 0)
+                    state->flags.z = 1;
+            }
+            break;
+
+        case 0xA8: // XOR A, B
+        case 0xA9: // XOR A, C
+        case 0xAA: // XOR A, D
+        case 0xAB: // XOR A, E
+        case 0xAC: // XOR A, H
+        case 0xAD: // XOR A, L
+        case 0xAE: // XOR A, (HL)
+        case 0xAF: // XOR A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
+                    cycles = 8;
+                }
+
+                DBG("%02X: XOR A, %s\n", opcode, srcStr);
+
+                state->a = state->a ^ *src;
+
+                state->ClearFlags();
+                if (state->a == 0)
+                    state->flags.z = 1;
+            }
+            break;
+
+        case 0xB0: // OR A, B
+        case 0xB1: // OR A, C
+        case 0xB2: // OR A, D
+        case 0xB3: // OR A, E
+        case 0xB4: // OR A, H
+        case 0xB5: // OR A, L
+        case 0xB6: // OR A, (HL)
+        case 0xB7: // OR A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
+                    cycles = 8;
+                }
+
+                DBG("%02X: OR A, %s\n", opcode, srcStr);
+
+                state->a = state->a | *src;
+
+                state->ClearFlags();
+                if (state->a == 0)
+                    state->flags.z = 1;
+            }
+            break;
+
+        case 0xB8: // CP A, B
+        case 0xB9: // CP A, C
+        case 0xBA: // CP A, D
+        case 0xBB: // CP A, E
+        case 0xBC: // CP A, H
+        case 0xBD: // CP A, L
+        case 0xBE: // CP A, (HL)
+        case 0xBF: // CP A, A
+            {
+                uint8_t regBits = opcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
+                    cycles = 8;
+                }
+
+                DBG("%02X: CP A, %s\n", opcode, srcStr);
+
+                // Subtract and don't save result.
+                Sub8Bit(state->a, *src);
+            }
+            break;
+
+        case 0x04: // INC B
+        case 0x0C: // INC C
+        case 0x14: // INC D
+        case 0x1C: // INC E
+        case 0x24: // INC H
+        case 0x2C: // INC L
+        case 0x34: // INC (HL)
+        case 0x3C: // INC A
+            {
+                uint8_t regBits = (opcode >> 3) & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
+                    cycles = 12;
+                }
+
+                DBG("%02X: INC %s\n", opcode, srcStr);
+
+                // Carry flag not changed.
+                uint8_t oldCarry = state->flags.c;
+                *src = Add8Bit(*src, 1);
+                state->flags.c = oldCarry;
+            }
+            break;
+            
+        case 0x05: // DEC B
+        case 0x0D: // DEC C
+        case 0x15: // DEC D
+        case 0x1D: // DEC E
+        case 0x25: // DEC H
+        case 0x2D: // DEC L
+        case 0x35: // DEC (HL)
+        case 0x3D: // DEC A
+            {
+                uint8_t regBits = (opcode >> 3) & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 4;
+
+                if (src == NULL)
+                {
+                    src = &state->memory[state->hl];
+                    cycles = 12;
+                }
+
+                DBG("%02X: DEC %s\n", opcode, srcStr);
+
+                (*src)--;
+                
+                // Carry flag not changed.
+                state->flags.n = 1;
+                state->flags.z = (*src == 0) ? 1 : 0;
+                state->flags.h = ((*src & 0x0F) == 0x0F) ? 1 : 0;
+            }
+            break;
+
+        case 0x09: // ADD HL, BC
+        case 0x19: // ADD HL, DE
+        case 0x29: // ADD HL, HL
+        case 0x39: // ADD HL, SP
+            {
+                uint8_t regBits = (opcode >> 4) & 0x03;
+                uint16_t *src = regMap16Bit[regBits];
+                const char *srcStr = regNameMap16Bit[regBits];
+                cycles = 8;
+
+                DBG("%02X: ADD HL, %s\n", opcode, srcStr);
+
+                // Zero flag not changed.
+                uint8_t oldZero = state->flags.z;
+                state->hl = Add16Bit(state->hl, *src);
+                state->flags.z = oldZero;
+            }
+            break;
+
+        case 0x03: // INC BC
+        case 0x13: // INC DE
+        case 0x23: // INC HL
+        case 0x33: // INC SP
+            {
+                // 0x[0123]3 is 16bit INC register
+                uint8_t regBits = (opcode >> 4) & 0x03;
+                uint16_t *src = regMap16Bit[regBits];
+                const char *srcStr = regNameMap16Bit[regBits];
+                cycles = 8;
+
+                DBG("%02X: INC %s\n", opcode, srcStr);
+
+                // Flags not changed.
+                (*src)++;
+            }
+            break;
+
+        case 0x0B: // DEC BC
+        case 0x1B: // DEC DE
+        case 0x2B: // DEC HL
+        case 0x3B: // DEC SP
+            {
+                // 0x[0123]B is 16bit DEC register
+                uint8_t regBits = (opcode >> 4) & 0x03;
+                uint16_t *src = regMap16Bit[regBits];
+                const char *srcStr = regNameMap16Bit[regBits];
+                cycles = 8;
+
+                DBG("%02X: DEC %s\n", opcode, srcStr);
+
+                // Flags not changed.
+                (*src)--;
+            }
+            break;
+
+        case 0x00: NotYetImplemented(); break;
+        //case 0x01: NotYetImplemented(); break;
+        case 0x02:
+            {
+                DBG("%02X: LD (BC), A\n", opcode);
+                state->memory[state->bc] = state->a;
+                cycles = 8;
+            }
+            break;
+        //case 0x03: NotYetImplemented(); break;
+        //case 0x04: NotYetImplemented(); break;
+        //case 0x05: NotYetImplemented(); break;
+        //case 0x06: NotYetImplemented(); break;
+        case 0x07:
+            {
+                DBG("%02X: RLCA\n", opcode);
+                state->ClearFlags();
+                state->flags.c = (state->a & 0x80) ? 1 : 0;
+                state->a = (state->a << 1) | state->flags.c;
+                cycles = 4;
+            }
+            break;
+        case 0x08:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: LD (0x%04X), SP\n", opcode, HighByte(x), LowByte(x), x);
+
+                state->memory[x] = (uint8_t)(state->sp & 0xff);
+                state->memory[x+1] = (uint8_t)(state->sp >> 8);
+
+                cycles = 20;
+            }
+            break;
+        //case 0x09: NotYetImplemented(); break;
+        case 0x0A:
+            {
+                DBG("LD A, (BC)\n");
+                state->a = state->memory[state->bc];
+                cycles = 8;
+            }
+            break;
+        //case 0x0B: NotYetImplemented(); break;
+        //case 0x0C: NotYetImplemented(); break;
+        //case 0x0D: NotYetImplemented(); break;
+        //case 0x0E: NotYetImplemented(); break;
+        case 0x0F:
+            {
+                DBG("%02X: RRCA\n", opcode);
+                state->ClearFlags();
+                state->flags.c = (state->a & 0x01) ? 1 : 0;
+                state->a = (state->a >> 1) | (state->flags.c << 7);
+                cycles = 4;
+            }
+            break;
+
+        case 0x10: NotYetImplemented(); break;
+        //case 0x11: NotYetImplemented(); break;
+        case 0x12:
+            {
+                DBG("LD (DE), A\n");
+                state->memory[state->de] = state->a;
+                cycles = 8;
+            }
+            break;
+        //case 0x13: NotYetImplemented(); break;
+        //case 0x14: NotYetImplemented(); break;
+        //case 0x15: NotYetImplemented(); break;
+        //case 0x16: NotYetImplemented(); break;
+        case 0x17:
+            {
+                DBG("%02X: RLA\n", opcode);
+                uint8_t oldCarry = state->flags.c;
+                state->ClearFlags();
+                state->flags.c = (state->a & 0x80) ? 1 : 0;
+                state->a = (state->a << 1) | oldCarry;
+                cycles = 4;
+            }
+            break;
+        case 0x18:
+            {
+                int8_t offset = Read8bit();
+                DBG("JR %d\n", offset);
+                state->pc += offset;
+                cycles = 12;
+            }
+            break;
+        //case 0x19: NotYetImplemented(); break;
+        case 0x1A:
+            {
+                DBG("LD A, (DE)\n");
+                state->a = state->memory[state->de];
+                cycles = 8;
+            }
+            break;
+        //case 0x1B: NotYetImplemented(); break;
+        //case 0x1C: NotYetImplemented(); break;
+        //case 0x1D: NotYetImplemented(); break;
+        //case 0x1E: NotYetImplemented(); break;
+        case 0x1F:
+            {
+                DBG("%02X: RRA\n", opcode);
+                uint8_t oldCarry = state->flags.c;
+                state->ClearFlags();
+                state->flags.c = (state->a & 0x01) ? 1 : 0;
+                state->a = (state->a >> 1) | (oldCarry << 7);
+                cycles = 4;
+            }
+            break;
+
+        case 0x20:
+            {
+                int8_t offset = Read8bit();
+                DBG("JR NZ, %d\n", offset);
+                if (state->flags.z == 0)
+                {
                     state->pc += offset;
                     cycles = 12;
                 }
-                break;
-            //case 0x19: NotYetImplemented(); break;
-            case 0x1A:
-                {
-                    DBG("LD A, (DE)\n");
-                    state->a = state->memory[state->de];
+                else
                     cycles = 8;
-                }
-                break;
-            //case 0x1B: NotYetImplemented(); break;
-            //case 0x1C: NotYetImplemented(); break;
-            //case 0x1D: NotYetImplemented(); break;
-            //case 0x1E: NotYetImplemented(); break;
-            case 0x1F:
+            }
+            break;
+        //case 0x21: NotYetImplemented(); break;
+        case 0x22: // LD (HL+), A
+            {
+                DBG("LD (HL+), A\n");
+                state->memory[state->hl] = state->a;
+                state->hl++;
+                cycles = 8;
+            }
+            break;
+        //case 0x23: NotYetImplemented(); break;
+        //case 0x24: NotYetImplemented(); break;
+        //case 0x25: NotYetImplemented(); break;
+        //case 0x26: NotYetImplemented(); break;
+        case 0x27: NotYetImplemented(); break;
+        case 0x28:
+            {
+                int8_t offset = Read8bit();
+                DBG("JR Z, %d\n", offset);
+                if (state->flags.z == 1)
                 {
-                    DBG("%02X: RRA\n", opcode);
-                    uint8_t oldCarry = state->flags.c;
-                    state->ClearFlags();
-                    state->flags.c = (state->a & 0x01) ? 1 : 0;
-                    state->a = (state->a >> 1) | (oldCarry << 7);
-                    cycles = 4;
+                    state->pc += offset;
+                    cycles = 12;
                 }
-                break;
+                else
+                    cycles = 8;
+            }
+            break;
+        //case 0x29: NotYetImplemented(); break;
+        case 0x2A: // LD A, (HL+)
+            {
+                DBG("LD A, (HL+)\n");
+                state->a = state->memory[state->hl];
+                state->hl++;
+                cycles = 8;
+            }
+            break;
+        //case 0x2B: NotYetImplemented(); break;
+        //case 0x2C: NotYetImplemented(); break;
+        //case 0x2D: NotYetImplemented(); break;
+        //case 0x2E: NotYetImplemented(); break;
+        case 0x2F: NotYetImplemented(); break;
 
-            case 0x20:
+        case 0x30:
+            {
+                int8_t offset = Read8bit();
+                DBG("JR NC, %d\n", offset);
+                if (state->flags.c == 0)
                 {
-                    int8_t offset = Read8bit();
-                    DBG("JR NZ, %d\n", offset);
-                    if (state->flags.z == 0)
-                    {
-                        state->pc += offset;
-                        cycles = 12;
-                    }
-                    else
-                        cycles = 8;
+                    state->pc += offset;
+                    cycles = 12;
                 }
-                break;
-            //case 0x21: NotYetImplemented(); break;
-            case 0x22: // LD (HL+), A
-                {
-                    DBG("LD (HL+), A\n");
-                    state->memory[state->hl] = state->a;
-                    state->hl++;
+                else
                     cycles = 8;
-                }
-                break;
-            //case 0x23: NotYetImplemented(); break;
-            //case 0x24: NotYetImplemented(); break;
-            //case 0x25: NotYetImplemented(); break;
-            //case 0x26: NotYetImplemented(); break;
-            case 0x27: NotYetImplemented(); break;
-            case 0x28:
+            }
+            break;
+        //case 0x31: NotYetImplemented(); break;
+        case 0x32: // LD (HL-), A
+            {
+                DBG("LD (HL-), A\n");
+                state->memory[state->hl] = state->a;
+                state->hl--;
+                cycles = 8;
+            }
+            break;
+        //case 0x33: NotYetImplemented(); break;
+        //case 0x34: NotYetImplemented(); break;
+        //case 0x35: NotYetImplemented(); break;
+        //case 0x36: NotYetImplemented(); break;
+        case 0x37: NotYetImplemented(); break;
+        case 0x38:
+            {
+                int8_t offset = Read8bit();
+                DBG("JR C, %d\n", offset);
+                if (state->flags.c == 1)
                 {
-                    int8_t offset = Read8bit();
-                    DBG("JR Z, %d\n", offset);
-                    if (state->flags.z == 1)
-                    {
-                        state->pc += offset;
-                        cycles = 12;
-                    }
-                    else
-                        cycles = 8;
+                    state->pc += offset;
+                    cycles = 12;
                 }
-                break;
-            //case 0x29: NotYetImplemented(); break;
-            case 0x2A: // LD A, (HL+)
-                {
-                    DBG("LD A, (HL+)\n");
-                    state->a = state->memory[state->hl];
-                    state->hl++;
+                else
                     cycles = 8;
-                }
-                break;
-            //case 0x2B: NotYetImplemented(); break;
-            //case 0x2C: NotYetImplemented(); break;
-            //case 0x2D: NotYetImplemented(); break;
-            //case 0x2E: NotYetImplemented(); break;
-            case 0x2F: NotYetImplemented(); break;
-
-            case 0x30:
-                {
-                    int8_t offset = Read8bit();
-                    DBG("JR NC, %d\n", offset);
-                    if (state->flags.c == 0)
-                    {
-                        state->pc += offset;
-                        cycles = 12;
-                    }
-                    else
-                        cycles = 8;
-                }
-                break;
-            //case 0x31: NotYetImplemented(); break;
-            case 0x32: // LD (HL-), A
-                {
-                    DBG("LD (HL-), A\n");
-                    state->memory[state->hl] = state->a;
-                    state->hl--;
-                    cycles = 8;
-                }
-                break;
-            //case 0x33: NotYetImplemented(); break;
-            //case 0x34: NotYetImplemented(); break;
-            //case 0x35: NotYetImplemented(); break;
-            //case 0x36: NotYetImplemented(); break;
-            case 0x37: NotYetImplemented(); break;
-            case 0x38:
-                {
-                    int8_t offset = Read8bit();
-                    DBG("JR C, %d\n", offset);
-                    if (state->flags.c == 1)
-                    {
-                        state->pc += offset;
-                        cycles = 12;
-                    }
-                    else
-                        cycles = 8;
-                }
-                break;
-            //case 0x39: NotYetImplemented(); break;
-            case 0x3A: // LD A, (HL-)
-                {
-                    DBG("LD A, (HL-)\n");
-                    state->a = state->memory[state->hl];
-                    state->hl--;
-                    cycles = 8;
-                }
-                break;
-            //case 0x3B: NotYetImplemented(); break;
-            //case 0x3C: NotYetImplemented(); break;
-            //case 0x3D: NotYetImplemented(); break;
-            //case 0x3E: NotYetImplemented(); break;
-            case 0x3F: NotYetImplemented(); break;
+            }
+            break;
+        //case 0x39: NotYetImplemented(); break;
+        case 0x3A: // LD A, (HL-)
+            {
+                DBG("LD A, (HL-)\n");
+                state->a = state->memory[state->hl];
+                state->hl--;
+                cycles = 8;
+            }
+            break;
+        //case 0x3B: NotYetImplemented(); break;
+        //case 0x3C: NotYetImplemented(); break;
+        //case 0x3D: NotYetImplemented(); break;
+        //case 0x3E: NotYetImplemented(); break;
+        case 0x3F: NotYetImplemented(); break;
 
 
-            case 0xC0:
+        case 0xC0:
+            {
+                DBG("%02X: RET NZ\n", opcode);
+                if (!state->flags.z)
                 {
-                    DBG("%02X: RET NZ\n", opcode);
-                    if (!state->flags.z)
-                    {
-                        Pop(&state->pc);
-                        cycles = 20;
-                    }
-                    else
-                        cycles = 8;
+                    Pop(&state->pc);
+                    cycles = 20;
                 }
-                break;
-            //case 0xC1: NotYetImplemented(); break;
-            case 0xC2:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: JP NZ, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
+                else
+                    cycles = 8;
+            }
+            break;
+        //case 0xC1: NotYetImplemented(); break;
+        case 0xC2:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: JP NZ, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
 
-                    if (!state->flags.z)
-                    {
-                        state->pc = x;
-                        cycles = 16;
-                    }
-                    else
-                    {
-                        cycles = 12;
-                    }
-                }
-                break;
-            case 0xC3:
+                if (!state->flags.z)
                 {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: JP 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
                     state->pc = x;
                     cycles = 16;
                 }
-                break;
-            case 0xC4:
+                else
                 {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: CALL NZ, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                    if (!state->flags.z)
-                    {
-                        Push(state->pc);
-                        state->pc = x;
-                        cycles = 24;
-                    }
-                    else
-                        cycles = 12;
+                    cycles = 12;
                 }
-                break;
-            //case 0xC5: NotYetImplemented(); break;
-            case 0xC6:
+            }
+            break;
+        case 0xC3:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: JP 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
+                state->pc = x;
+                cycles = 16;
+            }
+            break;
+        case 0xC4:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: CALL NZ, %04X\n", opcode, LowByte(x), HighByte(x), x);
+                if (!state->flags.z)
                 {
-                    uint8_t x = Read8bit();
-                    DBG("%02X %02X: ADD A, 0x%02X\n", opcode, x, x);
-                    state->a = Add8Bit(state->a, x);
-                    cycles = 8;
-                }
-                break;
-            case 0xC7: NotYetImplemented(); break;
-            case 0xC8:
-                {
-                    DBG("%02X: RET Z\n", opcode);
-                    if (state->flags.z)
-                    {
-                        Pop(&state->pc);
-                        cycles = 20;
-                    }
-                    else
-                        cycles = 8;
-                }
-                break;
-            case 0xC9:
-                {
-                    DBG("%02X: RET\n", opcode);
-                    Pop(&state->pc);
-                    cycles = 16;
-                }
-                break;
-            case 0xCA:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: JP Z, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-
-                    if (state->flags.z)
-                    {
-                        state->pc = x;
-                        cycles = 16;
-                    }
-                    else
-                    {
-                        cycles = 12;
-                    }
-                }
-                break;
-            case 0xCB:
-                {
-                    uint8_t subcode = Read8bit();
-
-                    uint8_t regBits = subcode & 0x07;
-                    uint8_t *src = regMap8Bit[regBits];
-                    const char *srcStr = regNameMap8Bit[regBits];
-                    cycles = 8;
-
-                    if (src == NULL)
-                    {
-                        src = &state->memory[state->hl];
-                        cycles = 16;
-                    }
-
-                    if ((subcode & 0xF8) == 0x00)
-                    {
-                        DBG("%02X %02X: RLC %s\n", opcode, subcode, srcStr);
-
-                        state->ClearFlags();
-                        state->flags.c = (*src & 0x80) ? 1 : 0;
-                        *src = (*src << 1) | state->flags.c;
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xF8) == 0x08)
-                    {
-                        DBG("%02X %02X: RRC %s\n", opcode, subcode, srcStr);
-
-                        state->ClearFlags();
-                        state->flags.c = *src & 0x01;
-                        *src = (*src >> 1) | (state->flags.c << 7);
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xF8) == 0x10)
-                    {
-                        DBG("%02X %02X: RL %s\n", opcode, subcode, srcStr);
-
-                        uint8_t oldCarry = state->flags.c;
-                        state->ClearFlags();
-                        state->flags.c = (*src & 0x80) ? 1 : 0;
-                        *src = (*src << 1) | oldCarry;
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xF8) == 0x18)
-                    {
-                        DBG("%02X %02X: RR %s\n", opcode, subcode, srcStr);
-
-                        uint8_t oldCarry = state->flags.c;
-                        state->ClearFlags();
-                        state->flags.c = *src & 0x01;
-                        *src = (*src >> 1) | (oldCarry << 7);
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xF8) == 0x20)
-                    {
-                        DBG("%02X %02X: SLA %s\n", opcode, subcode, srcStr);
-
-                        state->ClearFlags();
-                        state->flags.c = (*src & 0x80) ? 1 : 0;
-                        *src <<= 1;
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xF8) == 0x28)
-                    {
-                        DBG("%02X %02X: SRA %s\n", opcode, subcode, srcStr);
-
-                        state->ClearFlags();
-                        state->flags.c = *src & 0x01;
-                        *src = (*src >> 1) | (*src & 0x80);
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xF8) == 0x30)
-                    {
-                        DBG("%02X %02X: SWAP %s\n", opcode, subcode, srcStr);
-
-                        state->ClearFlags();
-                        *src = (*src << 4) | (*src >> 4);
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xF8) == 0x38)
-                    {
-                        DBG("%02X %02X: SRL %s\n", opcode, subcode, srcStr);
-
-                        state->ClearFlags();
-                        state->flags.c = *src & 0x01;
-                        *src >>= 1;
-                        state->flags.z = *src == 0 ? 1 : 0;
-                    }
-                    else if ((subcode & 0xC0) == 0x40)
-                    {
-                        uint8_t bit = (subcode >> 3) & 0x07;
-                        
-                        DBG("%02X %02X: BIT %d, %s\n", opcode, subcode, bit, srcStr);
-
-                        // Carry bit not changed.
-                        state->flags.z = (*src & (1 << bit)) ? 0 : 1;
-                        state->flags.n = 0;
-                        state->flags.h = 1;
-                    }
-                    else if ((subcode & 0xC0) == 0x80)
-                    {
-                        uint8_t bit = (subcode >> 3) & 0x07;
-                        
-                        DBG("%02X %02X: RES %d, %s\n", opcode, subcode, bit, srcStr);
-
-                        *src &= ~(1 << bit);
-                    }
-                    else if ((subcode & 0xC0) == 0xC0)
-                    {
-                        uint8_t bit = (subcode >> 3) & 0x07;
-                        
-                        DBG("%02X %02X: SET %d, %s\n", opcode, subcode, bit, srcStr);
-
-                        *src |= (1 << bit);
-                    }
-                }
-                break;
-            case 0xCC:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: CALL Z, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                    if (state->flags.z)
-                    {
-                        Push(state->pc);
-                        state->pc = x;
-                        cycles = 24;
-                    }
-                    else
-                        cycles = 12;
-                }
-                break;
-            case 0xCD:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: CALL %04X\n", opcode, LowByte(x), HighByte(x), x);
                     Push(state->pc);
                     state->pc = x;
                     cycles = 24;
                 }
-                break;
-            case 0xCE:
+                else
+                    cycles = 12;
+            }
+            break;
+        //case 0xC5: NotYetImplemented(); break;
+        case 0xC6:
+            {
+                uint8_t x = Read8bit();
+                DBG("%02X %02X: ADD A, 0x%02X\n", opcode, x, x);
+                state->a = Add8Bit(state->a, x);
+                cycles = 8;
+            }
+            break;
+        case 0xC7: NotYetImplemented(); break;
+        case 0xC8:
+            {
+                DBG("%02X: RET Z\n", opcode);
+                if (state->flags.z)
                 {
-                    uint8_t x = Read8bit();
-                    DBG("%02X %02X: ADC A, 0x%02X, %d\n", opcode, x, x, state->flags.c);
-                    state->a = Add8Bit(state->a, x, state->flags.c);
-                    cycles = 8;
-                }
-                break;
-            case 0xCF: NotYetImplemented(); break;
-
-            case 0xD0:
-                {
-                    DBG("%02X: RET NC\n", opcode);
-                    if (!state->flags.c)
-                    {
-                        Pop(&state->pc);
-                        cycles = 20;
-                    }
-                    else
-                        cycles = 8;
-                }
-                break;
-            //case 0xD1: NotYetImplemented(); break;
-            case 0xD2:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: JP NC, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-
-                    if (!state->flags.c)
-                    {
-                        state->pc = x;
-                        cycles = 16;
-                    }
-                    else
-                    {
-                        cycles = 12;
-                    }
-                }
-                break;
-            case 0xD3: NotYetImplemented(); break;
-            case 0xD4:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: CALL NC, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                    if (!state->flags.c)
-                    {
-                        Push(state->pc);
-                        state->pc = x;
-                        cycles = 24;
-                    }
-                    else
-                        cycles = 12;
-                }
-                break;
-            //case 0xD5: NotYetImplemented(); break;
-            case 0xD6:
-                {
-                    uint8_t x = Read8bit();
-
-                    DBG("%02X %02X: SUB A, 0x%02X\n", opcode, x, x);
-
-                    state->a = Sub8Bit(state->a, x);
-                    
-                    cycles = 8;
-                }
-                 break;
-            case 0xD7: NotYetImplemented(); break;
-            case 0xD8:
-                {
-                    DBG("%02X: RET C\n", opcode);
-                    if (state->flags.c)
-                    {
-                        Pop(&state->pc);
-                        cycles = 20;
-                    }
-                    else
-                        cycles = 8;
-                }
-                break;
-            case 0xD9:
-                {
-                    DBG("%02X: RETI\n", opcode);
                     Pop(&state->pc);
+                    cycles = 20;
+                }
+                else
+                    cycles = 8;
+            }
+            break;
+        case 0xC9:
+            {
+                DBG("%02X: RET\n", opcode);
+                Pop(&state->pc);
+                cycles = 16;
+            }
+            break;
+        case 0xCA:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: JP Z, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
+
+                if (state->flags.z)
+                {
+                    state->pc = x;
                     cycles = 16;
                 }
-                break;
-            case 0xDA:
+                else
                 {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: JP C, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-
-                    if (state->flags.c)
-                    {
-                        state->pc = x;
-                        cycles = 16;
-                    }
-                    else
-                    {
-                        cycles = 12;
-                    }
-                }
-                break;
-            case 0xDB: NotYetImplemented(); break;
-            case 0xDC:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("%02X %02X %02X: CALL C, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                    if (state->flags.c)
-                    {
-                        Push(state->pc);
-                        state->pc = x;
-                        cycles = 24;
-                    }
-                    else
-                        cycles = 12;
-                }
-                break;
-            case 0xDD: NotYetImplemented(); break;
-            case 0xDE:
-                {
-                    uint8_t x = Read8bit();
-                    DBG("%02X %02X: SBC A, 0x%02X, %d\n", opcode, x, x, state->flags.c);
-                    state->a = Sub8Bit(state->a, x, state->flags.c);
-                    cycles = 8;
-                }
-                break;
-            case 0xDF: NotYetImplemented(); break;
-
-            case 0xE0:
-                {
-                    uint8_t x = Read8bit();
-                    DBG("LD (0xFF00+0x%02X), A\n", x);
-                    state->memory[0xFF00 + x] = state->a;
                     cycles = 12;
                 }
-                break;
-            //case 0xE1: NotYetImplemented(); break;
-            case 0xE2:
+            }
+            break;
+        case 0xCB:
+            {
+                uint8_t subcode = Read8bit();
+
+                uint8_t regBits = subcode & 0x07;
+                uint8_t *src = regMap8Bit[regBits];
+                const char *srcStr = regNameMap8Bit[regBits];
+                cycles = 8;
+
+                if (src == NULL)
                 {
-                    DBG("LD (0xFF00+C), A\n");
-                    state->memory[0xFF00 + state->c] = state->a;
-                    cycles = 8;
+                    src = &state->memory[state->hl];
+                    cycles = 16;
                 }
-                break;
-            case 0xE3: NotYetImplemented(); break;
-            case 0xE4: NotYetImplemented(); break;
-            //case 0xE5: NotYetImplemented(); break;
-            case 0xE6:
+
+                if ((subcode & 0xF8) == 0x00)
                 {
-                    uint8_t x = Read8bit();
-
-                    DBG("%02X %02X: AND A, 0x%02X\n", opcode, x, x);
-
-                    state->a = state->a & x;
-                    
-                    cycles = 8;
+                    DBG("%02X %02X: RLC %s\n", opcode, subcode, srcStr);
 
                     state->ClearFlags();
+                    state->flags.c = (*src & 0x80) ? 1 : 0;
+                    *src = (*src << 1) | state->flags.c;
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xF8) == 0x08)
+                {
+                    DBG("%02X %02X: RRC %s\n", opcode, subcode, srcStr);
+
+                    state->ClearFlags();
+                    state->flags.c = *src & 0x01;
+                    *src = (*src >> 1) | (state->flags.c << 7);
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xF8) == 0x10)
+                {
+                    DBG("%02X %02X: RL %s\n", opcode, subcode, srcStr);
+
+                    uint8_t oldCarry = state->flags.c;
+                    state->ClearFlags();
+                    state->flags.c = (*src & 0x80) ? 1 : 0;
+                    *src = (*src << 1) | oldCarry;
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xF8) == 0x18)
+                {
+                    DBG("%02X %02X: RR %s\n", opcode, subcode, srcStr);
+
+                    uint8_t oldCarry = state->flags.c;
+                    state->ClearFlags();
+                    state->flags.c = *src & 0x01;
+                    *src = (*src >> 1) | (oldCarry << 7);
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xF8) == 0x20)
+                {
+                    DBG("%02X %02X: SLA %s\n", opcode, subcode, srcStr);
+
+                    state->ClearFlags();
+                    state->flags.c = (*src & 0x80) ? 1 : 0;
+                    *src <<= 1;
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xF8) == 0x28)
+                {
+                    DBG("%02X %02X: SRA %s\n", opcode, subcode, srcStr);
+
+                    state->ClearFlags();
+                    state->flags.c = *src & 0x01;
+                    *src = (*src >> 1) | (*src & 0x80);
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xF8) == 0x30)
+                {
+                    DBG("%02X %02X: SWAP %s\n", opcode, subcode, srcStr);
+
+                    state->ClearFlags();
+                    *src = (*src << 4) | (*src >> 4);
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xF8) == 0x38)
+                {
+                    DBG("%02X %02X: SRL %s\n", opcode, subcode, srcStr);
+
+                    state->ClearFlags();
+                    state->flags.c = *src & 0x01;
+                    *src >>= 1;
+                    state->flags.z = *src == 0 ? 1 : 0;
+                }
+                else if ((subcode & 0xC0) == 0x40)
+                {
+                    uint8_t bit = (subcode >> 3) & 0x07;
+                    
+                    DBG("%02X %02X: BIT %d, %s\n", opcode, subcode, bit, srcStr);
+
+                    // Carry bit not changed.
+                    state->flags.z = (*src & (1 << bit)) ? 0 : 1;
+                    state->flags.n = 0;
                     state->flags.h = 1;
-                    if (state->a == 0)
-                        state->flags.z = 1;
                 }
-                break;
-            case 0xE7: NotYetImplemented(); break;
-            case 0xE8:
+                else if ((subcode & 0xC0) == 0x80)
                 {
-                    uint8_t x = Read8bit();
-
-                    DBG("%02X %02X: ADD SP, %02X\n", opcode, x, x);
-
-                    state->sp = Add16Bit(state->sp, x);
-
-                    // Zero flag is always cleared.
-                    state->flags.z = 0;
-
-                    cycles = 16;
-                }
-                break;
-            case 0xE9:
-                {
-                    DBG("%02X: JP (HL)\n", opcode);
-                    state->pc = state->hl;
-                    cycles = 4;
-                }
-                break;
-            case 0xEA:
-                {
-                    uint16_t x = Read16bit();
-                    DBG("LD (%04X), A\n", x);
-                    state->memory[x] = state->a;
-                    cycles = 16;
-                }
-                break;
-            case 0xEB: NotYetImplemented(); break;
-            case 0xEC: NotYetImplemented(); break;
-            case 0xED: NotYetImplemented(); break;
-            case 0xEE:
-                {
-                    uint8_t x = Read8bit();
-
-                    DBG("%02X %02X: XOR A, 0x%02X\n", opcode, x, x);
-
-                    state->a = state->a ^ x;
+                    uint8_t bit = (subcode >> 3) & 0x07;
                     
-                    cycles = 8;
+                    DBG("%02X %02X: RES %d, %s\n", opcode, subcode, bit, srcStr);
 
-                    state->ClearFlags();
-                    if (state->a == 0)
-                        state->flags.z = 1;
+                    *src &= ~(1 << bit);
                 }
-                break;
-            case 0xEF: NotYetImplemented(); break;
-
-            case 0xF0:
+                else if ((subcode & 0xC0) == 0xC0)
                 {
-                    uint8_t x = Read8bit();
-                    DBG("LD A, (0xFF00+0x%02X)\n", x);
-                    state->a = state->memory[0xFF00 + x];
+                    uint8_t bit = (subcode >> 3) & 0x07;
+                    
+                    DBG("%02X %02X: SET %d, %s\n", opcode, subcode, bit, srcStr);
+
+                    *src |= (1 << bit);
+                }
+            }
+            break;
+        case 0xCC:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: CALL Z, %04X\n", opcode, LowByte(x), HighByte(x), x);
+                if (state->flags.z)
+                {
+                    Push(state->pc);
+                    state->pc = x;
+                    cycles = 24;
+                }
+                else
+                    cycles = 12;
+            }
+            break;
+        case 0xCD:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: CALL %04X\n", opcode, LowByte(x), HighByte(x), x);
+                Push(state->pc);
+                state->pc = x;
+                cycles = 24;
+            }
+            break;
+        case 0xCE:
+            {
+                uint8_t x = Read8bit();
+                DBG("%02X %02X: ADC A, 0x%02X, %d\n", opcode, x, x, state->flags.c);
+                state->a = Add8Bit(state->a, x, state->flags.c);
+                cycles = 8;
+            }
+            break;
+        case 0xCF: NotYetImplemented(); break;
+
+        case 0xD0:
+            {
+                DBG("%02X: RET NC\n", opcode);
+                if (!state->flags.c)
+                {
+                    Pop(&state->pc);
+                    cycles = 20;
+                }
+                else
+                    cycles = 8;
+            }
+            break;
+        //case 0xD1: NotYetImplemented(); break;
+        case 0xD2:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: JP NC, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
+
+                if (!state->flags.c)
+                {
+                    state->pc = x;
+                    cycles = 16;
+                }
+                else
+                {
                     cycles = 12;
                 }
-                break;
-            //case 0xF1: NotYetImplemented(); break;
-            case 0xF2:
+            }
+            break;
+        case 0xD3: NotYetImplemented(); break;
+        case 0xD4:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: CALL NC, %04X\n", opcode, LowByte(x), HighByte(x), x);
+                if (!state->flags.c)
                 {
-                    DBG("LD A, (0xFF00+C)\n");
-                    state->a = state->memory[0xFF00 + state->c];
-                    cycles = 8;
+                    Push(state->pc);
+                    state->pc = x;
+                    cycles = 24;
                 }
-                break;
-            case 0xF3: NotYetImplemented(); break;
-            case 0xF4: NotYetImplemented(); break;
-            //case 0xF5: NotYetImplemented(); break;
-            case 0xF6:
-                {
-                    uint8_t x = Read8bit();
-
-                    DBG("%02X %02X: OR A, 0x%02X\n", opcode, x, x);
-
-                    state->a = state->a | x;
-                    
-                    cycles = 8;
-
-                    state->ClearFlags();
-                    if (state->a == 0)
-                        state->flags.z = 1;
-                }
-                break;
-            case 0xF7: NotYetImplemented(); break;
-            case 0xF8:
-                {
-                    int8_t x = Read8bit();
-
-                    DBG("LD HL, SP+0x%02X\n", x);
-
-                    uint16_t result = Add16Bit(state->sp, x);
-                    state->hl = result;
-
-                    // Zero flag is always cleared.
-                    state->flags.z = 0;
-                    
+                else
                     cycles = 12;
-                }
+            }
+            break;
+        //case 0xD5: NotYetImplemented(); break;
+        case 0xD6:
+            {
+                uint8_t x = Read8bit();
+
+                DBG("%02X %02X: SUB A, 0x%02X\n", opcode, x, x);
+
+                state->a = Sub8Bit(state->a, x);
+                
+                cycles = 8;
+            }
                 break;
-            case 0xF9:
+        case 0xD7: NotYetImplemented(); break;
+        case 0xD8:
+            {
+                DBG("%02X: RET C\n", opcode);
+                if (state->flags.c)
                 {
-                    DBG("LD SP, HL\n");
-                    state->sp = state->hl;
+                    Pop(&state->pc);
+                    cycles = 20;
+                }
+                else
                     cycles = 8;
-                }
-                break;
-            case 0xFA:
+            }
+            break;
+        case 0xD9:
+            {
+                DBG("%02X: RETI\n", opcode);
+                Pop(&state->pc);
+                cycles = 16;
+            }
+            break;
+        case 0xDA:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: JP C, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
+
+                if (state->flags.c)
                 {
-                    uint16_t x = Read16bit();
-                    DBG("LD A, (%04X)\n", x);
-                    state->a = state->memory[x];
+                    state->pc = x;
                     cycles = 16;
                 }
-                break;
-            case 0xFB: NotYetImplemented(); break;
-            case 0xFC: NotYetImplemented(); break;
-            case 0xFD: NotYetImplemented(); break;
-            case 0xFE:
+                else
                 {
-                    uint8_t x = Read8bit();
-
-                    DBG("%02X %02X: CP A, 0x%02X\n", opcode, x, x);
-                    
-                    cycles = 8;
-
-                    //uint8_t oldA = state->a;
-                    // Subtract and don't save result.
-                    Sub8Bit(state->a, x);
-                    //state->a = oldA;
+                    cycles = 12;
                 }
-                break;
-            case 0xFF: NotYetImplemented(); break;
+            }
+            break;
+        case 0xDB: NotYetImplemented(); break;
+        case 0xDC:
+            {
+                uint16_t x = Read16bit();
+                DBG("%02X %02X %02X: CALL C, %04X\n", opcode, LowByte(x), HighByte(x), x);
+                if (state->flags.c)
+                {
+                    Push(state->pc);
+                    state->pc = x;
+                    cycles = 24;
+                }
+                else
+                    cycles = 12;
+            }
+            break;
+        case 0xDD: NotYetImplemented(); break;
+        case 0xDE:
+            {
+                uint8_t x = Read8bit();
+                DBG("%02X %02X: SBC A, 0x%02X, %d\n", opcode, x, x, state->flags.c);
+                state->a = Sub8Bit(state->a, x, state->flags.c);
+                cycles = 8;
+            }
+            break;
+        case 0xDF: NotYetImplemented(); break;
 
-            default: NotYetImplemented(); break;
-        }
+        case 0xE0:
+            {
+                uint8_t x = Read8bit();
+                DBG("LD (0xFF00+0x%02X), A\n", x);
+                state->memory[0xFF00 + x] = state->a;
+                cycles = 12;
+            }
+            break;
+        //case 0xE1: NotYetImplemented(); break;
+        case 0xE2:
+            {
+                DBG("LD (0xFF00+C), A\n");
+                state->memory[0xFF00 + state->c] = state->a;
+                cycles = 8;
+            }
+            break;
+        case 0xE3: NotYetImplemented(); break;
+        case 0xE4: NotYetImplemented(); break;
+        //case 0xE5: NotYetImplemented(); break;
+        case 0xE6:
+            {
+                uint8_t x = Read8bit();
+
+                DBG("%02X %02X: AND A, 0x%02X\n", opcode, x, x);
+
+                state->a = state->a & x;
+                
+                cycles = 8;
+
+                state->ClearFlags();
+                state->flags.h = 1;
+                if (state->a == 0)
+                    state->flags.z = 1;
+            }
+            break;
+        case 0xE7: NotYetImplemented(); break;
+        case 0xE8:
+            {
+                uint8_t x = Read8bit();
+
+                DBG("%02X %02X: ADD SP, %02X\n", opcode, x, x);
+
+                state->sp = Add16Bit(state->sp, x);
+
+                // Zero flag is always cleared.
+                state->flags.z = 0;
+
+                cycles = 16;
+            }
+            break;
+        case 0xE9:
+            {
+                DBG("%02X: JP (HL)\n", opcode);
+                state->pc = state->hl;
+                cycles = 4;
+            }
+            break;
+        case 0xEA:
+            {
+                uint16_t x = Read16bit();
+                DBG("LD (%04X), A\n", x);
+                state->memory[x] = state->a;
+                cycles = 16;
+            }
+            break;
+        case 0xEB: NotYetImplemented(); break;
+        case 0xEC: NotYetImplemented(); break;
+        case 0xED: NotYetImplemented(); break;
+        case 0xEE:
+            {
+                uint8_t x = Read8bit();
+
+                DBG("%02X %02X: XOR A, 0x%02X\n", opcode, x, x);
+
+                state->a = state->a ^ x;
+                
+                cycles = 8;
+
+                state->ClearFlags();
+                if (state->a == 0)
+                    state->flags.z = 1;
+            }
+            break;
+        case 0xEF: NotYetImplemented(); break;
+
+        case 0xF0:
+            {
+                uint8_t x = Read8bit();
+                DBG("LD A, (0xFF00+0x%02X)\n", x);
+                state->a = state->memory[0xFF00 + x];
+                cycles = 12;
+            }
+            break;
+        //case 0xF1: NotYetImplemented(); break;
+        case 0xF2:
+            {
+                DBG("LD A, (0xFF00+C)\n");
+                state->a = state->memory[0xFF00 + state->c];
+                cycles = 8;
+            }
+            break;
+        case 0xF3: NotYetImplemented(); break;
+        case 0xF4: NotYetImplemented(); break;
+        //case 0xF5: NotYetImplemented(); break;
+        case 0xF6:
+            {
+                uint8_t x = Read8bit();
+
+                DBG("%02X %02X: OR A, 0x%02X\n", opcode, x, x);
+
+                state->a = state->a | x;
+                
+                cycles = 8;
+
+                state->ClearFlags();
+                if (state->a == 0)
+                    state->flags.z = 1;
+            }
+            break;
+        case 0xF7: NotYetImplemented(); break;
+        case 0xF8:
+            {
+                int8_t x = Read8bit();
+
+                DBG("LD HL, SP+0x%02X\n", x);
+
+                uint16_t result = Add16Bit(state->sp, x);
+                state->hl = result;
+
+                // Zero flag is always cleared.
+                state->flags.z = 0;
+                
+                cycles = 12;
+            }
+            break;
+        case 0xF9:
+            {
+                DBG("LD SP, HL\n");
+                state->sp = state->hl;
+                cycles = 8;
+            }
+            break;
+        case 0xFA:
+            {
+                uint16_t x = Read16bit();
+                DBG("LD A, (%04X)\n", x);
+                state->a = state->memory[x];
+                cycles = 16;
+            }
+            break;
+        case 0xFB: NotYetImplemented(); break;
+        case 0xFC: NotYetImplemented(); break;
+        case 0xFD: NotYetImplemented(); break;
+        case 0xFE:
+            {
+                uint8_t x = Read8bit();
+
+                DBG("%02X %02X: CP A, 0x%02X\n", opcode, x, x);
+                
+                cycles = 8;
+
+                //uint8_t oldA = state->a;
+                // Subtract and don't save result.
+                Sub8Bit(state->a, x);
+                //state->a = oldA;
+            }
+            break;
+        case 0xFF: NotYetImplemented(); break;
+
+        default: NotYetImplemented(); break;
     }
 
     state->PrintState();
