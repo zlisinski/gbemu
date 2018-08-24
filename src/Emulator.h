@@ -13,6 +13,7 @@ public:
 
     uint8_t HighByte(uint16_t word);
     uint8_t LowByte(uint16_t word);
+    uint8_t GetFlagValue(uint8_t bits);
 
     uint8_t Add8Bit(uint8_t x, uint8_t y, bool carryFlag = false);
     uint16_t Add16Bit(uint16_t x, uint16_t y);
@@ -35,4 +36,5 @@ private:
     static const char *regNameMap8Bit[8];
     static const char *regNameMap16Bit[4];
     static const char *regNameMap16BitStack[4];
+    static const char *flagNameMap[4];
 };

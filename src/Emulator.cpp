@@ -4,6 +4,7 @@
 const char *Emulator::regNameMap8Bit[8] = {"B", "C", "D", "E", "H", "L", "(HL)", "A"};
 const char *Emulator::regNameMap16Bit[4] = {"BC", "DE", "HL", "SP"};
 const char *Emulator::regNameMap16BitStack[4] = {"BC", "DE", "HL", "AF"};
+const char *Emulator::flagNameMap[4] = {"NZ", "Z", "NC", "C"};
 
 
 Emulator::Emulator(State *state) : pc(NULL)
@@ -63,6 +64,30 @@ inline uint8_t Emulator::HighByte(uint16_t word)
 inline uint8_t Emulator::LowByte(uint16_t word)
 {
     return word & 0xFF;
+}
+
+
+inline uint8_t Emulator::GetFlagValue(uint8_t bits)
+{
+    uint8_t value;
+
+    switch (bits & 0x03)
+    {
+        case 0x00:
+            value = !state->flags.z;
+            break;
+        case 0x01:
+            value = state->flags.z;
+            break;
+        case 0x02:
+            value = !state->flags.c;
+            break;
+        case 0x03:
+            value = state->flags.c;
+            break;
+    }
+
+    return value;
 }
 
 
@@ -593,8 +618,128 @@ int Emulator::ProcessOpCode()
             }
             break;
 
+
+
+        case 0xC3: // JP nn
+            {
+                uint16_t addr = Read16bit();
+                DBG("%02X %02X %02X: JP 0x%04X\n", opcode, LowByte(addr), HighByte(addr), addr);
+                state->pc = addr;
+                cycles = 16;
+            }
+            break;
+        case 0xE9: // JP (HL)
+            {
+                DBG("%02X: JP (HL)\n", opcode);
+                state->pc = state->hl;
+                cycles = 4;
+            }
+            break;
+        case 0xC2: // JP NZ, nn
+        case 0xCA: // JP Z, nn
+        case 0xD2: // JP NC, nn
+        case 0xDA: // JP C, nn
+            {
+                uint16_t addr = Read16bit();
+                uint8_t flagBits = (opcode >> 3) & 0x03;
+                DBG("%02X %02X %02X: JP %s, 0x%04X\n", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
+                if (GetFlagValue(flagBits))
+                {
+                    state->pc = addr;
+                    cycles = 16;
+                }
+                else
+                    cycles = 12;
+            }
+            break;
+
+        case 0x18: // JR e
+            {
+                int8_t offset = Read8bit();
+                DBG("%02X %02X: JR %d\n", opcode, offset, offset);
+                state->pc += offset;
+                cycles = 12;
+            }
+            break;
+        case 0x20: // JR NZ, e
+        case 0x28: // JR Z, e
+        case 0x30: // JR NC, e
+        case 0x38: // JR C, e
+            {
+                int8_t offset = Read8bit();
+                uint8_t flagBits = (opcode >> 3) & 0x03;
+                DBG("%02X %02X: JR %s, %d\n", opcode, (uint8_t)offset, flagNameMap[flagBits], offset);
+                if (GetFlagValue(flagBits))
+                {
+                    state->pc += offset;
+                    cycles = 12;
+                }
+                else
+                    cycles = 8;
+            }
+            break;
+
+        case 0xCD: // CALL nn
+            {
+                uint16_t addr = Read16bit();
+                DBG("%02X %02X %02X: CALL %04X\n", opcode, LowByte(addr), HighByte(addr), addr);
+                Push(state->pc);
+                state->pc = addr;
+                cycles = 24;
+            }
+            break;
+        case 0xC4: // CALL NZ, nn
+        case 0xCC: // CALL Z, nn
+        case 0xD4: // CALL NC, nn
+        case 0xDC: // CALL C, nn
+            {
+                uint16_t addr = Read16bit();
+                uint8_t flagBits = (opcode >> 3) & 0x03;
+                DBG("%02X %02X %02X: CALL %s, %04X\n", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
+                if (GetFlagValue(flagBits))
+                {
+                    Push(state->pc);
+                    state->pc = addr;
+                    cycles = 24;
+                }
+                else
+                    cycles = 12;
+            }
+            break;
+
+        case 0xC9: // RET
+            {
+                DBG("%02X: RET\n", opcode);
+                Pop(&state->pc);
+                cycles = 16;
+            }
+            break;
+        case 0xD9: // RETI
+            {
+                DBG("%02X: RETI\n", opcode);
+                Pop(&state->pc);
+                cycles = 16;
+            }
+            break;
+        case 0xC0: // RET NZ
+        case 0xC8: // RET Z
+        case 0xD0: // RET NC
+        case 0xD8: // RET C
+            {
+                uint8_t flagBits = (opcode >> 3) & 0x03;
+                DBG("%02X: RET %s\n", opcode, flagNameMap[flagBits]);
+                if (GetFlagValue(flagBits))
+                {
+                    Pop(&state->pc);
+                    cycles = 20;
+                }
+                else
+                    cycles = 8;
+            }
+            break;
+        
+
         case 0x00: NotYetImplemented(); break;
-        //case 0x01: NotYetImplemented(); break;
         case 0x02:
             {
                 DBG("%02X: LD (BC), A\n", opcode);
@@ -602,10 +747,6 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x03: NotYetImplemented(); break;
-        //case 0x04: NotYetImplemented(); break;
-        //case 0x05: NotYetImplemented(); break;
-        //case 0x06: NotYetImplemented(); break;
         case 0x07:
             {
                 DBG("%02X: RLCA\n", opcode);
@@ -626,7 +767,6 @@ int Emulator::ProcessOpCode()
                 cycles = 20;
             }
             break;
-        //case 0x09: NotYetImplemented(); break;
         case 0x0A:
             {
                 DBG("LD A, (BC)\n");
@@ -634,10 +774,6 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x0B: NotYetImplemented(); break;
-        //case 0x0C: NotYetImplemented(); break;
-        //case 0x0D: NotYetImplemented(); break;
-        //case 0x0E: NotYetImplemented(); break;
         case 0x0F:
             {
                 DBG("%02X: RRCA\n", opcode);
@@ -649,7 +785,6 @@ int Emulator::ProcessOpCode()
             break;
 
         case 0x10: NotYetImplemented(); break;
-        //case 0x11: NotYetImplemented(); break;
         case 0x12:
             {
                 DBG("LD (DE), A\n");
@@ -657,10 +792,6 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x13: NotYetImplemented(); break;
-        //case 0x14: NotYetImplemented(); break;
-        //case 0x15: NotYetImplemented(); break;
-        //case 0x16: NotYetImplemented(); break;
         case 0x17:
             {
                 DBG("%02X: RLA\n", opcode);
@@ -671,15 +802,6 @@ int Emulator::ProcessOpCode()
                 cycles = 4;
             }
             break;
-        case 0x18:
-            {
-                int8_t offset = Read8bit();
-                DBG("JR %d\n", offset);
-                state->pc += offset;
-                cycles = 12;
-            }
-            break;
-        //case 0x19: NotYetImplemented(); break;
         case 0x1A:
             {
                 DBG("LD A, (DE)\n");
@@ -687,10 +809,6 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x1B: NotYetImplemented(); break;
-        //case 0x1C: NotYetImplemented(); break;
-        //case 0x1D: NotYetImplemented(); break;
-        //case 0x1E: NotYetImplemented(); break;
         case 0x1F:
             {
                 DBG("%02X: RRA\n", opcode);
@@ -702,20 +820,6 @@ int Emulator::ProcessOpCode()
             }
             break;
 
-        case 0x20:
-            {
-                int8_t offset = Read8bit();
-                DBG("JR NZ, %d\n", offset);
-                if (state->flags.z == 0)
-                {
-                    state->pc += offset;
-                    cycles = 12;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        //case 0x21: NotYetImplemented(); break;
         case 0x22: // LD (HL+), A
             {
                 DBG("LD (HL+), A\n");
@@ -724,25 +828,7 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x23: NotYetImplemented(); break;
-        //case 0x24: NotYetImplemented(); break;
-        //case 0x25: NotYetImplemented(); break;
-        //case 0x26: NotYetImplemented(); break;
         case 0x27: NotYetImplemented(); break;
-        case 0x28:
-            {
-                int8_t offset = Read8bit();
-                DBG("JR Z, %d\n", offset);
-                if (state->flags.z == 1)
-                {
-                    state->pc += offset;
-                    cycles = 12;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        //case 0x29: NotYetImplemented(); break;
         case 0x2A: // LD A, (HL+)
             {
                 DBG("LD A, (HL+)\n");
@@ -751,26 +837,8 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x2B: NotYetImplemented(); break;
-        //case 0x2C: NotYetImplemented(); break;
-        //case 0x2D: NotYetImplemented(); break;
-        //case 0x2E: NotYetImplemented(); break;
         case 0x2F: NotYetImplemented(); break;
 
-        case 0x30:
-            {
-                int8_t offset = Read8bit();
-                DBG("JR NC, %d\n", offset);
-                if (state->flags.c == 0)
-                {
-                    state->pc += offset;
-                    cycles = 12;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        //case 0x31: NotYetImplemented(); break;
         case 0x32: // LD (HL-), A
             {
                 DBG("LD (HL-), A\n");
@@ -779,25 +847,7 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x33: NotYetImplemented(); break;
-        //case 0x34: NotYetImplemented(); break;
-        //case 0x35: NotYetImplemented(); break;
-        //case 0x36: NotYetImplemented(); break;
         case 0x37: NotYetImplemented(); break;
-        case 0x38:
-            {
-                int8_t offset = Read8bit();
-                DBG("JR C, %d\n", offset);
-                if (state->flags.c == 1)
-                {
-                    state->pc += offset;
-                    cycles = 12;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        //case 0x39: NotYetImplemented(); break;
         case 0x3A: // LD A, (HL-)
             {
                 DBG("LD A, (HL-)\n");
@@ -806,65 +856,8 @@ int Emulator::ProcessOpCode()
                 cycles = 8;
             }
             break;
-        //case 0x3B: NotYetImplemented(); break;
-        //case 0x3C: NotYetImplemented(); break;
-        //case 0x3D: NotYetImplemented(); break;
-        //case 0x3E: NotYetImplemented(); break;
         case 0x3F: NotYetImplemented(); break;
 
-
-        case 0xC0:
-            {
-                DBG("%02X: RET NZ\n", opcode);
-                if (!state->flags.z)
-                {
-                    Pop(&state->pc);
-                    cycles = 20;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        //case 0xC1: NotYetImplemented(); break;
-        case 0xC2:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: JP NZ, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-
-                if (!state->flags.z)
-                {
-                    state->pc = x;
-                    cycles = 16;
-                }
-                else
-                {
-                    cycles = 12;
-                }
-            }
-            break;
-        case 0xC3:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: JP 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-                state->pc = x;
-                cycles = 16;
-            }
-            break;
-        case 0xC4:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: CALL NZ, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                if (!state->flags.z)
-                {
-                    Push(state->pc);
-                    state->pc = x;
-                    cycles = 24;
-                }
-                else
-                    cycles = 12;
-            }
-            break;
-        //case 0xC5: NotYetImplemented(); break;
         case 0xC6:
             {
                 uint8_t x = Read8bit();
@@ -874,41 +867,6 @@ int Emulator::ProcessOpCode()
             }
             break;
         case 0xC7: NotYetImplemented(); break;
-        case 0xC8:
-            {
-                DBG("%02X: RET Z\n", opcode);
-                if (state->flags.z)
-                {
-                    Pop(&state->pc);
-                    cycles = 20;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        case 0xC9:
-            {
-                DBG("%02X: RET\n", opcode);
-                Pop(&state->pc);
-                cycles = 16;
-            }
-            break;
-        case 0xCA:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: JP Z, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-
-                if (state->flags.z)
-                {
-                    state->pc = x;
-                    cycles = 16;
-                }
-                else
-                {
-                    cycles = 12;
-                }
-            }
-            break;
         case 0xCB:
             {
                 uint8_t subcode = Read8bit();
@@ -1026,29 +984,6 @@ int Emulator::ProcessOpCode()
                 }
             }
             break;
-        case 0xCC:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: CALL Z, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                if (state->flags.z)
-                {
-                    Push(state->pc);
-                    state->pc = x;
-                    cycles = 24;
-                }
-                else
-                    cycles = 12;
-            }
-            break;
-        case 0xCD:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: CALL %04X\n", opcode, LowByte(x), HighByte(x), x);
-                Push(state->pc);
-                state->pc = x;
-                cycles = 24;
-            }
-            break;
         case 0xCE:
             {
                 uint8_t x = Read8bit();
@@ -1059,51 +994,7 @@ int Emulator::ProcessOpCode()
             break;
         case 0xCF: NotYetImplemented(); break;
 
-        case 0xD0:
-            {
-                DBG("%02X: RET NC\n", opcode);
-                if (!state->flags.c)
-                {
-                    Pop(&state->pc);
-                    cycles = 20;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        //case 0xD1: NotYetImplemented(); break;
-        case 0xD2:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: JP NC, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-
-                if (!state->flags.c)
-                {
-                    state->pc = x;
-                    cycles = 16;
-                }
-                else
-                {
-                    cycles = 12;
-                }
-            }
-            break;
         case 0xD3: NotYetImplemented(); break;
-        case 0xD4:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: CALL NC, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                if (!state->flags.c)
-                {
-                    Push(state->pc);
-                    state->pc = x;
-                    cycles = 24;
-                }
-                else
-                    cycles = 12;
-            }
-            break;
-        //case 0xD5: NotYetImplemented(); break;
         case 0xD6:
             {
                 uint8_t x = Read8bit();
@@ -1116,56 +1007,7 @@ int Emulator::ProcessOpCode()
             }
                 break;
         case 0xD7: NotYetImplemented(); break;
-        case 0xD8:
-            {
-                DBG("%02X: RET C\n", opcode);
-                if (state->flags.c)
-                {
-                    Pop(&state->pc);
-                    cycles = 20;
-                }
-                else
-                    cycles = 8;
-            }
-            break;
-        case 0xD9:
-            {
-                DBG("%02X: RETI\n", opcode);
-                Pop(&state->pc);
-                cycles = 16;
-            }
-            break;
-        case 0xDA:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: JP C, 0x%04X\n", opcode, LowByte(x), HighByte(x), x);
-
-                if (state->flags.c)
-                {
-                    state->pc = x;
-                    cycles = 16;
-                }
-                else
-                {
-                    cycles = 12;
-                }
-            }
-            break;
         case 0xDB: NotYetImplemented(); break;
-        case 0xDC:
-            {
-                uint16_t x = Read16bit();
-                DBG("%02X %02X %02X: CALL C, %04X\n", opcode, LowByte(x), HighByte(x), x);
-                if (state->flags.c)
-                {
-                    Push(state->pc);
-                    state->pc = x;
-                    cycles = 24;
-                }
-                else
-                    cycles = 12;
-            }
-            break;
         case 0xDD: NotYetImplemented(); break;
         case 0xDE:
             {
@@ -1185,7 +1027,6 @@ int Emulator::ProcessOpCode()
                 cycles = 12;
             }
             break;
-        //case 0xE1: NotYetImplemented(); break;
         case 0xE2:
             {
                 DBG("LD (0xFF00+C), A\n");
@@ -1195,7 +1036,6 @@ int Emulator::ProcessOpCode()
             break;
         case 0xE3: NotYetImplemented(); break;
         case 0xE4: NotYetImplemented(); break;
-        //case 0xE5: NotYetImplemented(); break;
         case 0xE6:
             {
                 uint8_t x = Read8bit();
@@ -1225,13 +1065,6 @@ int Emulator::ProcessOpCode()
                 state->flags.z = 0;
 
                 cycles = 16;
-            }
-            break;
-        case 0xE9:
-            {
-                DBG("%02X: JP (HL)\n", opcode);
-                state->pc = state->hl;
-                cycles = 4;
             }
             break;
         case 0xEA:
@@ -1270,7 +1103,6 @@ int Emulator::ProcessOpCode()
                 cycles = 12;
             }
             break;
-        //case 0xF1: NotYetImplemented(); break;
         case 0xF2:
             {
                 DBG("LD A, (0xFF00+C)\n");
@@ -1280,7 +1112,6 @@ int Emulator::ProcessOpCode()
             break;
         case 0xF3: NotYetImplemented(); break;
         case 0xF4: NotYetImplemented(); break;
-        //case 0xF5: NotYetImplemented(); break;
         case 0xF6:
             {
                 uint8_t x = Read8bit();
