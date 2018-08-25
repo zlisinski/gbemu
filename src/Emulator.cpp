@@ -882,105 +882,206 @@ int Emulator::ProcessOpCode()
                     cycles = 16;
                 }
 
-                if ((subcode & 0xF8) == 0x00)
+                switch (subcode)
                 {
-                    DBG("%02X %02X: RLC %s\n", opcode, subcode, srcStr);
+                    case 0x00: // RLC B
+                    case 0x01: // RLC C
+                    case 0x02: // RLC D
+                    case 0x03: // RLC E
+                    case 0x04: // RLC H
+                    case 0x05: // RLC L
+                    case 0x06: // RLC (HL)
+                    case 0x07: // RLC A
+                        {
+                            DBG("%02X %02X: RLC %s\n", opcode, subcode, srcStr);
 
-                    state->ClearFlags();
-                    state->flags.c = (*src & 0x80) ? 1 : 0;
-                    *src = (*src << 1) | state->flags.c;
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xF8) == 0x08)
-                {
-                    DBG("%02X %02X: RRC %s\n", opcode, subcode, srcStr);
+                            state->ClearFlags();
+                            state->flags.c = (*src & 0x80) ? 1 : 0;
+                            *src = (*src << 1) | state->flags.c;
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
 
-                    state->ClearFlags();
-                    state->flags.c = *src & 0x01;
-                    *src = (*src >> 1) | (state->flags.c << 7);
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xF8) == 0x10)
-                {
-                    DBG("%02X %02X: RL %s\n", opcode, subcode, srcStr);
+                    case 0x08: // RRC B
+                    case 0x09: // RRC C
+                    case 0x0A: // RRC D
+                    case 0x0B: // RRC E
+                    case 0x0C: // RRC H
+                    case 0x0D: // RRC L
+                    case 0x0E: // RRC (HL)
+                    case 0x0F: // RRC A
+                        {
+                            DBG("%02X %02X: RRC %s\n", opcode, subcode, srcStr);
 
-                    uint8_t oldCarry = state->flags.c;
-                    state->ClearFlags();
-                    state->flags.c = (*src & 0x80) ? 1 : 0;
-                    *src = (*src << 1) | oldCarry;
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xF8) == 0x18)
-                {
-                    DBG("%02X %02X: RR %s\n", opcode, subcode, srcStr);
+                            state->ClearFlags();
+                            state->flags.c = *src & 0x01;
+                            *src = (*src >> 1) | (state->flags.c << 7);
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
 
-                    uint8_t oldCarry = state->flags.c;
-                    state->ClearFlags();
-                    state->flags.c = *src & 0x01;
-                    *src = (*src >> 1) | (oldCarry << 7);
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xF8) == 0x20)
-                {
-                    DBG("%02X %02X: SLA %s\n", opcode, subcode, srcStr);
+                    case 0x10: // RL B
+                    case 0x11: // RL C
+                    case 0x12: // RL D
+                    case 0x13: // RL E
+                    case 0x14: // RL H
+                    case 0x15: // RL L
+                    case 0x16: // RL (HL)
+                    case 0x17: // RL A
+                        {
+                            DBG("%02X %02X: RL %s\n", opcode, subcode, srcStr);
 
-                    state->ClearFlags();
-                    state->flags.c = (*src & 0x80) ? 1 : 0;
-                    *src <<= 1;
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xF8) == 0x28)
-                {
-                    DBG("%02X %02X: SRA %s\n", opcode, subcode, srcStr);
+                            uint8_t oldCarry = state->flags.c;
+                            state->ClearFlags();
+                            state->flags.c = (*src & 0x80) ? 1 : 0;
+                            *src = (*src << 1) | oldCarry;
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
 
-                    state->ClearFlags();
-                    state->flags.c = *src & 0x01;
-                    *src = (*src >> 1) | (*src & 0x80);
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xF8) == 0x30)
-                {
-                    DBG("%02X %02X: SWAP %s\n", opcode, subcode, srcStr);
+                    case 0x18: // RR B
+                    case 0x19: // RR C
+                    case 0x1A: // RR D
+                    case 0x1B: // RR E
+                    case 0x1C: // RR H
+                    case 0x1D: // RR L
+                    case 0x1E: // RR (HL)
+                    case 0x1F: // RR A
+                        {
+                            DBG("%02X %02X: RR %s\n", opcode, subcode, srcStr);
 
-                    state->ClearFlags();
-                    *src = (*src << 4) | (*src >> 4);
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xF8) == 0x38)
-                {
-                    DBG("%02X %02X: SRL %s\n", opcode, subcode, srcStr);
+                            uint8_t oldCarry = state->flags.c;
+                            state->ClearFlags();
+                            state->flags.c = *src & 0x01;
+                            *src = (*src >> 1) | (oldCarry << 7);
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
 
-                    state->ClearFlags();
-                    state->flags.c = *src & 0x01;
-                    *src >>= 1;
-                    state->flags.z = *src == 0 ? 1 : 0;
-                }
-                else if ((subcode & 0xC0) == 0x40)
-                {
-                    uint8_t bit = (subcode >> 3) & 0x07;
-                    
-                    DBG("%02X %02X: BIT %d, %s\n", opcode, subcode, bit, srcStr);
+                    case 0x20: // SLA B
+                    case 0x21: // SLA C
+                    case 0x22: // SLA D
+                    case 0x23: // SLA E
+                    case 0x24: // SLA H
+                    case 0x25: // SLA L
+                    case 0x26: // SLA (HL)
+                    case 0x27: // SLA A
+                        {
+                            DBG("%02X %02X: SLA %s\n", opcode, subcode, srcStr);
 
-                    // Carry bit not changed.
-                    state->flags.z = (*src & (1 << bit)) ? 0 : 1;
-                    state->flags.n = 0;
-                    state->flags.h = 1;
-                }
-                else if ((subcode & 0xC0) == 0x80)
-                {
-                    uint8_t bit = (subcode >> 3) & 0x07;
-                    
-                    DBG("%02X %02X: RES %d, %s\n", opcode, subcode, bit, srcStr);
+                            state->ClearFlags();
+                            state->flags.c = (*src & 0x80) ? 1 : 0;
+                            *src <<= 1;
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
 
-                    *src &= ~(1 << bit);
-                }
-                else if ((subcode & 0xC0) == 0xC0)
-                {
-                    uint8_t bit = (subcode >> 3) & 0x07;
-                    
-                    DBG("%02X %02X: SET %d, %s\n", opcode, subcode, bit, srcStr);
+                    case 0x28: // SRA B
+                    case 0x29: // SRA C
+                    case 0x2A: // SRA D
+                    case 0x2B: // SRA E
+                    case 0x2C: // SRA H
+                    case 0x2D: // SRA L
+                    case 0x2E: // SRA (HL)
+                    case 0x2F: // SRA A
+                        {
+                            DBG("%02X %02X: SRA %s\n", opcode, subcode, srcStr);
 
-                    *src |= (1 << bit);
+                            state->ClearFlags();
+                            state->flags.c = *src & 0x01;
+                            *src = (*src >> 1) | (*src & 0x80);
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
+
+                    case 0x30: // SWAP B
+                    case 0x31: // SWAP C
+                    case 0x32: // SWAP D
+                    case 0x33: // SWAP E
+                    case 0x34: // SWAP H
+                    case 0x35: // SWAP L
+                    case 0x36: // SWAP (HL)
+                    case 0x37: // SWAP A
+                        {
+                            DBG("%02X %02X: SWAP %s\n", opcode, subcode, srcStr);
+
+                            state->ClearFlags();
+                            *src = (*src << 4) | (*src >> 4);
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
+
+                    case 0x38: // SRL B
+                    case 0x39: // SRL C
+                    case 0x3A: // SRL D
+                    case 0x3B: // SRL E
+                    case 0x3C: // SRL H
+                    case 0x3D: // SRL L
+                    case 0x3E: // SRL (HL)
+                    case 0x3F: // SRL A
+                        {
+                            DBG("%02X %02X: SRL %s\n", opcode, subcode, srcStr);
+
+                            state->ClearFlags();
+                            state->flags.c = *src & 0x01;
+                            *src >>= 1;
+                            state->flags.z = *src == 0 ? 1 : 0;
+                        }
+                        break;
+
+                    case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47: // BIT 0, Register
+                    case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F: // BIT 1, Register
+                    case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: // BIT 2, Register
+                    case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F: // BIT 3, Register
+                    case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67: // BIT 4, Register
+                    case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F: // BIT 5, Register
+                    case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77: // BIT 6, Register
+                    case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F: // BIT 7, Register
+                        {
+                            uint8_t bit = (subcode >> 3) & 0x07;
+                            
+                            DBG("%02X %02X: BIT %d, %s\n", opcode, subcode, bit, srcStr);
+
+                            // Carry bit not changed.
+                            state->flags.z = (*src & (1 << bit)) ? 0 : 1;
+                            state->flags.n = 0;
+                            state->flags.h = 1;
+                        }
+                        break;
+
+                    case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87: // RES 0, Register
+                    case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F: // RES 1, Register
+                    case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97: // RES 2, Register
+                    case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F: // RES 3, Register
+                    case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7: // RES 4, Register
+                    case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF: // RES 5, Register
+                    case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7: // RES 6, Register
+                    case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF: // RES 7, Register
+                        {
+                            uint8_t bit = (subcode >> 3) & 0x07;
+                            
+                            DBG("%02X %02X: RES %d, %s\n", opcode, subcode, bit, srcStr);
+
+                            *src &= ~(1 << bit);
+                        }
+                        break;
+
+                    case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7: // SET 0, Register
+                    case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF: // SET 1, Register
+                    case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7: // SET 2, Register
+                    case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF: // SET 3, Register
+                    case 0xE0: case 0xE1: case 0xE2: case 0xE3: case 0xE4: case 0xE5: case 0xE6: case 0xE7: // SET 4, Register
+                    case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF: // SET 5, Register
+                    case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7: // SET 6, Register
+                    case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC: case 0xFD: case 0xFE: case 0xFF: // SET 7, Register
+                        {
+                            uint8_t bit = (subcode >> 3) & 0x07;
+                            
+                            DBG("%02X %02X: SET %d, %s\n", opcode, subcode, bit, srcStr);
+
+                            *src |= (1 << bit);
+                        }
+                        break;
                 }
             }
             break;
