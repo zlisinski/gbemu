@@ -3876,3 +3876,155 @@ TEST_F(EmulatorTest, Test_RET_C)
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(cycles, 8);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+TEST_F(EmulatorTest, Test_RST)
+{
+    Emulator emulator(&state);
+    int cycles = 0;
+
+    ResetState();
+    state.memory[0x1234] = 0xC7;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0000);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+
+    ResetState();
+    state.memory[0x1234] = 0xCF;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0008);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+
+    ResetState();
+    state.memory[0x1234] = 0xD7;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0010);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+
+    ResetState();
+    state.memory[0x1234] = 0xDF;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0018);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+
+    ResetState();
+    state.memory[0x1234] = 0xE7;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0020);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+
+    ResetState();
+    state.memory[0x1234] = 0xEF;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0028);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+
+    ResetState();
+    state.memory[0x1234] = 0xF7;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0030);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+
+    ResetState();
+    state.memory[0x1234] = 0xFF;
+    state.pc = 0x1234;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0038);
+    ASSERT_EQ(state.sp, 0xFFFC);
+    ASSERT_EQ(state.memory[0xFFFD], 0x12);
+    ASSERT_EQ(state.memory[0xFFFC], 0x35);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 16);
+}

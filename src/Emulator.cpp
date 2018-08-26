@@ -1293,6 +1293,23 @@ int Emulator::ProcessOpCode()
             }
             break;
 
+        case 0xC7: // RST 0x00
+        case 0xCF: // RST 0x08
+        case 0xD7: // RST 0x10
+        case 0xDF: // RST 0x18
+        case 0xE7: // RST 0x20
+        case 0xEF: // RST 0x28
+        case 0xF7: // RST 0x30
+        case 0xFF: // RST 0x38
+            {
+                uint8_t addr = ((opcode >> 3) & 0x07) * 8;
+                DBG("%02X: RST 0x%02X\n", opcode, addr);
+                Push(state->pc);
+                state->pc = (uint16_t)addr;
+                cycles = 16;
+            }
+            break;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                   //
 //                                                                                                                   //
@@ -1310,30 +1327,21 @@ int Emulator::ProcessOpCode()
         case 0x37: NotYetImplemented(); break;
         case 0x3F: NotYetImplemented(); break;
 
-        case 0xC7: NotYetImplemented(); break;
-        case 0xCF: NotYetImplemented(); break;
-
         case 0xD3: NotYetImplemented(); break;
-        case 0xD7: NotYetImplemented(); break;
         case 0xDB: NotYetImplemented(); break;
         case 0xDD: NotYetImplemented(); break;
-        case 0xDF: NotYetImplemented(); break;
 
         case 0xE3: NotYetImplemented(); break;
         case 0xE4: NotYetImplemented(); break;
-        case 0xE7: NotYetImplemented(); break;
         case 0xEB: NotYetImplemented(); break;
         case 0xEC: NotYetImplemented(); break;
         case 0xED: NotYetImplemented(); break;
-        case 0xEF: NotYetImplemented(); break;
 
         case 0xF3: NotYetImplemented(); break;
         case 0xF4: NotYetImplemented(); break;
-        case 0xF7: NotYetImplemented(); break;
         case 0xFB: NotYetImplemented(); break;
         case 0xFC: NotYetImplemented(); break;
         case 0xFD: NotYetImplemented(); break;
-        case 0xFF: NotYetImplemented(); break;
 
         default: NotYetImplemented(); break;
     }
