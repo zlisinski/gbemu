@@ -62,8 +62,9 @@ struct State
     uint16_t pc;
     uint16_t sp;
     uint8_t *memory;
+    bool halted;
 
-    State() : f(0), a(0), bc(0), de(0), hl(0), pc(0), sp(0), memory(NULL)
+    State() : f(0), a(0), bc(0), de(0), hl(0), pc(0), sp(0), memory(NULL), halted(false)
     {
         memory = new uint8_t[MEM_SIZE]();
     }

@@ -620,7 +620,7 @@ int Emulator::ProcessOpCode()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                   //
-// Boolean opcodes                                                                                                   //
+// Boolean and bitwise opcodes                                                                                       //
 //                                                                                                                   //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -796,6 +796,16 @@ int Emulator::ProcessOpCode()
 
                 // Subtract and don't save result.
                 Sub8Bit(state->a, x);
+            }
+            break;
+
+        case 0x2F: // CPL A
+            {
+                DBG("%02X: CPL A\n", opcode);
+                state->a = ~state->a;
+                state->flags.h = 1;
+                state->flags.n = 1;
+                cycles = 4;
             }
             break;
 
@@ -1312,20 +1322,88 @@ int Emulator::ProcessOpCode()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                   //
-//                                                                                                                   //
+// Misc opcodes                                                                                                      //
 //                                                                                                                   //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        case 0x00: // NOP
+            {
+                DBG("%02X: NOP\n", opcode);
+                cycles = 4;
+            }
+            break;
 
-        case 0x00: NotYetImplemented(); break;
+        case 0x76: // HALT
+            {
+                DBG("%02X: HALT\n", opcode);
+                state->halted = true;
+                cycles = 4;
+            }
+            break;
 
-        case 0x10: NotYetImplemented(); break;
+        case 0x37: // SCF
+            {
+                DBG("%02X: SCF\n", opcode);
+                state->flags.c = 1;
+                cycles = 4;
+            }
+            break;
 
-        case 0x27: NotYetImplemented(); break;
-        case 0x2F: NotYetImplemented(); break;
+        case 0x3F: // CCF
+            {
+                DBG("%02X: CCF\n", opcode);
+                state->flags.c = !state->flags.c;
+                cycles = 4;
+            }
+            break;
 
-        case 0x37: NotYetImplemented(); break;
-        case 0x3F: NotYetImplemented(); break;
+        case 0x27: // DAA
+            {
+                DBG("%02X: DAA\n", opcode);
+
+                if (!state->flags.n)
+                {
+                    if (state->flags.c || state->a > 0x99)
+                    {
+                        state->a += 0x60;
+                        state->flags.c = 1;
+                    }
+                    if (state->flags.h || (state->a & 0x0F) > 0x09)
+                    {
+                        state->a += 0x06;
+                        state->flags.h = 0;
+                    }
+                }
+                else
+                {
+                    if (state->flags.c && state->flags.h)
+                    {
+                        state->a += 0x9A;
+                        state->flags.h = 0;
+                    }
+                    else if (state->flags.c)
+                    {
+                        state->a += 0xA0;
+                    }
+                    else if (state->flags.h)
+                    {
+                        state->a += 0xFA;
+                        state->flags.h = 0;
+                    }
+                }
+
+                state->flags.z = !((bool)state->a);
+                cycles = 4;
+            }
+            break;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                   //
+// Unimplemented opcodes                                                                                             //
+//                                                                                                                   //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        case 0x10: NotYetImplemented(); break; // STOP
 
         case 0xD3: NotYetImplemented(); break;
         case 0xDB: NotYetImplemented(); break;
@@ -1337,9 +1415,9 @@ int Emulator::ProcessOpCode()
         case 0xEC: NotYetImplemented(); break;
         case 0xED: NotYetImplemented(); break;
 
-        case 0xF3: NotYetImplemented(); break;
+        case 0xF3: NotYetImplemented(); break; // DI
         case 0xF4: NotYetImplemented(); break;
-        case 0xFB: NotYetImplemented(); break;
+        case 0xFB: NotYetImplemented(); break; // EI
         case 0xFC: NotYetImplemented(); break;
         case 0xFD: NotYetImplemented(); break;
 
