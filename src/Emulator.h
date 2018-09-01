@@ -1,7 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include "gbemu.h"
 #include "State.h"
+#include "AbsByteProxy.h"
+
+typedef std::shared_ptr<AbsByteProxy> ByteProxy;
 
 class Emulator
 {
@@ -25,6 +30,7 @@ public:
     int ProcessOpCode();
 
 private:
+    ByteProxy GetByteProxy(uint8_t bits);
     void NotYetImplemented();
 
     State *state;

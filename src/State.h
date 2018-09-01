@@ -1,22 +1,7 @@
 #pragma once
 
 #include "gbemu.h"
-
-/*struct Flags
-{
-    uint8_t z:1; // Zero
-    uint8_t n:1; // Subtract
-    uint8_t h:1; // Half Carry
-    uint8_t c:1; // Carry
-    uint8_t pad:4;
-
-    Flags() : z(0), n(0), h(0), c(0) {}
-
-    void Clear()
-    {
-        z = n = h = c = 0;
-    }
-};*/
+#include "Memory.h"
 
 struct State
 {
@@ -36,8 +21,6 @@ struct State
         };
         uint16_t af;
     };
-    // Flags flags;
-    // uint8_t a;
     union {
         struct {
             uint8_t c;
@@ -61,17 +44,17 @@ struct State
     };
     uint16_t pc;
     uint16_t sp;
-    uint8_t *memory;
+    Memory memory;
     bool halted;
 
-    State() : f(0), a(0), bc(0), de(0), hl(0), pc(0), sp(0), memory(NULL), halted(false)
+    State() : f(0), a(0), bc(0), de(0), hl(0), pc(0), sp(0), halted(false)
     {
-        memory = new uint8_t[MEM_SIZE]();
+
     }
 
     ~State()
     {
-        delete [] memory;
+
     }
 
     void ClearFlags()

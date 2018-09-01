@@ -60,7 +60,7 @@ int main()
     uint8_t *romMemory = NULL;
     Emulator emulator(&state);
 
-    if (!LoadBIOS("data/BIOS.gb", state.memory))
+    if (!LoadBIOS("data/BIOS.gb", state.memory.GetBytePtr(0)))
     {
         exit(1);
     }

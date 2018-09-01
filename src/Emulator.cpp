@@ -1,5 +1,7 @@
 #include "gbemu.h"
 #include "Emulator.h"
+#include "RegisterByteProxy.h"
+#include "MemoryByteProxy.h"
 
 const char *Emulator::regNameMap8Bit[8] = {"B", "C", "D", "E", "H", "L", "(HL)", "A"};
 const char *Emulator::regNameMap16Bit[4] = {"BC", "DE", "HL", "SP"};
@@ -34,8 +36,19 @@ Emulator::Emulator(State *state) : pc(NULL)
 
 void Emulator::NotYetImplemented()
 {
-    printf("NYI opcode %02X at %04X\n", state->memory[state->pc], state->pc);
+    printf("NYI opcode %02X at %04X\n", state->memory[state->pc-1], state->pc-1); // state->pc is advanced in Read8bit, so subtract 1.
     exit(1);
+}
+
+
+ByteProxy Emulator::GetByteProxy(uint8_t bits)
+{
+    uint8_t *ptr = regMap8Bit[bits & 0x07];
+
+    if (ptr != NULL)
+        return std::make_shared<RegisterByteProxy>(ptr);
+
+    return std::make_shared<MemoryByteProxy>(state->hl, &state->memory);
 }
 
 
@@ -145,9 +158,9 @@ inline uint8_t Emulator::Sub8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*
 void Emulator::Push(uint16_t src)
 {
     state->sp--;
-    state->memory[state->sp] = (uint8_t)(src >> 8);
+    state->memory.WriteByte(state->sp, (uint8_t)(src >> 8));
     state->sp--;
-    state->memory[state->sp] = (uint8_t)(src & 0xFF);
+    state->memory.WriteByte(state->sp, (uint8_t)(src & 0xFF));
 }
 
 
@@ -183,29 +196,20 @@ int Emulator::ProcessOpCode()
         case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: /*case 0x76:*/ case 0x77: // LD (HL), Register
         case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F: // LD A, Register
             {
-                // 0x40-0x7F, except 0x76, is LD register, register
                 uint8_t destRegBits = (opcode >> 3) & 0x07;
                 uint8_t srcRegBits = opcode & 0x07;
-                uint8_t *dest = regMap8Bit[destRegBits];
-                uint8_t *src = regMap8Bit[srcRegBits];
+                ByteProxy dest = GetByteProxy(destRegBits);
+                const ByteProxy src = GetByteProxy(srcRegBits);
                 const char *destStr = regNameMap8Bit[destRegBits];
                 const char *srcStr = regNameMap8Bit[srcRegBits];
                 cycles = 4;
 
-                if (dest == NULL)
-                {
-                    dest = &state->memory[state->hl];
+                if (dest->ExtraCycles() || src->ExtraCycles())
                     cycles = 8;
-                }
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
-                    cycles = 8;
-                }
                 
                 DBG("%02X: LD %s, %s\n", opcode, destStr, srcStr);
 
-                *dest = *src;
+                *dest = src->Value();
             }
             break;
 
@@ -219,16 +223,13 @@ int Emulator::ProcessOpCode()
         case 0x3E: // LD A, immediate
             {
                 uint8_t destRegBits = (opcode >> 3) & 0x07;
-                uint8_t *dest = regMap8Bit[destRegBits];
+                ByteProxy dest = GetByteProxy(destRegBits);
                 uint8_t x = Read8bit();
                 const char *destStr = regNameMap8Bit[destRegBits];
                 cycles = 8;
 
-                if (dest == NULL)
-                {
-                    dest = &state->memory[state->hl];
+                if (dest->ExtraCycles())
                     cycles = 12;
-                }
                 
                 DBG("%02X %02X: LD %s, %02X\n", opcode, x, destStr, x);
 
@@ -294,14 +295,14 @@ int Emulator::ProcessOpCode()
             {
                 uint8_t x = Read8bit();
                 DBG("%02X %02X: LD (0xFF00+0x%02X), A\n", opcode, x, x);
-                state->memory[0xFF00 + x] = state->a;
+                state->memory.WriteByte(0xFF00 + x, state->a);
                 cycles = 12;
             }
             break;
         case 0xE2: // LD (0xFF00 + C), A
             {
                 DBG("%02X: LD (0xFF00+C), A\n", opcode);
-                state->memory[0xFF00 + state->c] = state->a;
+                state->memory.WriteByte(0xFF00 + state->c, state->a);
                 cycles = 8;
             }
             break;
@@ -309,28 +310,28 @@ int Emulator::ProcessOpCode()
             {
                 uint16_t x = Read16bit();
                 DBG("%02X %02X %02X: LD (%04X), A\n", opcode, LowByte(x), HighByte(x), x);
-                state->memory[x] = state->a;
+                state->memory.WriteByte(x, state->a);
                 cycles = 16;
             }
             break;
         case 0x02: // LD (BC), A
             {
                 DBG("%02X: LD (BC), A\n", opcode);
-                state->memory[state->bc] = state->a;
+                state->memory.WriteByte(state->bc, state->a);
                 cycles = 8;
             }
             break;
         case 0x12: // LD (DE), A
             {
                 DBG("%02X: LD (DE), A\n", opcode);
-                state->memory[state->de] = state->a;
+                state->memory.WriteByte(state->de, state->a);
                 cycles = 8;
             }
             break;
         case 0x22: // LD (HL+), A
             {
                 DBG("%02X: LD (HL+), A\n", opcode);
-                state->memory[state->hl] = state->a;
+                state->memory.WriteByte(state->hl, state->a);
                 state->hl++;
                 cycles = 8;
             }
@@ -338,7 +339,7 @@ int Emulator::ProcessOpCode()
         case 0x32: // LD (HL-), A
             {
                 DBG("%02X: LD (HL-), A\n", opcode);
-                state->memory[state->hl] = state->a;
+                state->memory.WriteByte(state->hl, state->a);
                 state->hl--;
                 cycles = 8;
             }
@@ -436,8 +437,8 @@ int Emulator::ProcessOpCode()
                 uint16_t x = Read16bit();
                 DBG("%02X %02X %02X: LD (0x%04X), SP\n", opcode, HighByte(x), LowByte(x), x);
 
-                state->memory[x] = LowByte(state->sp);
-                state->memory[x+1] = HighByte(state->sp);
+                state->memory.WriteByte(x, LowByte(state->sp));
+                state->memory.WriteByte(x+1, HighByte(state->sp));
 
                 cycles = 20;
             }
@@ -459,15 +460,12 @@ int Emulator::ProcessOpCode()
         case 0x87: // ADD A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: ADD A, %s\n", opcode, srcStr);
 
@@ -493,15 +491,12 @@ int Emulator::ProcessOpCode()
         case 0x8F: // ADC A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: ADC A, %s, %d\n", opcode, srcStr, state->flags.c);
 
@@ -527,15 +522,12 @@ int Emulator::ProcessOpCode()
         case 0x97: // SUB A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: SUB A, %s\n", opcode, srcStr);
 
@@ -561,15 +553,12 @@ int Emulator::ProcessOpCode()
         case 0x9F: // SBC A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: SBC A, %s, %d\n", opcode, srcStr, state->flags.c);
 
@@ -634,15 +623,12 @@ int Emulator::ProcessOpCode()
         case 0xA7: // AND A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: AND A, %s\n", opcode, srcStr);
 
@@ -681,15 +667,12 @@ int Emulator::ProcessOpCode()
         case 0xAF: // XOR A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: XOR A, %s\n", opcode, srcStr);
 
@@ -726,15 +709,12 @@ int Emulator::ProcessOpCode()
         case 0xB7: // OR A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: OR A, %s\n", opcode, srcStr);
 
@@ -771,15 +751,12 @@ int Emulator::ProcessOpCode()
         case 0xBF: // CP A, A
             {
                 uint8_t regBits = opcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 8;
-                }
 
                 DBG("%02X: CP A, %s\n", opcode, srcStr);
 
@@ -825,15 +802,12 @@ int Emulator::ProcessOpCode()
         case 0x3C: // INC A
             {
                 uint8_t regBits = (opcode >> 3) & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 12;
-                }
 
                 DBG("%02X: INC %s\n", opcode, srcStr);
 
@@ -854,24 +828,19 @@ int Emulator::ProcessOpCode()
         case 0x3D: // DEC A
             {
                 uint8_t regBits = (opcode >> 3) & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 4;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 12;
-                }
 
                 DBG("%02X: DEC %s\n", opcode, srcStr);
 
-                (*src)--;
-                
                 // Carry flag not changed.
-                state->flags.n = 1;
-                state->flags.z = (*src == 0) ? 1 : 0;
-                state->flags.h = ((*src & 0x0F) == 0x0F) ? 1 : 0;
+                uint8_t oldCarry = state->flags.c;
+                *src = Sub8Bit(*src, 1);
+                state->flags.c = oldCarry;
             }
             break;
 
@@ -965,15 +934,12 @@ int Emulator::ProcessOpCode()
                 uint8_t subcode = Read8bit();
 
                 uint8_t regBits = subcode & 0x07;
-                uint8_t *src = regMap8Bit[regBits];
+                ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
                 cycles = 8;
 
-                if (src == NULL)
-                {
-                    src = &state->memory[state->hl];
+                if (src->ExtraCycles())
                     cycles = 16;
-                }
 
                 switch (subcode)
                 {
@@ -1064,7 +1030,7 @@ int Emulator::ProcessOpCode()
 
                             state->ClearFlags();
                             state->flags.c = (*src & 0x80) ? 1 : 0;
-                            *src <<= 1;
+                            *src = *src << 1;
                             state->flags.z = *src == 0 ? 1 : 0;
                         }
                         break;
@@ -1117,7 +1083,7 @@ int Emulator::ProcessOpCode()
 
                             state->ClearFlags();
                             state->flags.c = *src & 0x01;
-                            *src >>= 1;
+                            *src = *src >> 1;
                             state->flags.z = *src == 0 ? 1 : 0;
                         }
                         break;
@@ -1155,7 +1121,7 @@ int Emulator::ProcessOpCode()
                             
                             DBG("%02X %02X: RES %d, %s\n", opcode, subcode, bit, srcStr);
 
-                            *src &= ~(1 << bit);
+                            *src = *src & ~(1 << bit);
                         }
                         break;
 
@@ -1172,7 +1138,7 @@ int Emulator::ProcessOpCode()
                             
                             DBG("%02X %02X: SET %d, %s\n", opcode, subcode, bit, srcStr);
 
-                            *src |= (1 << bit);
+                            *src = *src | (1 << bit);
                         }
                         break;
                 }

@@ -15,4 +15,5 @@ protected:
     void ResetState();
 
     State state;
+    uint8_t *memory;
 };
