@@ -137,6 +137,24 @@ inline uint16_t Emulator::Add16Bit(uint16_t x, uint16_t y)
 }
 
 
+inline uint16_t Emulator::Add16BitSigned8Bit(uint16_t x, int8_t y)
+{
+    uint32_t result = x + y;
+
+    state->ClearFlags();
+    // Half carry is on bit 4, not 12 like other 16 bit ops.
+    if (((x & 0x000F) + ((uint8_t)y & 0x000F)) > 0x000F)
+        state->flags.h = 1;
+    // Carry is on bit 8, not bit 16 like other 16 bit ops.
+    if (((x & 0x00FF) + ((uint8_t)y & 0x00FF)) > 0x00FF)
+        state->flags.c = 1;
+    if ((result & 0xFFFF) == 0)
+        state->flags.z = 1;
+
+    return (result & 0xFFFF);
+}
+
+
 inline uint8_t Emulator::Sub8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*/)
 {
     uint8_t carry = carryFlag ? 1 : 0;
@@ -386,7 +404,11 @@ int Emulator::ProcessOpCode()
 
                 DBG("%02X: PUSH %s\n", opcode, srcStr);
 
-                Push(*src);
+                if (src == &state->af)
+                    // blargg's test roms say the low nybble of flags should always be zero.
+                    Push(*src & 0xFFF0);
+                else
+                    Push(*src);
 
                 cycles = 16;
             }
@@ -405,6 +427,10 @@ int Emulator::ProcessOpCode()
 
                 Pop(dest);
 
+                if (dest == &state->af)
+                    // blargg's test roms say the low nybble of flags should always be zero.
+                    *dest = *dest & 0xFFF0;
+
                 cycles = 12;
             }
             break;
@@ -419,15 +445,12 @@ int Emulator::ProcessOpCode()
         case 0xF8: // LD HL, SP + e
             {
                 int8_t x = Read8bit();
-
                 DBG("%02X %02X: LD HL, SP+0x%02X\n", opcode, x, x);
 
-                uint16_t result = Add16Bit(state->sp, x);
-                state->hl = result;
+                state->hl = Add16BitSigned8Bit(state->sp, x);
 
-                // Zero and Subtract flag is always cleared.
+                // Zero flag is always cleared.
                 state->flags.z = 0;
-                state->flags.n = 0;
 
                 cycles = 12;
             }
@@ -595,10 +618,10 @@ int Emulator::ProcessOpCode()
 
         case 0xE8: // ADD SP, e
             {
-                uint8_t x = Read8bit();
+                int8_t x = Read8bit();
                 DBG("%02X %02X: ADD SP, %02X\n", opcode, x, x);
 
-                state->sp = Add16Bit(state->sp, x);
+                state->sp = Add16BitSigned8Bit(state->sp, x);
 
                 // Zero flag is always cleared.
                 state->flags.z = 0;
@@ -1188,6 +1211,11 @@ int Emulator::ProcessOpCode()
             {
                 int8_t offset = Read8bit();
                 DBG("%02X %02X: JR %d\n", opcode, offset, offset);
+                if (offset == -2)
+                {
+                    DBG("Infinite loop detected\n");
+                    exit(1);
+                }
                 state->pc += offset;
                 cycles = 12;
             }
@@ -1202,6 +1230,11 @@ int Emulator::ProcessOpCode()
                 DBG("%02X %02X: JR %s, %d\n", opcode, (uint8_t)offset, flagNameMap[flagBits], offset);
                 if (GetFlagValue(flagBits))
                 {
+                    if (offset == -2)
+                    {
+                        DBG("Infinite loop detected\n");
+                        exit(1);
+                    }
                     state->pc += offset;
                     cycles = 12;
                 }
@@ -1381,9 +1414,9 @@ int Emulator::ProcessOpCode()
         case 0xEC: NotYetImplemented(); break;
         case 0xED: NotYetImplemented(); break;
 
-        case 0xF3: NotYetImplemented(); break; // DI
+        case 0xF3: /*NotYetImplemented();*/ cycles = 4; break; // DI
         case 0xF4: NotYetImplemented(); break;
-        case 0xFB: NotYetImplemented(); break; // EI
+        case 0xFB: /*NotYetImplemented();*/ cycles = 4; break; // EI
         case 0xFC: NotYetImplemented(); break;
         case 0xFD: NotYetImplemented(); break;
 

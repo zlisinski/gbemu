@@ -209,7 +209,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
 
     ResetState();
     result = emulator.Add16Bit(0xFFFF, 0xFFFF);
-    ASSERT_EQ(result, SP_VALUE);
+    ASSERT_EQ(result, 0xFFFE);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
     ASSERT_EQ(state.flags.c, 1);
@@ -229,6 +229,38 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 1);
     ASSERT_EQ(state.flags.c, 1);
+    ASSERT_EQ(state.flags.n, 0);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+TEST_F(EmulatorTest, TEST_Add16BitSigned)
+{
+    uint16_t result;
+    Emulator emulator(&state);
+
+    ResetState();
+    result = emulator.Add16BitSigned8Bit(0x00, -1);
+    ASSERT_EQ(result, 0xFFFF);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.n, 0);
+
+    ResetState();
+    result = emulator.Add16BitSigned8Bit(0x00, 0x00);
+    ASSERT_EQ(result, 0);
+    ASSERT_EQ(state.flags.z, 1);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.n, 0);
+
+    ResetState();
+    result = emulator.Add16BitSigned8Bit(0x0001, 0x0F);
+    ASSERT_EQ(result, 0x0010);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(state.flags.h, 1);
+    ASSERT_EQ(state.flags.c, 0);
     ASSERT_EQ(state.flags.n, 0);
 }
 
@@ -996,7 +1028,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(cycles, 12);
 
-    // Half-carry is on bit 11->12
+    // Half-carry is on bit 3->4
     ResetState();
     state.sp = 0x000F;
     memory[0] = 0xF8;
@@ -1009,12 +1041,12 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
     ASSERT_EQ(state.sp, 0x000F);
     ASSERT_EQ(state.pc, 0x0002);
     ASSERT_EQ(state.flags.c, 0);
-    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.h, 1);
     ASSERT_EQ(state.flags.n, 0);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(cycles, 12);
 
-    // Half-carry is on bit 11->12
+    // Half-carry is on bit 3->4
     ResetState();
     state.sp = 0x0FFF;
     memory[0] = 0xF8;
@@ -1026,7 +1058,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
     ASSERT_EQ(state.de, DE_VALUE);
     ASSERT_EQ(state.sp, 0x0FFF);
     ASSERT_EQ(state.pc, 0x0002);
-    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.c, 1);
     ASSERT_EQ(state.flags.h, 1);
     ASSERT_EQ(state.flags.n, 0);
     ASSERT_EQ(state.flags.z, 0);
@@ -1234,7 +1266,7 @@ TEST_F(EmulatorTest, Test_POP)
     memory[0] = 0xF1;
     cycles = emulator.ProcessOpCode();
     ASSERT_EQ(state.sp, SP_VALUE);
-    ASSERT_EQ(state.af, 0x12A1);
+    ASSERT_EQ(state.af, 0x12A0);
     ASSERT_EQ(state.bc, BC_VALUE);
     ASSERT_EQ(state.de, DE_VALUE);
     ASSERT_EQ(state.hl, HL_VALUE);

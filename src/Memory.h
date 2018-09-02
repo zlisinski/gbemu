@@ -4,6 +4,9 @@
 
 #include "gbemu.h"
 
+const uint16_t MEM_SB = 0xFF01;
+const uint16_t MEM_SC = 0xFF02;
+
 class Memory
 {
 public:

@@ -6,7 +6,7 @@ CPPFLAGS=-c -g -Wall -Wpedantic -std=c++11 -pthread $(INCLUDES)
 
 CLASSES = src/Emulator.cpp src/State.cpp src/Memory.cpp
 MAIN_SRC = $(CLASSES) src/gbemu.cpp
-TEST_SRC = $(CLASSES) src/tests/main.cpp src/tests/EmulatorTest.cpp
+TEST_SRC = $(CLASSES) src/tests/main.cpp src/tests/EmulatorTest.cpp src/tests/MemoryTest.cpp
 MAIN_OBJ = $(MAIN_SRC:%.cpp=%.o)
 TEST_OBJ = $(TEST_SRC:%.cpp=%.o)
 
