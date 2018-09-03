@@ -7,10 +7,10 @@ class EmulatorTest : public ::testing::Test
 {
 protected:
     EmulatorTest();
-    virtual ~EmulatorTest();
+    ~EmulatorTest() override;
 
-    virtual void SetUp();
-    virtual void TearDown();
+    void SetUp() override;
+    void TearDown() override;
 
     void ResetState();
 

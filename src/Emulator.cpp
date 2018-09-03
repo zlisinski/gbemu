@@ -9,10 +9,10 @@ const char *Emulator::regNameMap16BitStack[4] = {"BC", "DE", "HL", "AF"};
 const char *Emulator::flagNameMap[4] = {"NZ", "Z", "NC", "C"};
 
 
-Emulator::Emulator(State *state) : pc(NULL)
+Emulator::Emulator(State *state) :
+    state(state),
+    enableInterruptsDelay(false)
 {
-    this->state = state;
-
     regMap8Bit[0] = &state->b;
     regMap8Bit[1] = &state->c;
     regMap8Bit[2] = &state->d;
@@ -189,9 +189,88 @@ void Emulator::Pop(uint16_t *dest)
 }
 
 
+bool Emulator::CheckInterrupt(eInterruptTypes &intType)
+{
+    if (!state->interruptsEnabled)
+        return false;
+
+    uint8_t regIE = state->memory[eRegIE];
+    uint8_t regIF = state->memory[eRegIF];
+    uint8_t interrupts = regIE & regIF;
+
+    if (interrupts & eIntBitVBlank)
+    {
+        intType = eIntVBlank;
+        return true;
+    }
+
+    if (interrupts & eIntBitLCDC)
+    {
+        intType = eIntLCDC;
+        return true;
+    }
+
+    if (interrupts & eIntBitTimer)
+    {
+        intType = eIntTimer;
+        return true;
+    }
+
+    if (interrupts & eIntBitSerial)
+    {
+        intType = eIntSerial;
+        return true;
+    }
+
+    if (interrupts & eIntBitJoypad)
+    {
+        intType = eIntJoypad;
+        return true;
+    }
+
+    return false;
+}
+
+
+void Emulator::ProcessInterrupt(eInterruptTypes intType)
+{
+    // Disable interrupts.
+    state->interruptsEnabled = false;
+
+    // Push return address onto the stack.
+    Push(state->pc);
+
+    // Clear current interrupt flag.
+    uint8_t newIF = state->memory[eRegIF] & ~(1 << intType);
+    state->memory.WriteByte(eRegIF, newIF);
+
+    // Jump to ISR.
+    state->pc = 0x40 + (8 * intType);
+
+    DBG("Interrupt %d, Jump to 0x%04X\n\n", intType, state->pc);
+}
+
+
 int Emulator::ProcessOpCode()
 {
     int cycles = 0;
+
+    // Check for any waiting interrupts and process.
+    eInterruptTypes intType;
+    if (CheckInterrupt(intType))
+    {
+        ProcessInterrupt(intType);
+        state->PrintState();
+        DBG("\n");
+        cycles = 20;
+        return cycles;
+    }
+
+    // The EI intruction has a delayed effect, so enable interrupts after checking interrupts for this cycle.
+    if (enableInterruptsDelay)
+    {
+        state->interruptsEnabled = true;
+    }
 
     uint8_t opcode = Read8bit();
     DBG("opcode=%02X\n", opcode);
@@ -1128,6 +1207,9 @@ int Emulator::ProcessOpCode()
                             state->flags.z = (*src & (1 << bit)) ? 0 : 1;
                             state->flags.n = 0;
                             state->flags.h = 1;
+
+                            if (src->ExtraCycles())
+                                cycles = 12;
                         }
                         break;
 
@@ -1282,6 +1364,7 @@ int Emulator::ProcessOpCode()
             {
                 DBG("%02X: RETI\n", opcode);
                 Pop(&state->pc);
+                state->interruptsEnabled = true;
                 cycles = 16;
             }
             break;
@@ -1396,6 +1479,25 @@ int Emulator::ProcessOpCode()
             }
             break;
 
+        case 0xF3: // DI
+            {
+                DBG("%02X: DI\n", opcode);
+                state->interruptsEnabled = false;
+                cycles = 4;
+            }
+            break;
+
+        case 0xFB: // EI
+            {
+                DBG("%02X: EI\n", opcode);
+
+                // Interrupts aren't immediately enabled, we have to process one opcode before enabling interrupts.
+                enableInterruptsDelay = true;
+
+                cycles = 4;
+            }
+            break;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                   //
 // Unimplemented opcodes                                                                                             //
@@ -1414,9 +1516,7 @@ int Emulator::ProcessOpCode()
         case 0xEC: NotYetImplemented(); break;
         case 0xED: NotYetImplemented(); break;
 
-        case 0xF3: /*NotYetImplemented();*/ cycles = 4; break; // DI
         case 0xF4: NotYetImplemented(); break;
-        case 0xFB: /*NotYetImplemented();*/ cycles = 4; break; // EI
         case 0xFC: NotYetImplemented(); break;
         case 0xFD: NotYetImplemented(); break;
 

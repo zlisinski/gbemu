@@ -26,8 +26,8 @@ TEST_F(MemoryTest, TEST_Serial)
 {
     testing::internal::CaptureStdout();
 
-    memory.WriteByte(MEM_SB, 0x30);
-    memory.WriteByte(MEM_SC, 0x81);
+    memory.WriteByte(eRegSB, 0x30);
+    memory.WriteByte(eRegSC, 0x81);
     std::string output = testing::internal::GetCapturedStdout();
 
     ASSERT_EQ(output, "Serial: 30, '0'\n");

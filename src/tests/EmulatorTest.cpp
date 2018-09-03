@@ -1,6 +1,7 @@
 #include "EmulatorTest.h"
 #include "../State.h"
 #include "../Emulator.h"
+#include "../Memory.h"
 
 const uint8_t A_VALUE = 0x12;
 const uint8_t F_VALUE = 0x00;
@@ -45,6 +46,7 @@ void EmulatorTest::ResetState()
     state.hl = HL_VALUE;
     state.sp = SP_VALUE;
     state.pc = 0;
+    state.interruptsEnabled = false;
 
     state.memory.ClearMemory();
     memory = state.memory.GetBytePtr(0);
@@ -2894,7 +2896,7 @@ TEST_F(EmulatorTest, Test_BIT)
     ASSERT_EQ(state.flags.h, 1);
     ASSERT_EQ(state.flags.n, 0);
     ASSERT_EQ(state.flags.z, 1);
-    ASSERT_EQ(cycles, 16);
+    ASSERT_EQ(cycles, 12);
 
     ResetState();
     memory[0] = 0xCB;
@@ -2912,7 +2914,7 @@ TEST_F(EmulatorTest, Test_BIT)
     ASSERT_EQ(state.flags.h, 1);
     ASSERT_EQ(state.flags.n, 0);
     ASSERT_EQ(state.flags.z, 0);
-    ASSERT_EQ(cycles, 16);
+    ASSERT_EQ(cycles, 12);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3715,6 +3717,7 @@ TEST_F(EmulatorTest, Test_RETI)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.interruptsEnabled, true);
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
     ASSERT_EQ(state.de, DE_VALUE);
@@ -4233,4 +4236,182 @@ TEST_F(EmulatorTest, Test_DAA)
     ASSERT_EQ(state.flags.n, 1);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(cycles, 4);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+TEST_F(EmulatorTest, Test_DI)
+{
+    Emulator emulator(&state);
+    int cycles = 0;
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[0] = 0xF3;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.interruptsEnabled, false);
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0001);
+    ASSERT_EQ(state.sp, SP_VALUE);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 4);
+
+    ResetState();
+    state.interruptsEnabled = false;
+    memory[0] = 0xF3;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.interruptsEnabled, false);
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0001);
+    ASSERT_EQ(state.sp, SP_VALUE);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 4);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+TEST_F(EmulatorTest, Test_EI)
+{
+    Emulator emulator(&state);
+    int cycles = 0;
+
+    ResetState();
+    state.interruptsEnabled = false;
+    memory[0] = 0xFB;
+    memory[1] = 0x00;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.interruptsEnabled, false); // EI has a delayed effect.
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.interruptsEnabled, true);
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0002);
+    ASSERT_EQ(state.sp, SP_VALUE);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 4);
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[0] = 0xFB;
+    memory[1] = 0x00;
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.interruptsEnabled, true); // EI has a delayed effect, but it was already enabled.
+    cycles = emulator.ProcessOpCode();
+    ASSERT_EQ(state.interruptsEnabled, true);
+    ASSERT_EQ(state.a, A_VALUE);
+    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.hl, HL_VALUE);
+    ASSERT_EQ(state.pc, 0x0002);
+    ASSERT_EQ(state.sp, SP_VALUE);
+    ASSERT_EQ(state.flags.c, 0);
+    ASSERT_EQ(state.flags.h, 0);
+    ASSERT_EQ(state.flags.n, 0);
+    ASSERT_EQ(state.flags.z, 0);
+    ASSERT_EQ(cycles, 4);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+TEST_F(EmulatorTest, Test_Interrupts)
+{
+    Emulator emulator(&state);
+    int cycles = 0;
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[eRegIE] = 0x01;
+    memory[eRegIF] = 0x01;
+    memory[0] = 0x00;
+    memory[1] = 0x00;
+    memory[0x40] = 0x3C; // INC A
+    memory[0x41] = 0xC9; // RET
+    cycles = emulator.ProcessOpCode(); // Process interrupt
+    ASSERT_EQ(state.pc, 0x0040);
+    ASSERT_EQ(state.sp, SP_VALUE - 2);
+    ASSERT_EQ(cycles, 20);
+    
+    cycles = emulator.ProcessOpCode(); // Process INC A
+    ASSERT_EQ(state.pc, 0x0041);
+    ASSERT_EQ(state.a, A_VALUE + 1);
+    ASSERT_EQ(cycles, 4);
+
+    cycles = emulator.ProcessOpCode(); // Process RET
+    ASSERT_EQ(state.pc, 0x0000);
+    ASSERT_EQ(state.sp, SP_VALUE);
+    ASSERT_EQ(cycles, 16);
+
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[eRegIE] = 0x00;
+    memory[eRegIF] = 0x01;
+    memory[0] = 0x00;
+    memory[1] = 0x00;
+    memory[0x40] = 0x3C; // INC A
+    memory[0x41] = 0xC9; // RET
+    cycles = emulator.ProcessOpCode(); // IE disabled
+    ASSERT_EQ(state.pc, 0x0001);
+    ASSERT_EQ(state.sp, SP_VALUE);
+    ASSERT_EQ(cycles, 4);
+    
+    cycles = emulator.ProcessOpCode(); // IE disabled
+    ASSERT_EQ(state.pc, 0x0002);
+    ASSERT_EQ(state.sp, SP_VALUE);
+    ASSERT_EQ(cycles, 4);
+
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[eRegIE] = 0x02;
+    memory[eRegIF] = 0x02;
+    cycles = emulator.ProcessOpCode(); // Process interrupt
+    ASSERT_EQ(state.pc, 0x0048);
+    ASSERT_EQ(state.sp, SP_VALUE - 2);
+    ASSERT_EQ(cycles, 20);
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[eRegIE] = 0x04;
+    memory[eRegIF] = 0x04;
+    cycles = emulator.ProcessOpCode(); // Process interrupt
+    ASSERT_EQ(state.pc, 0x0050);
+    ASSERT_EQ(state.sp, SP_VALUE - 2);
+    ASSERT_EQ(cycles, 20);
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[eRegIE] = 0x08;
+    memory[eRegIF] = 0x08;
+    cycles = emulator.ProcessOpCode(); // Process interrupt
+    ASSERT_EQ(state.pc, 0x0058);
+    ASSERT_EQ(state.sp, SP_VALUE - 2);
+    ASSERT_EQ(cycles, 20);
+
+    ResetState();
+    state.interruptsEnabled = true;
+    memory[eRegIE] = 0x10;
+    memory[eRegIF] = 0x10;
+    cycles = emulator.ProcessOpCode(); // Process interrupt
+    ASSERT_EQ(state.pc, 0x0060);
+    ASSERT_EQ(state.sp, SP_VALUE - 2);
+    ASSERT_EQ(cycles, 20);
 }

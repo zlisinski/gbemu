@@ -7,10 +7,10 @@ class MemoryTest : public ::testing::Test
 {
 protected:
     MemoryTest();
-    virtual ~MemoryTest();
+    ~MemoryTest() override;
 
-    virtual void SetUp();
-    virtual void TearDown();
+    void SetUp() override;
+    void TearDown() override;
 
     Memory memory;
 };

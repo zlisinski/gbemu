@@ -46,8 +46,9 @@ struct State
     uint16_t sp;
     Memory memory;
     bool halted;
+    bool interruptsEnabled;
 
-    State() : f(0), a(0), bc(0), de(0), hl(0), pc(0), sp(0), halted(false)
+    State() : f(0), a(0), bc(0), de(0), hl(0), pc(0), sp(0), halted(false), interruptsEnabled(false)
     {
 
     }
@@ -64,7 +65,7 @@ struct State
 
     void PrintState()
     {
-        printf("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X\n",
-               a, b, c, d, e, h, l, pc, sp, flags.z, flags.n, flags.h, flags.c);
+        printf("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X int:%d\n",
+               a, b, c, d, e, h, l, pc, sp, flags.z, flags.n, flags.h, flags.c, interruptsEnabled);
     }
 };

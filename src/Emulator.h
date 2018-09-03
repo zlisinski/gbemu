@@ -6,6 +6,24 @@
 #include "State.h"
 #include "AbsByteProxy.h"
 
+enum eInterruptTypes
+{
+    eIntVBlank = 0,
+    eIntLCDC   = 1,
+    eIntTimer  = 2,
+    eIntSerial = 3,
+    eIntJoypad = 4
+};
+
+enum eInterruptBits
+{
+    eIntBitVBlank = 0x01,
+    eIntBitLCDC   = 0x02,
+    eIntBitTimer  = 0x04,
+    eIntBitSerial = 0x08,
+    eIntBitJoypad = 0x10
+};
+
 typedef std::shared_ptr<AbsByteProxy> ByteProxy;
 
 class Emulator
@@ -34,8 +52,11 @@ private:
     ByteProxy GetByteProxy(uint8_t bits);
     void NotYetImplemented();
 
+    bool CheckInterrupt(eInterruptTypes &intType);
+    void ProcessInterrupt(eInterruptTypes intType);
+
     State *state;
-    uint8_t *pc;
+    bool enableInterruptsDelay;
 
     uint8_t *regMap8Bit[8];
     uint16_t *regMap16Bit[4];
