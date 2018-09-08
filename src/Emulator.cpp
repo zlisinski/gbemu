@@ -270,6 +270,7 @@ int Emulator::ProcessOpCode()
     if (enableInterruptsDelay)
     {
         state->interruptsEnabled = true;
+        enableInterruptsDelay = false;
     }
 
     uint8_t opcode = Read8bit();
