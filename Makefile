@@ -33,6 +33,7 @@ clean:
 
 test: $(TEST_BIN)
 	./$(TEST_BIN)
+	./run_test_roms.sh
 
 lib/libgtest.a:
 	g++ -I$(GTEST_SRC) -pthread -fPIC -c $(GTEST_SRC)/src/gtest-all.cc -o lib/gtest-all.o
