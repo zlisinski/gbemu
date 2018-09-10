@@ -32,14 +32,27 @@ uint8_t Memory::operator[](uint16_t index) const
 
 void Memory::WriteByte(uint16_t index, uint8_t byte)
 {
-    memory[index] = byte;
-
-    if (index == eRegSC && byte & 0x80)
+    switch (index)
     {
-        FILE *file = fopen("serial.txt", "a");
-        fputc(memory[eRegSB], file);
-        fclose(file);
-        DBG("Serial: %02X, '%c'\n", memory[eRegSB], memory[eRegSB]);
+        case eRegSC: // 0xFF02
+            if (byte & 0x80)
+            {
+                FILE *file = fopen("serial.txt", "a");
+                fputc(memory[eRegSB], file);
+                fclose(file);
+                DBG("Serial: %02X, '%c'\n", memory[eRegSB], memory[eRegSB]);
+
+                memory[index] = byte;
+            }
+            return;
+    }
+
+    // If we get here, it wasn't handled by the switch.
+
+    // Let observers handle the update. If there are no observers for this address, update the value.
+    if (!NotifyObservers(index, byte))
+    {
+        memory[index] = byte;
     }
 }
 

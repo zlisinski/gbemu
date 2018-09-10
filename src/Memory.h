@@ -3,6 +3,7 @@
 #include <array>
 
 #include "gbemu.h"
+#include "MemoryByteSubject.h"
 
 enum SpecialRegisters
 {
@@ -72,7 +73,7 @@ enum SpecialRegisters
     eRegIE    = 0xFFFF, // Interrupt enable
 };
 
-class Memory
+class Memory : public MemoryByteSubject
 {
 public:
     Memory();

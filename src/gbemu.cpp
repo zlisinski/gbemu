@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
     const char *romFilename = argv[1];
 
-    /*if (!LoadBIOS("data/BIOS.gb", state.memory.GetBytePtr(0)))
+    /*if (!LoadBIOS("data/BIOS.gb", state.memory->GetBytePtr(0)))
     {
         exit(1);
     }*/
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    memcpy(state.memory.GetBytePtr(0), romMemory, romSize);
+    memcpy(state.memory->GetBytePtr(0), romMemory, romSize);
 
     // Set state to what it would be after running the BIOS.
     state.a = 0x01;
@@ -91,43 +91,46 @@ int main(int argc, char **argv)
     state.de = 0x00D8;
     state.hl = 0x014D;
     state.sp = 0xFFFE;
-    state.memory.WriteByte(eRegTIMA, 0x00);
-    state.memory.WriteByte(eRegTMA, 0x00);
-    state.memory.WriteByte(eRegTAC, 0x00);
-    state.memory.WriteByte(eRegNR10, 0x80);
-    state.memory.WriteByte(eRegNR11, 0xBF);
-    state.memory.WriteByte(eRegNR12, 0xF3);
-    state.memory.WriteByte(eRegNR14, 0xBF);
-    state.memory.WriteByte(eRegNR21, 0x3F);
-    state.memory.WriteByte(eRegNR22, 0x00);
-    state.memory.WriteByte(eRegNR24, 0xBF);
-    state.memory.WriteByte(eRegNR30, 0x7F);
-    state.memory.WriteByte(eRegNR31, 0xFF);
-    state.memory.WriteByte(eRegNR32, 0x9F);
-    state.memory.WriteByte(eRegNR34, 0xBF);
-    state.memory.WriteByte(eRegNR41, 0xFF);
-    state.memory.WriteByte(eRegNR42, 0x00);
-    state.memory.WriteByte(eRegNR43, 0x00);
-    state.memory.WriteByte(eRegNR44, 0xBF);
-    state.memory.WriteByte(eRegNR50, 0x77);
-    state.memory.WriteByte(eRegNR51, 0xF3);
-    state.memory.WriteByte(eRegNR52, 0xF1);
-    state.memory.WriteByte(eRegLCDC, 0x91);
-    state.memory.WriteByte(eRegSCY, 0x00);
-    state.memory.WriteByte(eRegSCX, 0x00);
-    state.memory.WriteByte(eRegLYC, 0x00);
-    state.memory.WriteByte(eRegBGP, 0xFC);
-    state.memory.WriteByte(eRegOBP0, 0xFF);
-    state.memory.WriteByte(eRegOBP1, 0xFF);
-    state.memory.WriteByte(eRegWY, 0x00);
-    state.memory.WriteByte(eRegWX, 0x00);
-    state.memory.WriteByte(eRegIE, 0x00);
+    state.memory->WriteByte(eRegTIMA, 0x00);
+    state.memory->WriteByte(eRegTMA, 0x00);
+    state.memory->WriteByte(eRegTAC, 0x00);
+    state.memory->WriteByte(eRegNR10, 0x80);
+    state.memory->WriteByte(eRegNR11, 0xBF);
+    state.memory->WriteByte(eRegNR12, 0xF3);
+    state.memory->WriteByte(eRegNR14, 0xBF);
+    state.memory->WriteByte(eRegNR21, 0x3F);
+    state.memory->WriteByte(eRegNR22, 0x00);
+    state.memory->WriteByte(eRegNR24, 0xBF);
+    state.memory->WriteByte(eRegNR30, 0x7F);
+    state.memory->WriteByte(eRegNR31, 0xFF);
+    state.memory->WriteByte(eRegNR32, 0x9F);
+    state.memory->WriteByte(eRegNR34, 0xBF);
+    state.memory->WriteByte(eRegNR41, 0xFF);
+    state.memory->WriteByte(eRegNR42, 0x00);
+    state.memory->WriteByte(eRegNR43, 0x00);
+    state.memory->WriteByte(eRegNR44, 0xBF);
+    state.memory->WriteByte(eRegNR50, 0x77);
+    state.memory->WriteByte(eRegNR51, 0xF3);
+    state.memory->WriteByte(eRegNR52, 0xF1);
+    state.memory->WriteByte(eRegLCDC, 0x91);
+    state.memory->WriteByte(eRegSCY, 0x00);
+    state.memory->WriteByte(eRegSCX, 0x00);
+    state.memory->WriteByte(eRegLYC, 0x00);
+    state.memory->WriteByte(eRegBGP, 0xFC);
+    state.memory->WriteByte(eRegOBP0, 0xFF);
+    state.memory->WriteByte(eRegOBP1, 0xFF);
+    state.memory->WriteByte(eRegWY, 0x00);
+    state.memory->WriteByte(eRegWX, 0x00);
+    state.memory->WriteByte(eRegIE, 0x00);
 
     state.pc = 0x0100;
 
     while (true)
     {
-        emulator.ProcessOpCode();
+        uint cycles = emulator.ProcessOpCode();
+        state.timer->ProcessCycles(cycles);
+        state.timer->PrintTimerData();
+        DBG("\n");
     }
 
     delete [] romMemory;

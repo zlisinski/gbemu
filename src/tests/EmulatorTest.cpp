@@ -18,7 +18,9 @@ const uint16_t HL_VALUE = 0xBCDE;
 const uint16_t SP_VALUE = 0xFFFE;
 
 
-EmulatorTest::EmulatorTest()
+EmulatorTest::EmulatorTest() :
+    state(),
+    emulator(&state)
 {
 
 }
@@ -48,8 +50,10 @@ void EmulatorTest::ResetState()
     state.pc = 0;
     state.interruptsEnabled = false;
 
-    state.memory.ClearMemory();
-    memory = state.memory.GetBytePtr(0);
+    state.memory->ClearMemory();
+    memory = state.memory->GetBytePtr(0);
+
+    emulator = Emulator(&state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -57,7 +61,6 @@ void EmulatorTest::ResetState()
 TEST_F(EmulatorTest, TEST_Add8Bit)
 {
     uint8_t result;
-    Emulator emulator(&state);
 
     result = emulator.Add8Bit(0x00, 0x00);
     ASSERT_EQ(result, 0);
@@ -160,7 +163,6 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
 TEST_F(EmulatorTest, TEST_Add16Bit)
 {
     uint16_t result;
-    Emulator emulator(&state);
 
     result = emulator.Add16Bit(0x00, 0x00);
     ASSERT_EQ(result, 0);
@@ -239,7 +241,6 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
 TEST_F(EmulatorTest, TEST_Add16BitSigned)
 {
     uint16_t result;
-    Emulator emulator(&state);
 
     ResetState();
     result = emulator.Add16BitSigned8Bit(0x00, -1);
@@ -271,7 +272,6 @@ TEST_F(EmulatorTest, TEST_Add16BitSigned)
 TEST_F(EmulatorTest, TEST_Sub8Bit)
 {
     uint16_t result;
-    Emulator emulator(&state);
 
     result = emulator.Sub8Bit(0x00, 0x00);
     ASSERT_EQ(result, 0);
@@ -341,8 +341,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
 
 TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD B. B
     ResetState();
@@ -484,8 +483,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
 
 TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD B. NN
     ResetState();
@@ -604,8 +602,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
 
 TEST_F(EmulatorTest, Test_LD_A_BC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD A, (BC)
     ResetState();
@@ -626,8 +623,7 @@ TEST_F(EmulatorTest, Test_LD_A_BC)
 
 TEST_F(EmulatorTest, Test_LD_A_DE)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD A, (DE)
     ResetState();
@@ -648,8 +644,7 @@ TEST_F(EmulatorTest, Test_LD_A_DE)
 
 TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_C)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD A, (0xFF00+C)
     ResetState();
@@ -670,8 +665,7 @@ TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_C)
 
 TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_C_A)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD (0xFF00+C), A
     ResetState();
@@ -693,8 +687,7 @@ TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_C_A)
 
 TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_N)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD A, (0xFF00+N)
     ResetState();
@@ -716,16 +709,15 @@ TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_N)
 
 TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_N_A)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD (0xFF00+N), A
     ResetState();
     memory[0] = 0xE0;
-    memory[1] = 0x02;
+    memory[1] = 0x03;
     state.a = 1;
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(memory[0xFF02], 1);
+    ASSERT_EQ(memory[0xFF03], 1);
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -740,8 +732,7 @@ TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_N_A)
 
 TEST_F(EmulatorTest, Test_LD_A_NN)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD A, (NN)
     ResetState();
@@ -764,8 +755,7 @@ TEST_F(EmulatorTest, Test_LD_A_NN)
 
 TEST_F(EmulatorTest, Test_LD_NN_A)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD (NN), A
     ResetState();
@@ -789,8 +779,7 @@ TEST_F(EmulatorTest, Test_LD_NN_A)
 
 TEST_F(EmulatorTest, Test_LD_A_HL_PLUS)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD A, (HL+)
     ResetState();
@@ -811,8 +800,7 @@ TEST_F(EmulatorTest, Test_LD_A_HL_PLUS)
 
 TEST_F(EmulatorTest, Test_LD_A_HL_MINUS)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD A, (HL-)
     ResetState();
@@ -833,8 +821,7 @@ TEST_F(EmulatorTest, Test_LD_A_HL_MINUS)
 
 TEST_F(EmulatorTest, Test_LD_BC_A)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD (BC), A
     ResetState();
@@ -856,8 +843,7 @@ TEST_F(EmulatorTest, Test_LD_BC_A)
 
 TEST_F(EmulatorTest, Test_LD_DE_A)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD (DE), A
     ResetState();
@@ -879,8 +865,7 @@ TEST_F(EmulatorTest, Test_LD_DE_A)
 
 TEST_F(EmulatorTest, Test_LD_HLI_A)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD (HL+), A
     ResetState();
@@ -902,8 +887,7 @@ TEST_F(EmulatorTest, Test_LD_HLI_A)
 
 TEST_F(EmulatorTest, Test_LD_HLD_A)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD (HL-), A
     ResetState();
@@ -925,8 +909,7 @@ TEST_F(EmulatorTest, Test_LD_HLD_A)
 
 TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD BC. NN
     ResetState();
@@ -989,8 +972,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
 
 TEST_F(EmulatorTest, Test_LD_SP_HL)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // LD SP, HL
     ResetState();
@@ -1010,8 +992,7 @@ TEST_F(EmulatorTest, Test_LD_SP_HL)
 
 TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     state.sp = 0;
@@ -1089,8 +1070,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
 
 TEST_F(EmulatorTest, Test_LD_NN_SP)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     memory[0] = 0x08;
     memory[1] = 0x00;
@@ -1116,8 +1096,7 @@ TEST_F(EmulatorTest, Test_LD_NN_SP)
 
 TEST_F(EmulatorTest, Test_PUSH)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.a = 0x12;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1196,8 +1175,7 @@ TEST_F(EmulatorTest, Test_PUSH)
 
 TEST_F(EmulatorTest, Test_POP)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1284,8 +1262,7 @@ TEST_F(EmulatorTest, Test_POP)
 
 TEST_F(EmulatorTest, Test_ADD)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1551,8 +1528,7 @@ TEST_F(EmulatorTest, Test_ADD)
 
 TEST_F(EmulatorTest, Test_ADC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1608,8 +1584,7 @@ TEST_F(EmulatorTest, Test_ADC)
 
 TEST_F(EmulatorTest, Test_SUB)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1725,8 +1700,7 @@ TEST_F(EmulatorTest, Test_SUB)
 
 TEST_F(EmulatorTest, Test_SBC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1803,8 +1777,7 @@ TEST_F(EmulatorTest, Test_SBC)
 
 TEST_F(EmulatorTest, Test_AND)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1878,8 +1851,7 @@ TEST_F(EmulatorTest, Test_AND)
 
 TEST_F(EmulatorTest, Test_OR)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -1953,8 +1925,7 @@ TEST_F(EmulatorTest, Test_OR)
 
 TEST_F(EmulatorTest, Test_XOR)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -2028,8 +1999,7 @@ TEST_F(EmulatorTest, Test_XOR)
 
 TEST_F(EmulatorTest, Test_CP)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -2103,8 +2073,7 @@ TEST_F(EmulatorTest, Test_CP)
 
 TEST_F(EmulatorTest, Test_INC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -2158,8 +2127,7 @@ TEST_F(EmulatorTest, Test_INC)
 
 TEST_F(EmulatorTest, Test_DEC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x12A1;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -2213,8 +2181,7 @@ TEST_F(EmulatorTest, Test_DEC)
 
 TEST_F(EmulatorTest, Test_ADD_HL_REG)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
     state.af = 0x1200;
     state.bc = BC_VALUE;
     state.de = DE_VALUE;
@@ -2268,8 +2235,7 @@ TEST_F(EmulatorTest, Test_ADD_HL_REG)
 
 TEST_F(EmulatorTest, Test_ADD_SP_N)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     // ADD SP, N
     ResetState();
@@ -2312,8 +2278,7 @@ TEST_F(EmulatorTest, Test_ADD_SP_N)
 
 TEST_F(EmulatorTest, Test_INC_16)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x03;
@@ -2352,8 +2317,7 @@ TEST_F(EmulatorTest, Test_INC_16)
 
 TEST_F(EmulatorTest, Test_DEC_16)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x2B;
@@ -2392,8 +2356,7 @@ TEST_F(EmulatorTest, Test_DEC_16)
 
 TEST_F(EmulatorTest, Test_RLCA)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x07;
@@ -2417,8 +2380,7 @@ TEST_F(EmulatorTest, Test_RLCA)
 
 TEST_F(EmulatorTest, Test_RLA)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x17;
@@ -2442,8 +2404,7 @@ TEST_F(EmulatorTest, Test_RLA)
 
 TEST_F(EmulatorTest, Test_RRCA)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x0F;
@@ -2467,8 +2428,7 @@ TEST_F(EmulatorTest, Test_RRCA)
 
 TEST_F(EmulatorTest, Test_RRA)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x1F;
@@ -2493,8 +2453,7 @@ TEST_F(EmulatorTest, Test_RRA)
 
 TEST_F(EmulatorTest, Test_RLC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2537,8 +2496,7 @@ TEST_F(EmulatorTest, Test_RLC)
 
 TEST_F(EmulatorTest, Test_RRC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2581,8 +2539,7 @@ TEST_F(EmulatorTest, Test_RRC)
 
 TEST_F(EmulatorTest, Test_RL)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2625,8 +2582,7 @@ TEST_F(EmulatorTest, Test_RL)
 
 TEST_F(EmulatorTest, Test_RR)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2668,8 +2624,7 @@ TEST_F(EmulatorTest, Test_RR)
 
 TEST_F(EmulatorTest, Test_SLA)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2712,8 +2667,7 @@ TEST_F(EmulatorTest, Test_SLA)
 
 TEST_F(EmulatorTest, Test_SRA)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2756,8 +2710,7 @@ TEST_F(EmulatorTest, Test_SRA)
 
 TEST_F(EmulatorTest, Test_SWAP)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2799,8 +2752,7 @@ TEST_F(EmulatorTest, Test_SWAP)
 
 TEST_F(EmulatorTest, Test_SRL)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2842,8 +2794,7 @@ TEST_F(EmulatorTest, Test_SRL)
 
 TEST_F(EmulatorTest, Test_BIT)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2921,8 +2872,7 @@ TEST_F(EmulatorTest, Test_BIT)
 
 TEST_F(EmulatorTest, Test_RES)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -2982,8 +2932,7 @@ TEST_F(EmulatorTest, Test_RES)
 
 TEST_F(EmulatorTest, Test_SET)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCB;
@@ -3043,8 +2992,7 @@ TEST_F(EmulatorTest, Test_SET)
 
 TEST_F(EmulatorTest, Test_JP)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xC3;
@@ -3068,8 +3016,7 @@ TEST_F(EmulatorTest, Test_JP)
 
 TEST_F(EmulatorTest, Test_JP_NZ)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xC2;
@@ -3111,8 +3058,7 @@ TEST_F(EmulatorTest, Test_JP_NZ)
 
 TEST_F(EmulatorTest, Test_JP_Z)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCA;
@@ -3155,8 +3101,7 @@ TEST_F(EmulatorTest, Test_JP_Z)
 
 TEST_F(EmulatorTest, Test_JP_NC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xD2;
@@ -3198,8 +3143,7 @@ TEST_F(EmulatorTest, Test_JP_NC)
 
 TEST_F(EmulatorTest, Test_JP_C)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xDA;
@@ -3242,8 +3186,7 @@ TEST_F(EmulatorTest, Test_JP_C)
 
 TEST_F(EmulatorTest, Test_JR)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x18;
@@ -3283,8 +3226,7 @@ TEST_F(EmulatorTest, Test_JR)
 
 TEST_F(EmulatorTest, Test_JR_NZ)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x20;
@@ -3324,8 +3266,7 @@ TEST_F(EmulatorTest, Test_JR_NZ)
 
 TEST_F(EmulatorTest, Test_JR_Z)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x28;
@@ -3366,8 +3307,7 @@ TEST_F(EmulatorTest, Test_JR_Z)
 
 TEST_F(EmulatorTest, Test_JR_NC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x30;
@@ -3407,8 +3347,7 @@ TEST_F(EmulatorTest, Test_JR_NC)
 
 TEST_F(EmulatorTest, Test_JR_C)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x38;
@@ -3449,8 +3388,7 @@ TEST_F(EmulatorTest, Test_JR_C)
 
 TEST_F(EmulatorTest, Test_JP_HL)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xE9;
@@ -3473,8 +3411,7 @@ TEST_F(EmulatorTest, Test_JP_HL)
 
 TEST_F(EmulatorTest, Test_CALL)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCD;
@@ -3500,8 +3437,7 @@ TEST_F(EmulatorTest, Test_CALL)
 
 TEST_F(EmulatorTest, Test_CALL_NZ)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xC4;
@@ -3545,8 +3481,7 @@ TEST_F(EmulatorTest, Test_CALL_NZ)
 
 TEST_F(EmulatorTest, Test_CALL_Z)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xCC;
@@ -3591,8 +3526,7 @@ TEST_F(EmulatorTest, Test_CALL_Z)
 
 TEST_F(EmulatorTest, Test_CALL_NC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xD4;
@@ -3636,8 +3570,7 @@ TEST_F(EmulatorTest, Test_CALL_NC)
 
 TEST_F(EmulatorTest, Test_CALL_C)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xDC;
@@ -3682,8 +3615,7 @@ TEST_F(EmulatorTest, Test_CALL_C)
 
 TEST_F(EmulatorTest, Test_RET)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xC9;
@@ -3708,8 +3640,7 @@ TEST_F(EmulatorTest, Test_RET)
 
 TEST_F(EmulatorTest, Test_RETI)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xD9;
@@ -3735,8 +3666,7 @@ TEST_F(EmulatorTest, Test_RETI)
 
 TEST_F(EmulatorTest, Test_RET_NZ)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xC0;
@@ -3780,8 +3710,7 @@ TEST_F(EmulatorTest, Test_RET_NZ)
 
 TEST_F(EmulatorTest, Test_RET_Z)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xC8;
@@ -3826,8 +3755,7 @@ TEST_F(EmulatorTest, Test_RET_Z)
 
 TEST_F(EmulatorTest, Test_RET_NC)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xD0;
@@ -3871,8 +3799,7 @@ TEST_F(EmulatorTest, Test_RET_NC)
 
 TEST_F(EmulatorTest, Test_RET_C)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0xD8;
@@ -3917,8 +3844,7 @@ TEST_F(EmulatorTest, Test_RET_C)
 
 TEST_F(EmulatorTest, Test_RST)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0x1234] = 0xC7;
@@ -4069,8 +3995,7 @@ TEST_F(EmulatorTest, Test_RST)
 
 TEST_F(EmulatorTest, Test_CPL)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x2F;
@@ -4093,8 +4018,7 @@ TEST_F(EmulatorTest, Test_CPL)
 
 TEST_F(EmulatorTest, Test_NOP)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x00;
@@ -4116,8 +4040,7 @@ TEST_F(EmulatorTest, Test_NOP)
 
 TEST_F(EmulatorTest, Test_SCF)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x37;
@@ -4155,8 +4078,7 @@ TEST_F(EmulatorTest, Test_SCF)
 
 TEST_F(EmulatorTest, Test_CCF)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     memory[0] = 0x3F;
@@ -4194,8 +4116,7 @@ TEST_F(EmulatorTest, Test_CCF)
 
 TEST_F(EmulatorTest, Test_DAA)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     state.a = 0x45;
@@ -4242,8 +4163,7 @@ TEST_F(EmulatorTest, Test_DAA)
 
 TEST_F(EmulatorTest, Test_DI)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     state.interruptsEnabled = true;
@@ -4285,8 +4205,7 @@ TEST_F(EmulatorTest, Test_DI)
 
 TEST_F(EmulatorTest, Test_EI)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     state.interruptsEnabled = false;
@@ -4333,8 +4252,7 @@ TEST_F(EmulatorTest, Test_EI)
 
 TEST_F(EmulatorTest, Test_Interrupts)
 {
-    Emulator emulator(&state);
-    int cycles = 0;
+    uint cycles = 0;
 
     ResetState();
     state.interruptsEnabled = true;

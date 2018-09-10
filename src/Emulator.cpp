@@ -36,7 +36,7 @@ Emulator::Emulator(State *state) :
 
 void Emulator::NotYetImplemented()
 {
-    printf("NYI opcode %02X at %04X\n", state->memory[state->pc-1], state->pc-1); // state->pc is advanced in Read8bit, so subtract 1.
+    printf("NYI opcode %02X at %04X\n", state->memory->ReadByte(state->pc-1), state->pc-1); // state->pc is advanced in Read8bit, so subtract 1.
     exit(1);
 }
 
@@ -48,13 +48,13 @@ ByteProxy Emulator::GetByteProxy(uint8_t bits)
     if (ptr != NULL)
         return std::make_shared<RegisterByteProxy>(ptr);
 
-    return std::make_shared<MemoryByteProxy>(state->hl, &state->memory);
+    return std::make_shared<MemoryByteProxy>(state->hl, state->memory.get());
 }
 
 
 inline uint8_t Emulator::Read8bit()
 {
-    uint8_t byte = state->memory[state->pc];
+    uint8_t byte = state->memory->ReadByte(state->pc);
     state->pc++;
     return byte;
 }
@@ -62,7 +62,7 @@ inline uint8_t Emulator::Read8bit()
 
 inline uint16_t Emulator::Read16bit()
 {
-    uint16_t word = (state->memory[state->pc + 1] << 8) | state->memory[state->pc];
+    uint16_t word = (state->memory->ReadByte(state->pc + 1) << 8) | state->memory->ReadByte(state->pc);
     state->pc += 2;
     return word;
 }
@@ -176,15 +176,15 @@ inline uint8_t Emulator::Sub8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*
 void Emulator::Push(uint16_t src)
 {
     state->sp--;
-    state->memory.WriteByte(state->sp, (uint8_t)(src >> 8));
+    state->memory->WriteByte(state->sp, (uint8_t)(src >> 8));
     state->sp--;
-    state->memory.WriteByte(state->sp, (uint8_t)(src & 0xFF));
+    state->memory->WriteByte(state->sp, (uint8_t)(src & 0xFF));
 }
 
 
 void Emulator::Pop(uint16_t *dest)
 {
-    *dest = (state->memory[state->sp+1] << 8) + state->memory[state->sp];
+    *dest = (state->memory->ReadByte(state->sp+1) << 8) + state->memory->ReadByte(state->sp);
     state->sp += 2;
 }
 
@@ -194,8 +194,8 @@ bool Emulator::CheckInterrupt(eInterruptTypes &intType)
     if (!state->interruptsEnabled)
         return false;
 
-    uint8_t regIE = state->memory[eRegIE];
-    uint8_t regIF = state->memory[eRegIF];
+    uint8_t regIE = state->memory->ReadByte(eRegIE);
+    uint8_t regIF = state->memory->ReadByte(eRegIF);
     uint8_t interrupts = regIE & regIF;
 
     if (interrupts & eIntBitVBlank)
@@ -241,8 +241,8 @@ void Emulator::ProcessInterrupt(eInterruptTypes intType)
     Push(state->pc);
 
     // Clear current interrupt flag.
-    uint8_t newIF = state->memory[eRegIF] & ~(1 << intType);
-    state->memory.WriteByte(eRegIF, newIF);
+    uint8_t newIF = state->memory->ReadByte(eRegIF) & ~(1 << intType);
+    state->memory->WriteByte(eRegIF, newIF);
 
     // Jump to ISR.
     state->pc = 0x40 + (8 * intType);
@@ -251,9 +251,9 @@ void Emulator::ProcessInterrupt(eInterruptTypes intType)
 }
 
 
-int Emulator::ProcessOpCode()
+uint Emulator::ProcessOpCode()
 {
-    int cycles = 0;
+    uint cycles = 0;
 
     // Check for any waiting interrupts and process.
     eInterruptTypes intType;
@@ -261,7 +261,6 @@ int Emulator::ProcessOpCode()
     {
         ProcessInterrupt(intType);
         state->PrintState();
-        DBG("\n");
         cycles = 20;
         return cycles;
     }
@@ -338,21 +337,21 @@ int Emulator::ProcessOpCode()
         case 0x0A: // LD A, (BC)
             {
                 DBG("%02X: LD A, (BC)\n", opcode);
-                state->a = state->memory[state->bc];
+                state->a = state->memory->ReadByte(state->bc);
                 cycles = 8;
             }
             break;
         case 0x1A: // LD A, (DE)
             {
                 DBG("%02X: LD A, (DE)\n", opcode);
-                state->a = state->memory[state->de];
+                state->a = state->memory->ReadByte(state->de);
                 cycles = 8;
             }
             break;
         case 0xF2: // LD A, (0xFF00 + C)
             {
                 DBG("%02X: LD A, (0xFF00+C)\n", opcode);
-                state->a = state->memory[0xFF00 + state->c];
+                state->a = state->memory->ReadByte(0xFF00 + state->c);
                 cycles = 8;
             }
             break;
@@ -360,7 +359,7 @@ int Emulator::ProcessOpCode()
             {
                 uint8_t x = Read8bit();
                 DBG("%02X %02X: LD A, (0xFF00+0x%02X)\n", opcode, x, x);
-                state->a = state->memory[0xFF00 + x];
+                state->a = state->memory->ReadByte(0xFF00 + x);
                 cycles = 12;
             }
             break;
@@ -368,14 +367,14 @@ int Emulator::ProcessOpCode()
             {
                 uint16_t x = Read16bit();
                 DBG("%02X %02X %02X: LD A, (%04X)\n", opcode, LowByte(x), HighByte(x), x);
-                state->a = state->memory[x];
+                state->a = state->memory->ReadByte(x);
                 cycles = 16;
             }
             break;
         case 0x2A: // LD A, (HL+)
             {
                 DBG("%02X: LD A, (HL+)\n", opcode);
-                state->a = state->memory[state->hl];
+                state->a = state->memory->ReadByte(state->hl);
                 state->hl++;
                 cycles = 8;
             }
@@ -383,7 +382,7 @@ int Emulator::ProcessOpCode()
         case 0x3A: // LD A, (HL-)
             {
                 DBG("%02X: LD A, (HL-)\n", opcode);
-                state->a = state->memory[state->hl];
+                state->a = state->memory->ReadByte(state->hl);
                 state->hl--;
                 cycles = 8;
             }
@@ -393,14 +392,14 @@ int Emulator::ProcessOpCode()
             {
                 uint8_t x = Read8bit();
                 DBG("%02X %02X: LD (0xFF00+0x%02X), A\n", opcode, x, x);
-                state->memory.WriteByte(0xFF00 + x, state->a);
+                state->memory->WriteByte(0xFF00 + x, state->a);
                 cycles = 12;
             }
             break;
         case 0xE2: // LD (0xFF00 + C), A
             {
                 DBG("%02X: LD (0xFF00+C), A\n", opcode);
-                state->memory.WriteByte(0xFF00 + state->c, state->a);
+                state->memory->WriteByte(0xFF00 + state->c, state->a);
                 cycles = 8;
             }
             break;
@@ -408,28 +407,28 @@ int Emulator::ProcessOpCode()
             {
                 uint16_t x = Read16bit();
                 DBG("%02X %02X %02X: LD (%04X), A\n", opcode, LowByte(x), HighByte(x), x);
-                state->memory.WriteByte(x, state->a);
+                state->memory->WriteByte(x, state->a);
                 cycles = 16;
             }
             break;
         case 0x02: // LD (BC), A
             {
                 DBG("%02X: LD (BC), A\n", opcode);
-                state->memory.WriteByte(state->bc, state->a);
+                state->memory->WriteByte(state->bc, state->a);
                 cycles = 8;
             }
             break;
         case 0x12: // LD (DE), A
             {
                 DBG("%02X: LD (DE), A\n", opcode);
-                state->memory.WriteByte(state->de, state->a);
+                state->memory->WriteByte(state->de, state->a);
                 cycles = 8;
             }
             break;
         case 0x22: // LD (HL+), A
             {
                 DBG("%02X: LD (HL+), A\n", opcode);
-                state->memory.WriteByte(state->hl, state->a);
+                state->memory->WriteByte(state->hl, state->a);
                 state->hl++;
                 cycles = 8;
             }
@@ -437,7 +436,7 @@ int Emulator::ProcessOpCode()
         case 0x32: // LD (HL-), A
             {
                 DBG("%02X: LD (HL-), A\n", opcode);
-                state->memory.WriteByte(state->hl, state->a);
+                state->memory->WriteByte(state->hl, state->a);
                 state->hl--;
                 cycles = 8;
             }
@@ -540,8 +539,8 @@ int Emulator::ProcessOpCode()
                 uint16_t x = Read16bit();
                 DBG("%02X %02X %02X: LD (0x%04X), SP\n", opcode, HighByte(x), LowByte(x), x);
 
-                state->memory.WriteByte(x, LowByte(state->sp));
-                state->memory.WriteByte(x+1, HighByte(state->sp));
+                state->memory->WriteByte(x, LowByte(state->sp));
+                state->memory->WriteByte(x+1, HighByte(state->sp));
 
                 cycles = 20;
             }
@@ -1531,8 +1530,6 @@ int Emulator::ProcessOpCode()
         printf("Missing cycles\n");
         exit(1);
     }
-
-    DBG("\n");
 
     return cycles;
 }

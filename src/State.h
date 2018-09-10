@@ -2,6 +2,7 @@
 
 #include "gbemu.h"
 #include "Memory.h"
+#include "Timer.h"
 
 struct State
 {
@@ -44,13 +45,26 @@ struct State
     };
     uint16_t pc;
     uint16_t sp;
-    Memory memory;
+    std::shared_ptr<Memory> memory;
+    std::shared_ptr<Timer> timer;
     bool halted;
     bool interruptsEnabled;
 
-    State() : f(0), a(0), bc(0), de(0), hl(0), pc(0), sp(0), halted(false), interruptsEnabled(false)
+    State() :
+        f(0),
+        a(0),
+        bc(0),
+        de(0),
+        hl(0),
+        pc(0),
+        sp(0),
+        halted(false),
+        interruptsEnabled(false)
     {
+        memory = std::make_shared<Memory>();
+        timer = std::make_shared<Timer>(memory);
 
+        timer->AttachToSubject();
     }
 
     ~State()

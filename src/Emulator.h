@@ -46,7 +46,7 @@ public:
     void Push(uint16_t src);
     void Pop(uint16_t *dest);
 
-    int ProcessOpCode();
+    uint ProcessOpCode();
 
 private:
     ByteProxy GetByteProxy(uint8_t bits);

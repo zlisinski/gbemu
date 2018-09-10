@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include "../State.h"
+#include "../Emulator.h"
 
 class EmulatorTest : public ::testing::Test
 {
@@ -15,5 +16,6 @@ protected:
     void ResetState();
 
     State state;
+    Emulator emulator;
     uint8_t *memory;
 };
