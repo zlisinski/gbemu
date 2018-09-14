@@ -1,11 +1,11 @@
 #pragma once
 
-#include <list>
-#include <memory>
 #include <unordered_map>
 
 #include "gbemu.h"
 #include "MemoryByteObserver.h"
+
+// TODO: Is multimap really necessary? Will there be more than one observer for a single address?
 
 class MemoryByteSubject
 {

@@ -5,24 +5,8 @@
 #include "gbemu.h"
 #include "State.h"
 #include "AbsByteProxy.h"
+#include "Interrupt.h"
 
-enum eInterruptTypes
-{
-    eIntVBlank = 0,
-    eIntLCDC   = 1,
-    eIntTimer  = 2,
-    eIntSerial = 3,
-    eIntJoypad = 4
-};
-
-enum eInterruptBits
-{
-    eIntBitVBlank = 0x01,
-    eIntBitLCDC   = 0x02,
-    eIntBitTimer  = 0x04,
-    eIntBitSerial = 0x08,
-    eIntBitJoypad = 0x10
-};
 
 typedef std::shared_ptr<AbsByteProxy> ByteProxy;
 
@@ -52,7 +36,6 @@ private:
     ByteProxy GetByteProxy(uint8_t bits);
     void NotYetImplemented();
 
-    bool CheckInterrupt(eInterruptTypes &intType);
     void ProcessInterrupt(eInterruptTypes intType);
 
     State *state;

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <memory>
-
 #include "gbemu.h"
+#include "Interrupt.h"
 #include "Memory.h"
 #include "MemoryByteObserver.h"
 #include "MemoryByteSubject.h"
@@ -13,11 +12,8 @@
 class Timer : public MemoryByteObserver, public std::enable_shared_from_this<Timer>
 {
 public:
-    //Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, MemoryByteSubject &subject);
-    Timer(std::shared_ptr<Memory> memory);
+    Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, std::shared_ptr<Interrupt> interrupts);
     virtual ~Timer();
-
-    void AttachToSubject();
 
     void ProcessCycles(uint cycles);
 
@@ -25,15 +21,13 @@ public:
     void WriteTAC(uint8_t newValue);
 
     // Inherited from MemoryByteObserver.
+    void AttachToSubject(std::shared_ptr<MemoryByteSubject> subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 
     void PrintTimerData();
 
 private:
     void ProcessCounterChange(uint16_t oldValue, uint16_t newValue);
-
-    // Hold a pointer to 'memory' to insure that reg pointers don't get deleted while we're using them.
-    std::shared_ptr<Memory> memory;
 
     uint8_t *regTIMA;
     uint8_t *regTMA;
@@ -42,5 +36,7 @@ private:
 
     uint8_t internalCounter;
 
-    bool regTIMAOverflowed;  
+    bool regTIMAOverflowed;
+
+    std::shared_ptr<Interrupt> interrupts;
 };

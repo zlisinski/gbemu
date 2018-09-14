@@ -12,4 +12,13 @@ echo "$(date)" > serial.txt
 ./gbemu ../gb-test-roms/cpu_instrs/individual/08-misc\ instrs.gb > /dev/null
 ./gbemu ../gb-test-roms/instr_timing/instr_timing.gb > /dev/null
 
-cat serial.txt
+
+colorize() {
+    esc=$(printf "\033[")
+    red="31m"
+    green="32m"
+    normal="0m"
+    sed '/^$/d' "$@" | sed -e "s/Passed/$esc$green&$esc$normal\n/g" -e "s/^.*Failed.*$/$esc$red&$esc$normal\n/g"
+}
+
+cat serial.txt | colorize

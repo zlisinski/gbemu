@@ -48,7 +48,7 @@ void EmulatorTest::ResetState()
     state.hl = HL_VALUE;
     state.sp = SP_VALUE;
     state.pc = 0;
-    state.interruptsEnabled = false;
+    state.interrupts->SetEnabled(false);
 
     state.memory->ClearMemory();
     memory = state.memory->GetBytePtr(0);
@@ -3648,7 +3648,7 @@ TEST_F(EmulatorTest, Test_RETI)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(state.interruptsEnabled, true);
+    ASSERT_EQ(state.interrupts->Enabled(), true);
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
     ASSERT_EQ(state.de, DE_VALUE);
@@ -4166,10 +4166,10 @@ TEST_F(EmulatorTest, Test_DI)
     uint cycles = 0;
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[0] = 0xF3;
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(state.interruptsEnabled, false);
+    ASSERT_EQ(state.interrupts->Enabled(), false);
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
     ASSERT_EQ(state.de, DE_VALUE);
@@ -4183,10 +4183,10 @@ TEST_F(EmulatorTest, Test_DI)
     ASSERT_EQ(cycles, 4);
 
     ResetState();
-    state.interruptsEnabled = false;
+    state.interrupts->SetEnabled(false);
     memory[0] = 0xF3;
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(state.interruptsEnabled, false);
+    ASSERT_EQ(state.interrupts->Enabled(), false);
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
     ASSERT_EQ(state.de, DE_VALUE);
@@ -4208,13 +4208,13 @@ TEST_F(EmulatorTest, Test_EI)
     uint cycles = 0;
 
     ResetState();
-    state.interruptsEnabled = false;
+    state.interrupts->SetEnabled(false);
     memory[0] = 0xFB;
     memory[1] = 0x00;
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(state.interruptsEnabled, false); // EI has a delayed effect.
+    ASSERT_EQ(state.interrupts->Enabled(), false); // EI has a delayed effect.
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(state.interruptsEnabled, true);
+    ASSERT_EQ(state.interrupts->Enabled(), true);
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
     ASSERT_EQ(state.de, DE_VALUE);
@@ -4228,13 +4228,13 @@ TEST_F(EmulatorTest, Test_EI)
     ASSERT_EQ(cycles, 4);
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[0] = 0xFB;
     memory[1] = 0x00;
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(state.interruptsEnabled, true); // EI has a delayed effect, but it was already enabled.
+    ASSERT_EQ(state.interrupts->Enabled(), true); // EI has a delayed effect, but it was already enabled.
     cycles = emulator.ProcessOpCode();
-    ASSERT_EQ(state.interruptsEnabled, true);
+    ASSERT_EQ(state.interrupts->Enabled(), true);
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
     ASSERT_EQ(state.de, DE_VALUE);
@@ -4255,7 +4255,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     uint cycles = 0;
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x01;
     memory[eRegIF] = 0x01;
     memory[0] = 0x00;
@@ -4279,7 +4279,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
 
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x00;
     memory[eRegIF] = 0x01;
     memory[0] = 0x00;
@@ -4298,7 +4298,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
 
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x02;
     memory[eRegIF] = 0x02;
     cycles = emulator.ProcessOpCode(); // Process interrupt
@@ -4307,7 +4307,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     ASSERT_EQ(cycles, 20);
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x04;
     memory[eRegIF] = 0x04;
     cycles = emulator.ProcessOpCode(); // Process interrupt
@@ -4316,7 +4316,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     ASSERT_EQ(cycles, 20);
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x08;
     memory[eRegIF] = 0x08;
     cycles = emulator.ProcessOpCode(); // Process interrupt
@@ -4325,7 +4325,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     ASSERT_EQ(cycles, 20);
 
     ResetState();
-    state.interruptsEnabled = true;
+    state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x10;
     memory[eRegIF] = 0x10;
     cycles = emulator.ProcessOpCode(); // Process interrupt

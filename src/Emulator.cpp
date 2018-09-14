@@ -189,63 +189,19 @@ void Emulator::Pop(uint16_t *dest)
 }
 
 
-bool Emulator::CheckInterrupt(eInterruptTypes &intType)
-{
-    if (!state->interruptsEnabled)
-        return false;
-
-    uint8_t regIE = state->memory->ReadByte(eRegIE);
-    uint8_t regIF = state->memory->ReadByte(eRegIF);
-    uint8_t interrupts = regIE & regIF;
-
-    if (interrupts & eIntBitVBlank)
-    {
-        intType = eIntVBlank;
-        return true;
-    }
-
-    if (interrupts & eIntBitLCDC)
-    {
-        intType = eIntLCDC;
-        return true;
-    }
-
-    if (interrupts & eIntBitTimer)
-    {
-        intType = eIntTimer;
-        return true;
-    }
-
-    if (interrupts & eIntBitSerial)
-    {
-        intType = eIntSerial;
-        return true;
-    }
-
-    if (interrupts & eIntBitJoypad)
-    {
-        intType = eIntJoypad;
-        return true;
-    }
-
-    return false;
-}
-
-
 void Emulator::ProcessInterrupt(eInterruptTypes intType)
 {
     // Disable interrupts.
-    state->interruptsEnabled = false;
+    state->interrupts->SetEnabled(false);
 
     // Push return address onto the stack.
     Push(state->pc);
 
     // Clear current interrupt flag.
-    uint8_t newIF = state->memory->ReadByte(eRegIF) & ~(1 << intType);
-    state->memory->WriteByte(eRegIF, newIF);
+    state->interrupts->ClearInterrupt(intType);
 
     // Jump to ISR.
-    state->pc = 0x40 + (8 * intType);
+    state->pc = state->interrupts->GetInterruptAddress(intType);
 
     DBG("Interrupt %d, Jump to 0x%04X\n\n", intType, state->pc);
 }
@@ -257,7 +213,7 @@ uint Emulator::ProcessOpCode()
 
     // Check for any waiting interrupts and process.
     eInterruptTypes intType;
-    if (CheckInterrupt(intType))
+    if (state->interrupts->Enabled() && state->interrupts->CheckInterrupts(intType))
     {
         ProcessInterrupt(intType);
         state->PrintState();
@@ -268,7 +224,7 @@ uint Emulator::ProcessOpCode()
     // The EI intruction has a delayed effect, so enable interrupts after checking interrupts for this cycle.
     if (enableInterruptsDelay)
     {
-        state->interruptsEnabled = true;
+        state->interrupts->SetEnabled(true);
         enableInterruptsDelay = false;
     }
 
@@ -1364,7 +1320,7 @@ uint Emulator::ProcessOpCode()
             {
                 DBG("%02X: RETI\n", opcode);
                 Pop(&state->pc);
-                state->interruptsEnabled = true;
+                state->interrupts->SetEnabled(true);
                 cycles = 16;
             }
             break;
@@ -1482,7 +1438,7 @@ uint Emulator::ProcessOpCode()
         case 0xF3: // DI
             {
                 DBG("%02X: DI\n", opcode);
-                state->interruptsEnabled = false;
+                state->interrupts->SetEnabled(false);
                 cycles = 4;
             }
             break;

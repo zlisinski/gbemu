@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "Emulator.h"
 
+
 // The lower two bits of the TAC register control how many clock cycles occur before TIMA is updated.
 // DIV and the internal counter byte make up the 16 bit counter, with DIV being the high byte.
 // It works by selecting a certain bit from DIV+internalCounter, and when that bit overflows, TIMA is incremented.
@@ -15,35 +16,41 @@ const uint8_t timerEnabledMask = 0x04;
 const uint8_t clocksPerCycle = 4;
 
 
-//Timer::Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, MemoryByteSubject &subject) :
-Timer::Timer(std::shared_ptr<Memory> memory) :
-    memory(memory),
-    regTIMA(memory->GetBytePtr(eRegTIMA)),
-    regTMA(memory->GetBytePtr(eRegTMA)),
-    regTAC(memory->GetBytePtr(eRegTAC)),
-    regDIV(memory->GetBytePtr(eRegDIV)),
+Timer::Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, std::shared_ptr<Interrupt> interrupts) :
+    regTIMA(regTIMA),
+    regTMA(regTMA),
+    regTAC(regTAC),
+    regDIV(regDIV),
     internalCounter(0),
-    regTIMAOverflowed(false)
+    regTIMAOverflowed(false),
+    interrupts(interrupts)
 {
     
 }
 
+
 Timer::~Timer()
 {
-    //memory->DetachObserver(eRegTIMA, shared_from_this());
-    //memory->DetachObserver(eRegTMA, shared_from_this());
-    memory->DetachObserver(eRegTAC, this);
-    memory->DetachObserver(eRegDIV, this);
+    if (subject)
+    {
+        //subject->DetachObserver(eRegTIMA, shared_from_this());
+        //subject->DetachObserver(eRegTMA, shared_from_this());
+        subject->DetachObserver(eRegTAC, this);
+        subject->DetachObserver(eRegDIV, this);
+    }
 }
 
+
 // This has to be called after construction.
-void Timer::AttachToSubject()
+void Timer::AttachToSubject(std::shared_ptr<MemoryByteSubject> subject)
 {
-    //memory->AttachObserver(eRegTIMA, shared_from_this());
-    //memory->AttachObserver(eRegTMA, shared_from_this());
-    memory->AttachObserver(eRegTAC, shared_from_this());
-    memory->AttachObserver(eRegDIV, shared_from_this());
+    this->subject = subject;
+    //subject->AttachObserver(eRegTIMA, shared_from_this());
+    //subject->AttachObserver(eRegTMA, shared_from_this());
+    subject->AttachObserver(eRegTAC, shared_from_this());
+    subject->AttachObserver(eRegDIV, shared_from_this());
 }
+
 
 void Timer::ProcessCycles(uint clocks)
 {
@@ -61,7 +68,7 @@ void Timer::ProcessCycles(uint clocks)
             *regTIMA = *regTMA;
 
             // Set timer interrupt.
-            memory->WriteByte(eRegIF, memory->ReadByte(eRegIF) | eIntBitTimer);
+            interrupts->RequestInterrupt(eIntTimer);
 
             regTIMAOverflowed = false;
         }
@@ -127,10 +134,10 @@ void Timer::UpdateMemoryAddr(uint16_t addr, uint8_t value)
     DBG("UpdateMemoryAddr %04X, %02X\n", addr, value);
     switch (addr)
     {
-        case eRegTIMA:
+        /*case eRegTIMA:
             break;
         case eRegTMA:
-            break;
+            break;*/
         case eRegTAC:
             WriteTAC(value);
             break;

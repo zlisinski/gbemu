@@ -1,11 +1,17 @@
 #pragma once
 
 #include "gbemu.h"
+#include "Interrupt.h"
 #include "Memory.h"
 #include "Timer.h"
 
 struct State
 {
+    // Yes, I know that this is probably Undefined Behavior in Standard C++. Type punning works in C (at least in GCC), but I'm having
+    // trouble nailing down whether it is accepted in G++. And I know about the the "warning: ISO C++ prohibits anonymous structs"
+    // warnings. I'm ignoring them for now, as this lets me focus on getting the rest of the emulator working. Regardless, it works
+    // for now, so I'm not going to change it until I care about cross platform/compiler, or even anything other than G++ 7.3.0 (LLVM,
+    // Visual Studio, etc). This is a personal project, and is not meant to compile/run in whatever _your_ chosen platform or compiler is.
     union {
         struct {
             union {
@@ -46,9 +52,9 @@ struct State
     uint16_t pc;
     uint16_t sp;
     std::shared_ptr<Memory> memory;
+    std::shared_ptr<Interrupt> interrupts;
     std::shared_ptr<Timer> timer;
     bool halted;
-    bool interruptsEnabled;
 
     State() :
         f(0),
@@ -58,13 +64,16 @@ struct State
         hl(0),
         pc(0),
         sp(0),
-        halted(false),
-        interruptsEnabled(false)
+        halted(false)
     {
         memory = std::make_shared<Memory>();
-        timer = std::make_shared<Timer>(memory);
+        interrupts = std::make_shared<Interrupt>(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
+        timer = std::make_shared<Timer>(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
+                                        memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
+        
 
-        timer->AttachToSubject();
+        interrupts->AttachToSubject(memory);
+        timer->AttachToSubject(memory);
     }
 
     ~State()
@@ -80,6 +89,6 @@ struct State
     void PrintState()
     {
         printf("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X int:%d\n",
-               a, b, c, d, e, h, l, pc, sp, flags.z, flags.n, flags.h, flags.c, interruptsEnabled);
+               a, b, c, d, e, h, l, pc, sp, flags.z, flags.n, flags.h, flags.c, interrupts->Enabled());
     }
 };
