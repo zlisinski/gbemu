@@ -40,6 +40,7 @@ private:
 
     State *state;
     bool enableInterruptsDelay;
+    bool haltBug;
 
     uint8_t *regMap8Bit[8];
     uint16_t *regMap16Bit[4];
