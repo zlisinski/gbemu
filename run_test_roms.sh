@@ -11,6 +11,9 @@ echo "$(date)" > serial.txt
 ./gbemu ../gb-test-roms/cpu_instrs/individual/07-jr,jp,call,ret,rst.gb > /dev/null
 ./gbemu ../gb-test-roms/cpu_instrs/individual/08-misc\ instrs.gb > /dev/null
 ./gbemu ../gb-test-roms/instr_timing/instr_timing.gb > /dev/null
+./gbemu ../gb-test-roms/mem_timing/individual/01-read_timing.gb > /dev/null
+./gbemu ../gb-test-roms/mem_timing/individual/02-write_timing.gb > /dev/null
+./gbemu ../gb-test-roms/mem_timing/individual/03-modify_timing.gb > /dev/null
 
 
 colorize() {

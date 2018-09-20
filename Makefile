@@ -31,7 +31,7 @@ $(TEST_BIN): $(TEST_OBJ) lib/libgtest.a
 clean:
 	rm -f $(MAIN_BIN) $(TEST_BIN) $(MAIN_OBJ) $(TEST_OBJ) lib/libgtest.a
 
-test: $(TEST_BIN)
+test: $(TEST_BIN) $(MAIN_BIN)
 	./$(TEST_BIN)
 	./run_test_roms.sh
 

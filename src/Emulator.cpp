@@ -37,7 +37,7 @@ Emulator::Emulator(State *state) :
 
 void Emulator::NotYetImplemented()
 {
-    printf("NYI opcode %02X at %04X\n", state->memory->ReadByte(state->pc-1), state->pc-1); // state->pc is advanced in Read8bit, so subtract 1.
+    printf("NYI opcode %02X at %04X\n", state->memory->ReadByte(state->pc-1), state->pc-1); // state->pc is advanced in ReadPC8Bit, so subtract 1.
     exit(1);
 }
 
@@ -53,9 +53,10 @@ ByteProxy Emulator::GetByteProxy(uint8_t bits)
 }
 
 
-inline uint8_t Emulator::Read8bit()
+inline uint8_t Emulator::ReadPC8Bit()
 {
     uint8_t byte = state->memory->ReadByte(state->pc);
+    state->timer->AddCycle();
 
     if (!haltBug)
         state->pc++;
@@ -66,10 +67,18 @@ inline uint8_t Emulator::Read8bit()
 }
 
 
-inline uint16_t Emulator::Read16bit()
+inline uint16_t Emulator::ReadPC16Bit()
 {
-    uint16_t word = (state->memory->ReadByte(state->pc + 1) << 8) | state->memory->ReadByte(state->pc);
-    state->pc += 2;
+    uint8_t low = state->memory->ReadByte(state->pc);
+    state->pc++;
+    state->timer->AddCycle();
+
+    uint8_t high = state->memory->ReadByte(state->pc);
+    state->pc++;
+    state->timer->AddCycle();
+
+    uint16_t word = (high << 8) | low;
+
     return word;
 }
 
@@ -120,8 +129,7 @@ inline uint8_t Emulator::Add8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*
         state->flags.h = 1;
     if (result > 0xFF)
         state->flags.c = 1;
-    if ((result & 0xFF) == 0)
-        state->flags.z = 1;
+    state->flags.z = !(result & 0xFF);
 
     return (result & 0xFF);
 }
@@ -136,8 +144,7 @@ inline uint16_t Emulator::Add16Bit(uint16_t x, uint16_t y)
         state->flags.h = 1;
     if (result > 0xFFFF)
         state->flags.c = 1;
-    if ((result & 0xFFFF) == 0)
-        state->flags.z = 1;
+    state->flags.z = !(result & 0xFFFF);
     
     return (result & 0xFFFF);
 }
@@ -154,8 +161,7 @@ inline uint16_t Emulator::Add16BitSigned8Bit(uint16_t x, int8_t y)
     // Carry is on bit 8, not bit 16 like other 16 bit ops.
     if (((x & 0x00FF) + ((uint8_t)y & 0x00FF)) > 0x00FF)
         state->flags.c = 1;
-    if ((result & 0xFFFF) == 0)
-        state->flags.z = 1;
+    state->flags.z = !(result & 0xFFFF);
 
     return (result & 0xFFFF);
 }
@@ -172,8 +178,7 @@ inline uint8_t Emulator::Sub8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*
         state->flags.h = 1;
     if (result < 0)
         state->flags.c = 1;
-    if ((result & 0xFF) == 0)
-        state->flags.z = 1;
+    state->flags.z = !(result & 0xFF);
 
     return (result & 0xFF);
 }
@@ -183,20 +188,35 @@ void Emulator::Push(uint16_t src)
 {
     state->sp--;
     state->memory->WriteByte(state->sp, (uint8_t)(src >> 8));
+    state->timer->AddCycle();
+
     state->sp--;
     state->memory->WriteByte(state->sp, (uint8_t)(src & 0xFF));
+    state->timer->AddCycle();
 }
 
 
 void Emulator::Pop(uint16_t *dest)
 {
-    *dest = (state->memory->ReadByte(state->sp+1) << 8) + state->memory->ReadByte(state->sp);
-    state->sp += 2;
+    uint8_t low = state->memory->ReadByte(state->sp);
+    state->sp++;
+    state->timer->AddCycle();
+
+    uint8_t high = state->memory->ReadByte(state->sp);
+    state->sp++;
+    state->timer->AddCycle();
+
+    *dest = (high << 8) + low;
 }
 
 
 void Emulator::ProcessInterrupt(eInterruptTypes intType)
 {
+    // Add delay.
+    state->timer->AddCycle();
+    state->timer->AddCycle();
+    state->timer->AddCycle();
+
     // Disable interrupts.
     state->interrupts->SetEnabled(false);
 
@@ -213,10 +233,8 @@ void Emulator::ProcessInterrupt(eInterruptTypes intType)
 }
 
 
-uint Emulator::ProcessOpCode()
+void Emulator::ProcessOpCode()
 {
-    uint cycles = 0;
-
     // Check for any waiting interrupts and process.
     eInterruptTypes intType;
     if (state->interrupts->CheckInterrupts(intType))
@@ -225,20 +243,20 @@ uint Emulator::ProcessOpCode()
         if (state->halted)
         {
             state->halted = false;
-            cycles += 4;
+            state->timer->AddCycle();
         }
 
         if (state->interrupts->Enabled())
         {
             ProcessInterrupt(intType);
-            cycles += 20;
-            return cycles;
+            return;
         }
     }
 
     if (state->halted)
     {
-        return 4;
+        state->timer->AddCycle();
+        return;
     }
 
     // The EI intruction has a delayed effect, so enable interrupts after checking interrupts for this cycle.
@@ -248,7 +266,7 @@ uint Emulator::ProcessOpCode()
         enableInterruptsDelay = false;
     }
 
-    uint8_t opcode = Read8bit();
+    uint8_t opcode = ReadPC8Bit();
     DBG("opcode=%02X\n", opcode);
 
     switch (opcode)
@@ -275,10 +293,9 @@ uint Emulator::ProcessOpCode()
                 const ByteProxy src = GetByteProxy(srcRegBits);
                 const char *destStr = regNameMap8Bit[destRegBits];
                 const char *srcStr = regNameMap8Bit[srcRegBits];
-                cycles += 4;
 
                 if (dest->ExtraCycles() || src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
                 
                 DBG("%02X: LD %s, %s\n", opcode, destStr, srcStr);
 
@@ -297,12 +314,11 @@ uint Emulator::ProcessOpCode()
             {
                 uint8_t destRegBits = (opcode >> 3) & 0x07;
                 ByteProxy dest = GetByteProxy(destRegBits);
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 const char *destStr = regNameMap8Bit[destRegBits];
-                cycles += 8;
 
                 if (dest->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
                 
                 DBG("%02X %02X: LD %s, %02X\n", opcode, x, destStr, x);
 
@@ -313,108 +329,115 @@ uint Emulator::ProcessOpCode()
         case 0x0A: // LD A, (BC)
             {
                 DBG("%02X: LD A, (BC)\n", opcode);
+                state->timer->AddCycle();
                 state->a = state->memory->ReadByte(state->bc);
-                cycles += 8;
             }
             break;
         case 0x1A: // LD A, (DE)
             {
                 DBG("%02X: LD A, (DE)\n", opcode);
+                state->timer->AddCycle();
                 state->a = state->memory->ReadByte(state->de);
-                cycles += 8;
             }
             break;
         case 0xF2: // LD A, (0xFF00 + C)
             {
                 DBG("%02X: LD A, (0xFF00+C)\n", opcode);
+                state->timer->AddCycle();
                 state->a = state->memory->ReadByte(0xFF00 + state->c);
-                cycles += 8;
             }
             break;
         case 0xF0: // LD A, (0xFF00 + n)
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 DBG("%02X %02X: LD A, (0xFF00+0x%02X)\n", opcode, x, x);
+                state->timer->AddCycle();
                 state->a = state->memory->ReadByte(0xFF00 + x);
-                cycles += 12;
             }
             break;
         case 0xFA: // LD A, (nn)
             {
-                uint16_t x = Read16bit();
+                uint16_t x = ReadPC16Bit();
                 DBG("%02X %02X %02X: LD A, (%04X)\n", opcode, LowByte(x), HighByte(x), x);
+                state->timer->AddCycle();
                 state->a = state->memory->ReadByte(x);
-                cycles += 16;
             }
             break;
         case 0x2A: // LD A, (HL+)
             {
                 DBG("%02X: LD A, (HL+)\n", opcode);
+                state->timer->AddCycle();
                 state->a = state->memory->ReadByte(state->hl);
                 state->hl++;
-                cycles += 8;
             }
             break;
         case 0x3A: // LD A, (HL-)
             {
                 DBG("%02X: LD A, (HL-)\n", opcode);
+                state->timer->AddCycle();
                 state->a = state->memory->ReadByte(state->hl);
                 state->hl--;
-                cycles += 8;
             }
             break;
 
         case 0xE0: // LD (0xFF00 + n), A
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 DBG("%02X %02X: LD (0xFF00+0x%02X), A\n", opcode, x, x);
-                state->memory->WriteByte(0xFF00 + x, state->a);
-                cycles += 12;
+                uint8_t val = state->a;
+                state->timer->AddCycle();
+                state->memory->WriteByte(0xFF00 + x, val);
             }
             break;
         case 0xE2: // LD (0xFF00 + C), A
             {
                 DBG("%02X: LD (0xFF00+C), A\n", opcode);
-                state->memory->WriteByte(0xFF00 + state->c, state->a);
-                cycles += 8;
+                uint8_t val = state->a;
+                state->timer->AddCycle();
+                state->memory->WriteByte(0xFF00 + state->c, val);
             }
             break;
         case 0xEA: // LD (nn), A
             {
-                uint16_t x = Read16bit();
+                uint16_t x = ReadPC16Bit();
                 DBG("%02X %02X %02X: LD (%04X), A\n", opcode, LowByte(x), HighByte(x), x);
-                state->memory->WriteByte(x, state->a);
-                cycles += 16;
+                uint8_t val = state->a;
+                state->timer->AddCycle();
+                state->memory->WriteByte(x, val);
             }
             break;
         case 0x02: // LD (BC), A
             {
                 DBG("%02X: LD (BC), A\n", opcode);
-                state->memory->WriteByte(state->bc, state->a);
-                cycles += 8;
+                uint8_t val = state->a;
+                state->timer->AddCycle();
+                state->memory->WriteByte(state->bc, val);
             }
             break;
         case 0x12: // LD (DE), A
             {
                 DBG("%02X: LD (DE), A\n", opcode);
-                state->memory->WriteByte(state->de, state->a);
-                cycles += 8;
+                uint8_t val = state->a;
+                state->timer->AddCycle();
+                state->memory->WriteByte(state->de, val);
             }
             break;
         case 0x22: // LD (HL+), A
             {
                 DBG("%02X: LD (HL+), A\n", opcode);
-                state->memory->WriteByte(state->hl, state->a);
+                uint8_t val = state->a;
+                state->timer->AddCycle();
+                state->memory->WriteByte(state->hl, val);
                 state->hl++;
-                cycles += 8;
             }
             break;
         case 0x32: // LD (HL-), A
             {
                 DBG("%02X: LD (HL-), A\n", opcode);
-                state->memory->WriteByte(state->hl, state->a);
+                uint8_t val = state->a;
+                state->timer->AddCycle();
+                state->memory->WriteByte(state->hl, val);
                 state->hl--;
-                cycles += 8;
             }
             break;
 
@@ -431,14 +454,12 @@ uint Emulator::ProcessOpCode()
             {
                 uint8_t destRegBits = (opcode >> 4) & 0x03;
                 uint16_t *dest = regMap16Bit[destRegBits];
-                uint16_t x = Read16bit();
+                uint16_t x = ReadPC16Bit();
                 const char *destStr = regNameMap16Bit[destRegBits];
                 
                 DBG("%02X %02X %02X: LD %s, %04X\n", opcode, LowByte(x), HighByte(x), destStr, x);
 
                 *dest = x;
-
-                cycles += 12;
             }
             break;
 
@@ -459,13 +480,13 @@ uint Emulator::ProcessOpCode()
 
                 DBG("%02X: PUSH %s\n", opcode, srcStr);
 
+                state->timer->AddCycle();
+
                 if (src == &state->af)
                     // blargg's test roms say the low nybble of flags should always be zero.
                     Push(*src & 0xFFF0);
                 else
                     Push(*src);
-
-                cycles += 16;
             }
             break;
 
@@ -485,21 +506,20 @@ uint Emulator::ProcessOpCode()
                 if (dest == &state->af)
                     // blargg's test roms say the low nybble of flags should always be zero.
                     *dest = *dest & 0xFFF0;
-
-                cycles += 12;
             }
             break;
 
         case 0xF9: // LD SP, HL
             {
                 DBG("%02X: LD SP, HL\n", opcode);
-                state->sp = state->hl;
-                cycles += 8;
+                uint16_t val = state->hl;
+                state->timer->AddCycle();
+                state->sp = val;
             }
             break;
         case 0xF8: // LD HL, SP + e
             {
-                int8_t x = Read8bit();
+                int8_t x = ReadPC8Bit();
                 DBG("%02X %02X: LD HL, SP+0x%02X\n", opcode, x, x);
 
                 state->hl = Add16BitSigned8Bit(state->sp, x);
@@ -507,18 +527,18 @@ uint Emulator::ProcessOpCode()
                 // Zero flag is always cleared.
                 state->flags.z = 0;
 
-                cycles += 12;
+                state->timer->AddCycle();
             }
             break;
         case 0x08: // LD (nn), SP
             {
-                uint16_t x = Read16bit();
+                uint16_t x = ReadPC16Bit();
                 DBG("%02X %02X %02X: LD (0x%04X), SP\n", opcode, HighByte(x), LowByte(x), x);
 
                 state->memory->WriteByte(x, LowByte(state->sp));
+                state->timer->AddCycle();
                 state->memory->WriteByte(x+1, HighByte(state->sp));
-
-                cycles += 20;
+                state->timer->AddCycle();
             }
             break;
 
@@ -540,10 +560,9 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: ADD A, %s\n", opcode, srcStr);
 
@@ -552,10 +571,9 @@ uint Emulator::ProcessOpCode()
             break;
         case 0xC6: // ADD A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 DBG("%02X %02X: ADD A, 0x%02X\n", opcode, x, x);
                 state->a = Add8Bit(state->a, x);
-                cycles += 8;
             }
             break;
 
@@ -571,10 +589,9 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: ADC A, %s, %d\n", opcode, srcStr, state->flags.c);
 
@@ -583,10 +600,9 @@ uint Emulator::ProcessOpCode()
             break;
         case 0xCE: // ADC A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 DBG("%02X %02X: ADC A, 0x%02X, %d\n", opcode, x, x, state->flags.c);
                 state->a = Add8Bit(state->a, x, state->flags.c);
-                cycles += 8;
             }
             break;
 
@@ -602,10 +618,9 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: SUB A, %s\n", opcode, srcStr);
 
@@ -614,10 +629,9 @@ uint Emulator::ProcessOpCode()
             break;
         case 0xD6: // SUB A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 DBG("%02X %02X: SUB A, 0x%02X\n", opcode, x, x);
                 state->a = Sub8Bit(state->a, x);
-                cycles += 8;
             }
             break;
 
@@ -633,10 +647,9 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: SBC A, %s, %d\n", opcode, srcStr, state->flags.c);
 
@@ -645,10 +658,9 @@ uint Emulator::ProcessOpCode()
             break;
         case 0xDE: // SBC A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 DBG("%02X %02X: SBC A, 0x%02X, %d\n", opcode, x, x, state->flags.c);
                 state->a = Sub8Bit(state->a, x, state->flags.c);
-                cycles += 8;
             }
             break;
 
@@ -660,7 +672,7 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = (opcode >> 4) & 0x03;
                 uint16_t *src = regMap16Bit[regBits];
                 const char *srcStr = regNameMap16Bit[regBits];
-                cycles += 8;
+                state->timer->AddCycle();
 
                 DBG("%02X: ADD HL, %s\n", opcode, srcStr);
 
@@ -673,15 +685,17 @@ uint Emulator::ProcessOpCode()
 
         case 0xE8: // ADD SP, e
             {
-                int8_t x = Read8bit();
+                int8_t x = ReadPC8Bit();
                 DBG("%02X %02X: ADD SP, %02X\n", opcode, x, x);
+
+                // Extra delay for this intruction.
+                state->timer->AddCycle();
+                state->timer->AddCycle();
 
                 state->sp = Add16BitSigned8Bit(state->sp, x);
 
                 // Zero flag is always cleared.
                 state->flags.z = 0;
-
-                cycles += 16;
             }
             break;
 
@@ -703,10 +717,9 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: AND A, %s\n", opcode, srcStr);
 
@@ -714,24 +727,20 @@ uint Emulator::ProcessOpCode()
 
                 state->ClearFlags();
                 state->flags.h = 1;
-                if (state->a == 0)
-                    state->flags.z = 1;
+                state->flags.z = !state->a;
             }
             break;
         case 0xE6: // AND A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
 
                 DBG("%02X %02X: AND A, 0x%02X\n", opcode, x, x);
 
                 state->a = state->a & x;
 
-                cycles += 8;
-
                 state->ClearFlags();
                 state->flags.h = 1;
-                if (state->a == 0)
-                    state->flags.z = 1;
+                state->flags.z = !state->a;
             }
             break;
 
@@ -747,33 +756,28 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: XOR A, %s\n", opcode, srcStr);
 
                 state->a = state->a ^ *src;
 
                 state->ClearFlags();
-                if (state->a == 0)
-                    state->flags.z = 1;
+                state->flags.z = !state->a;
             }
             break;
         case 0xEE: // XOR A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
 
                 DBG("%02X %02X: XOR A, 0x%02X\n", opcode, x, x);
 
                 state->a = state->a ^ x;
 
-                cycles += 8;
-
                 state->ClearFlags();
-                if (state->a == 0)
-                    state->flags.z = 1;
+                state->flags.z = !state->a;
             }
             break;
 
@@ -789,33 +793,28 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: OR A, %s\n", opcode, srcStr);
 
                 state->a = state->a | *src;
 
                 state->ClearFlags();
-                if (state->a == 0)
-                    state->flags.z = 1;
+                state->flags.z = !state->a;
             }
             break;
         case 0xF6: // OR A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
 
                 DBG("%02X %02X: OR A, 0x%02X\n", opcode, x, x);
 
                 state->a = state->a | x;
 
-                cycles += 8;
-
                 state->ClearFlags();
-                if (state->a == 0)
-                    state->flags.z = 1;
+                state->flags.z = !state->a;
             }
             break;
 
@@ -831,10 +830,9 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = opcode & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 4;
+                    state->timer->AddCycle();
 
                 DBG("%02X: CP A, %s\n", opcode, srcStr);
 
@@ -844,10 +842,8 @@ uint Emulator::ProcessOpCode()
             break;
         case 0xFE: // CP A, n
             {
-                uint8_t x = Read8bit();
+                uint8_t x = ReadPC8Bit();
                 DBG("%02X %02X: CP A, 0x%02X\n", opcode, x, x);
-
-                cycles += 8;
 
                 // Subtract and don't save result.
                 Sub8Bit(state->a, x);
@@ -860,7 +856,6 @@ uint Emulator::ProcessOpCode()
                 state->a = ~state->a;
                 state->flags.h = 1;
                 state->flags.n = 1;
-                cycles += 4;
             }
             break;
 
@@ -882,16 +877,20 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = (opcode >> 3) & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 8;
+                    state->timer->AddCycle();
 
                 DBG("%02X: INC %s\n", opcode, srcStr);
 
+                uint8_t srcVal = *src;
+
+                if (src->ExtraCycles())
+                    state->timer->AddCycle();
+
                 // Carry flag not changed.
                 uint8_t oldCarry = state->flags.c;
-                *src = Add8Bit(*src, 1);
+                *src = Add8Bit(srcVal, 1);
                 state->flags.c = oldCarry;
             }
             break;
@@ -908,16 +907,20 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = (opcode >> 3) & 0x07;
                 const ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 4;
 
                 if (src->ExtraCycles())
-                    cycles += 8;
+                    state->timer->AddCycle();
 
                 DBG("%02X: DEC %s\n", opcode, srcStr);
 
+                uint8_t srcVal = *src;
+
+                if (src->ExtraCycles())
+                    state->timer->AddCycle();
+
                 // Carry flag not changed.
                 uint8_t oldCarry = state->flags.c;
-                *src = Sub8Bit(*src, 1);
+                *src = Sub8Bit(srcVal, 1);
                 state->flags.c = oldCarry;
             }
             break;
@@ -930,7 +933,7 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = (opcode >> 4) & 0x03;
                 uint16_t *src = regMap16Bit[regBits];
                 const char *srcStr = regNameMap16Bit[regBits];
-                cycles += 8;
+                state->timer->AddCycle();
 
                 DBG("%02X: INC %s\n", opcode, srcStr);
 
@@ -947,7 +950,7 @@ uint Emulator::ProcessOpCode()
                 uint8_t regBits = (opcode >> 4) & 0x03;
                 uint16_t *src = regMap16Bit[regBits];
                 const char *srcStr = regNameMap16Bit[regBits];
-                cycles += 8;
+                state->timer->AddCycle();
 
                 DBG("%02X: DEC %s\n", opcode, srcStr);
 
@@ -968,7 +971,6 @@ uint Emulator::ProcessOpCode()
                 state->ClearFlags();
                 state->flags.c = (state->a & 0x80) ? 1 : 0;
                 state->a = (state->a << 1) | state->flags.c;
-                cycles += 4;
             }
             break;
         case 0x17: // RLA
@@ -978,7 +980,6 @@ uint Emulator::ProcessOpCode()
                 state->ClearFlags();
                 state->flags.c = (state->a & 0x80) ? 1 : 0;
                 state->a = (state->a << 1) | oldCarry;
-                cycles += 4;
             }
             break;
         case 0x0F: // RRCA
@@ -987,7 +988,6 @@ uint Emulator::ProcessOpCode()
                 state->ClearFlags();
                 state->flags.c = (state->a & 0x01) ? 1 : 0;
                 state->a = (state->a >> 1) | (state->flags.c << 7);
-                cycles += 4;
             }
             break;
         case 0x1F: // RRA
@@ -997,7 +997,6 @@ uint Emulator::ProcessOpCode()
                 state->ClearFlags();
                 state->flags.c = (state->a & 0x01) ? 1 : 0;
                 state->a = (state->a >> 1) | (oldCarry << 7);
-                cycles += 4;
             }
             break;
 
@@ -1009,15 +1008,11 @@ uint Emulator::ProcessOpCode()
 
         case 0xCB:
             {
-                uint8_t subcode = Read8bit();
+                uint8_t subcode = ReadPC8Bit();
 
                 uint8_t regBits = subcode & 0x07;
                 ByteProxy src = GetByteProxy(regBits);
                 const char *srcStr = regNameMap8Bit[regBits];
-                cycles += 8;
-
-                if (src->ExtraCycles())
-                    cycles += 8;
 
                 switch (subcode)
                 {
@@ -1032,10 +1027,18 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: RLC %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             state->ClearFlags();
-                            state->flags.c = (*src & 0x80) ? 1 : 0;
-                            *src = (*src << 1) | state->flags.c;
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            state->flags.c = (srcVal & 0x80) ? 1 : 0;
+                            *src = (srcVal << 1) | state->flags.c;
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1050,10 +1053,18 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: RRC %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             state->ClearFlags();
-                            state->flags.c = *src & 0x01;
-                            *src = (*src >> 1) | (state->flags.c << 7);
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            state->flags.c = srcVal & 0x01;
+                            *src = (srcVal >> 1) | (state->flags.c << 7);
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1068,11 +1079,19 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: RL %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             uint8_t oldCarry = state->flags.c;
                             state->ClearFlags();
-                            state->flags.c = (*src & 0x80) ? 1 : 0;
-                            *src = (*src << 1) | oldCarry;
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            state->flags.c = (srcVal & 0x80) ? 1 : 0;
+                            *src = (srcVal << 1) | oldCarry;
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1087,11 +1106,19 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: RR %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             uint8_t oldCarry = state->flags.c;
                             state->ClearFlags();
-                            state->flags.c = *src & 0x01;
-                            *src = (*src >> 1) | (oldCarry << 7);
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            state->flags.c = srcVal & 0x01;
+                            *src = (srcVal >> 1) | (oldCarry << 7);
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1106,10 +1133,18 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: SLA %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             state->ClearFlags();
-                            state->flags.c = (*src & 0x80) ? 1 : 0;
-                            *src = *src << 1;
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            state->flags.c = (srcVal & 0x80) ? 1 : 0;
+                            *src = srcVal << 1;
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1124,10 +1159,18 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: SRA %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             state->ClearFlags();
-                            state->flags.c = *src & 0x01;
-                            *src = (*src >> 1) | (*src & 0x80);
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            state->flags.c = srcVal & 0x01;
+                            *src = (srcVal >> 1) | (srcVal & 0x80);
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1142,9 +1185,17 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: SWAP %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             state->ClearFlags();
-                            *src = (*src << 4) | (*src >> 4);
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            *src = (srcVal << 4) | (srcVal >> 4);
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1159,10 +1210,18 @@ uint Emulator::ProcessOpCode()
                         {
                             DBG("%02X %02X: SRL %s\n", opcode, subcode, srcStr);
 
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             state->ClearFlags();
-                            state->flags.c = *src & 0x01;
-                            *src = *src >> 1;
-                            state->flags.z = *src == 0 ? 1 : 0;
+                            state->flags.c = srcVal & 0x01;
+                            *src = srcVal >> 1;
+                            state->flags.z = !(*src);
                         }
                         break;
 
@@ -1175,17 +1234,17 @@ uint Emulator::ProcessOpCode()
                     case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77: // BIT 6, Register
                     case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F: // BIT 7, Register
                         {
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
                             uint8_t bit = (subcode >> 3) & 0x07;
                             
                             DBG("%02X %02X: BIT %d, %s\n", opcode, subcode, bit, srcStr);
 
                             // Carry bit not changed.
-                            state->flags.z = (*src & (1 << bit)) ? 0 : 1;
+                            state->flags.z = !(*src & (1 << bit));
                             state->flags.n = 0;
                             state->flags.h = 1;
-
-                            if (src->ExtraCycles())
-                                cycles -= 4;
                         }
                         break;
 
@@ -1202,7 +1261,15 @@ uint Emulator::ProcessOpCode()
                             
                             DBG("%02X %02X: RES %d, %s\n", opcode, subcode, bit, srcStr);
 
-                            *src = *src & ~(1 << bit);
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            *src = srcVal & ~(1 << bit);
                         }
                         break;
 
@@ -1219,7 +1286,15 @@ uint Emulator::ProcessOpCode()
                             
                             DBG("%02X %02X: SET %d, %s\n", opcode, subcode, bit, srcStr);
 
-                            *src = *src | (1 << bit);
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            uint8_t srcVal = *src;
+
+                            if (src->ExtraCycles())
+                                state->timer->AddCycle();
+
+                            *src = srcVal | (1 << bit);
                         }
                         break;
                 }
@@ -1234,17 +1309,16 @@ uint Emulator::ProcessOpCode()
 
         case 0xC3: // JP nn
             {
-                uint16_t addr = Read16bit();
+                uint16_t addr = ReadPC16Bit();
                 DBG("%02X %02X %02X: JP 0x%04X\n", opcode, LowByte(addr), HighByte(addr), addr);
+                state->timer->AddCycle();
                 state->pc = addr;
-                cycles += 16;
             }
             break;
         case 0xE9: // JP (HL)
             {
                 DBG("%02X: JP (HL)\n", opcode);
                 state->pc = state->hl;
-                cycles += 4;
             }
             break;
         case 0xC2: // JP NZ, nn
@@ -1252,22 +1326,20 @@ uint Emulator::ProcessOpCode()
         case 0xD2: // JP NC, nn
         case 0xDA: // JP C, nn
             {
-                uint16_t addr = Read16bit();
+                uint16_t addr = ReadPC16Bit();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
                 DBG("%02X %02X %02X: JP %s, 0x%04X\n", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
                 if (GetFlagValue(flagBits))
                 {
                     state->pc = addr;
-                    cycles += 16;
+                    state->timer->AddCycle();
                 }
-                else
-                    cycles += 12;
             }
             break;
 
         case 0x18: // JR e
             {
-                int8_t offset = Read8bit();
+                int8_t offset = ReadPC8Bit();
                 DBG("%02X %02X: JR %d\n", opcode, offset, offset);
                 if (offset == -2)
                 {
@@ -1275,7 +1347,7 @@ uint Emulator::ProcessOpCode()
                     exit(1);
                 }
                 state->pc += offset;
-                cycles += 12;
+                state->timer->AddCycle();
             }
             break;
         case 0x20: // JR NZ, e
@@ -1283,7 +1355,7 @@ uint Emulator::ProcessOpCode()
         case 0x30: // JR NC, e
         case 0x38: // JR C, e
             {
-                int8_t offset = Read8bit();
+                int8_t offset = ReadPC8Bit();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
                 DBG("%02X %02X: JR %s, %d\n", opcode, (uint8_t)offset, flagNameMap[flagBits], offset);
                 if (GetFlagValue(flagBits))
@@ -1294,20 +1366,18 @@ uint Emulator::ProcessOpCode()
                         exit(1);
                     }
                     state->pc += offset;
-                    cycles += 12;
+                    state->timer->AddCycle();
                 }
-                else
-                    cycles += 8;
             }
             break;
 
         case 0xCD: // CALL nn
             {
-                uint16_t addr = Read16bit();
+                uint16_t addr = ReadPC16Bit();
                 DBG("%02X %02X %02X: CALL %04X\n", opcode, LowByte(addr), HighByte(addr), addr);
+                state->timer->AddCycle();
                 Push(state->pc);
                 state->pc = addr;
-                cycles += 24;
             }
             break;
         case 0xC4: // CALL NZ, nn
@@ -1315,33 +1385,31 @@ uint Emulator::ProcessOpCode()
         case 0xD4: // CALL NC, nn
         case 0xDC: // CALL C, nn
             {
-                uint16_t addr = Read16bit();
+                uint16_t addr = ReadPC16Bit();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
                 DBG("%02X %02X %02X: CALL %s, %04X\n", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
                 if (GetFlagValue(flagBits))
                 {
+                    state->timer->AddCycle();
                     Push(state->pc);
                     state->pc = addr;
-                    cycles += 24;
                 }
-                else
-                    cycles += 12;
             }
             break;
 
         case 0xC9: // RET
             {
                 DBG("%02X: RET\n", opcode);
+                state->timer->AddCycle();
                 Pop(&state->pc);
-                cycles += 16;
             }
             break;
         case 0xD9: // RETI
             {
                 DBG("%02X: RETI\n", opcode);
+                state->timer->AddCycle();
                 Pop(&state->pc);
                 state->interrupts->SetEnabled(true);
-                cycles += 16;
             }
             break;
         case 0xC0: // RET NZ
@@ -1349,15 +1417,14 @@ uint Emulator::ProcessOpCode()
         case 0xD0: // RET NC
         case 0xD8: // RET C
             {
+                state->timer->AddCycle();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
                 DBG("%02X: RET %s\n", opcode, flagNameMap[flagBits]);
                 if (GetFlagValue(flagBits))
                 {
                     Pop(&state->pc);
-                    cycles += 20;
+                    state->timer->AddCycle();
                 }
-                else
-                    cycles += 8;
             }
             break;
 
@@ -1372,9 +1439,9 @@ uint Emulator::ProcessOpCode()
             {
                 uint8_t addr = ((opcode >> 3) & 0x07) * 8;
                 DBG("%02X: RST 0x%02X\n", opcode, addr);
+                state->timer->AddCycle();
                 Push(state->pc);
                 state->pc = (uint16_t)addr;
-                cycles += 16;
             }
             break;
 
@@ -1387,7 +1454,6 @@ uint Emulator::ProcessOpCode()
         case 0x00: // NOP
             {
                 DBG("%02X: NOP\n", opcode);
-                cycles += 4;
             }
             break;
 
@@ -1399,7 +1465,6 @@ uint Emulator::ProcessOpCode()
                     haltBug = true;
                 else
                     state->halted = true;
-                cycles += 4;
             }
             break;
 
@@ -1407,7 +1472,6 @@ uint Emulator::ProcessOpCode()
             {
                 DBG("%02X: SCF\n", opcode);
                 state->flags.c = 1;
-                cycles += 4;
             }
             break;
 
@@ -1415,7 +1479,6 @@ uint Emulator::ProcessOpCode()
             {
                 DBG("%02X: CCF\n", opcode);
                 state->flags.c = !state->flags.c;
-                cycles += 4;
             }
             break;
 
@@ -1455,7 +1518,6 @@ uint Emulator::ProcessOpCode()
                 }
 
                 state->flags.z = !((bool)state->a);
-                cycles += 4;
             }
             break;
 
@@ -1463,7 +1525,6 @@ uint Emulator::ProcessOpCode()
             {
                 DBG("%02X: DI\n", opcode);
                 state->interrupts->SetEnabled(false);
-                cycles += 4;
             }
             break;
 
@@ -1473,8 +1534,6 @@ uint Emulator::ProcessOpCode()
 
                 // Interrupts aren't immediately enabled, we have to process one opcode before enabling interrupts.
                 enableInterruptsDelay = true;
-
-                cycles += 4;
             }
             break;
 
@@ -1503,11 +1562,5 @@ uint Emulator::ProcessOpCode()
         default: NotYetImplemented(); break;
     }
 
-    if (cycles == 0)
-    {
-        printf("Missing cycles\n");
-        exit(1);
-    }
-
-    return cycles;
+    return;
 }

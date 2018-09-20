@@ -15,7 +15,7 @@ public:
     Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, std::shared_ptr<Interrupt> interrupts);
     virtual ~Timer();
 
-    void ProcessCycles(uint cycles);
+    void AddCycle();
 
     void WriteDIV();
     void WriteTAC(uint8_t newValue);
@@ -25,6 +25,8 @@ public:
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 
     void PrintTimerData();
+
+    uint16_t GetCounter() {return (*regDIV << 8) | internalCounter;}
 
 private:
     void ProcessCounterChange(uint16_t oldValue, uint16_t newValue);

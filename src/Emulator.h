@@ -15,8 +15,8 @@ class Emulator
 public:
     Emulator(State *state);
 
-    uint8_t Read8bit();
-    uint16_t Read16bit();
+    uint8_t ReadPC8Bit();
+    uint16_t ReadPC16Bit();
 
     uint8_t HighByte(uint16_t word);
     uint8_t LowByte(uint16_t word);
@@ -30,7 +30,7 @@ public:
     void Push(uint16_t src);
     void Pop(uint16_t *dest);
 
-    uint ProcessOpCode();
+    void ProcessOpCode();
 
 private:
     ByteProxy GetByteProxy(uint8_t bits);

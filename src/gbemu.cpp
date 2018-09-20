@@ -127,9 +127,8 @@ int main(int argc, char **argv)
 
     while (true)
     {
-        uint cycles = emulator.ProcessOpCode();
+        emulator.ProcessOpCode();
         state.PrintState();
-        state.timer->ProcessCycles(cycles);
         state.timer->PrintTimerData();
         DBG("\n");
     }

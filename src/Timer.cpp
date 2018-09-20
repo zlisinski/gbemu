@@ -52,35 +52,26 @@ void Timer::AttachToSubject(std::shared_ptr<MemoryByteSubject> subject)
 }
 
 
-void Timer::ProcessCycles(uint clocks)
+void Timer::AddCycle()
 {
-    DBG("Timer::ProcessCycles(%u)\n", clocks);
-
-    assert((clocks % clocksPerCycle) == 0);
-
-    uint cycles = clocks / clocksPerCycle;
-
-    for (uint i = 0; i < cycles; i++)
+    // Copy TMA to TIMA after a delay when TIMA overflows.
+    if (regTIMAOverflowed)
     {
-        // Copy TMA to TIMA after a delay when TIMA overflows.
-        if (regTIMAOverflowed)
-        {
-            *regTIMA = *regTMA;
+        *regTIMA = *regTMA;
 
-            // Set timer interrupt.
-            interrupts->RequestInterrupt(eIntTimer);
+        // Set timer interrupt.
+        interrupts->RequestInterrupt(eIntTimer);
 
-            regTIMAOverflowed = false;
-        }
-
-        uint16_t currentCounter = (*regDIV << 8) | internalCounter;
-        uint16_t newCounter = currentCounter + clocksPerCycle;
-
-        ProcessCounterChange(currentCounter, newCounter);
-
-        *regDIV = newCounter >> 8;
-        internalCounter = newCounter & 0xFF;
+        regTIMAOverflowed = false;
     }
+
+    uint16_t currentCounter = (*regDIV << 8) | internalCounter;
+    uint16_t newCounter = currentCounter + clocksPerCycle;
+
+    ProcessCounterChange(currentCounter, newCounter);
+
+    *regDIV = newCounter >> 8;
+    internalCounter = newCounter & 0xFF;
 }
 
 
