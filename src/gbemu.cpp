@@ -1,11 +1,47 @@
 #include <string.h>
+#include <SDL2/SDL.h>
 
 #include "gbemu.h"
 #include "State.h"
 #include "Emulator.h"
 
-const size_t BIOS_SIZE = 0xFF;
+const size_t BIOS_SIZE = 0x100;
 const size_t ROM_BANK_SIZE = 0x4000;
+
+bool debugOutput = false;
+
+
+void Usage(const char *mesage, const char *prog)
+{
+    printf("%s\n", mesage);
+    printf("Usage: %s [-d] rom_filename\n", prog);
+    printf("  -d        Debug output\n");
+
+    exit(1);
+}
+
+
+int ParseArgs(int argc, char **argv)
+{
+    int c;
+
+    while ((c = getopt(argc, argv, "d")) != -1)
+    {
+        switch (c)
+        {
+            case 'd':
+                debugOutput = true;
+                break;
+            default:
+                std::string str("Unknown option: ");
+                str += c;
+                Usage(str.c_str(), argv[0]);
+                break;
+        }
+    }
+
+    return optind;
+}
 
 
 bool LoadBIOS(const char *filename, uint8_t *memory)
@@ -57,35 +93,60 @@ bool loadROM(const char *filename, uint8_t **memory, long &size)
 }
 
 
+void DumpMemory(uint8_t *mem, uint start, uint len)
+{
+    for (uint i = 0; i < len; i += 16)
+    {
+        uint off = start + i;
+        uint8_t *b = mem + off;
+        printf("%04X: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n", off,
+            b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
+    }
+}
+
+
 int main(int argc, char **argv)
 {
+    int optind = ParseArgs(argc, argv);
+
+    printf("debug=%d\n", debugOutput);
+    printf("optind=%d\n", optind);
+    printf("argv[optind]=%s\n", argv[optind]);
+    //exit(0);
+
+    if (!argv[optind])
+    {
+        Usage("Missing ROM filename", argv[0]);
+    }
+
+    const char *romFilename = argv[optind];
+
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+        printf("SDL_Init Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+
     State state;
     uint8_t *romMemory = NULL;
     long romSize = 0;
     Emulator emulator(&state);
 
-    if (argc < 2)
+    if (!LoadBIOS("data/BIOS.gb", state.memory->GetBytePtr(0)))
     {
-        printf("Usage: %s rom_filename\n", argv[0]);
         exit(1);
     }
-
-    const char *romFilename = argv[1];
-
-    /*if (!LoadBIOS("data/BIOS.gb", state.memory->GetBytePtr(0)))
-    {
-        exit(1);
-    }*/
 
     if (!loadROM(romFilename, &romMemory, romSize))
     {
         exit(1);
     }
 
-    memcpy(state.memory->GetBytePtr(0), romMemory, romSize);
+    //memcpy(state.memory->GetBytePtr(0), romMemory, romSize);
+    memcpy(state.memory->GetBytePtr(BIOS_SIZE), romMemory + BIOS_SIZE, romSize - BIOS_SIZE);
 
     // Set state to what it would be after running the BIOS.
-    state.a = 0x01;
+    /*state.a = 0x01;
     state.f = 0xB0;
     state.bc = 0x0013;
     state.de = 0x00D8;
@@ -123,7 +184,7 @@ int main(int argc, char **argv)
     state.memory->WriteByte(eRegWX, 0x00);
     state.memory->WriteByte(eRegIE, 0x00);
 
-    state.pc = 0x0100;
+    state.pc = 0x0100;*/
 
     while (true)
     {
@@ -131,9 +192,28 @@ int main(int argc, char **argv)
         state.PrintState();
         state.timer->PrintTimerData();
         DBG("\n");
+
+        if (state.pc >= 0x100)
+        {
+            SDL_Delay(10000);
+            break;
+        }
     }
 
+    uint8_t *mem = state.memory->GetBytePtr(0);
+
+    printf("\n");
+    DumpMemory(mem, 0xFF00, 0x48);
+    printf("\n");
+    DumpMemory(mem, 0x8000, 0x1800);
+    printf("\n");
+    DumpMemory(mem, 0x9800, 0x0400);
+    printf("\n");
+    DumpMemory(mem, 0x9C00, 0x0400);
+
     delete [] romMemory;
+
+    SDL_Quit();
 
     return 0;
 }

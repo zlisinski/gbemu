@@ -255,6 +255,7 @@ void Emulator::ProcessOpCode()
 
     if (state->halted)
     {
+        DBG("Halted\n");
         state->timer->AddCycle();
         return;
     }

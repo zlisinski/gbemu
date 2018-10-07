@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gbemu.h"
+#include "Display.h"
 #include "Interrupt.h"
 #include "Memory.h"
 #include "Timer.h"
@@ -54,6 +55,7 @@ struct State
     std::shared_ptr<Memory> memory;
     std::shared_ptr<Interrupt> interrupts;
     std::shared_ptr<Timer> timer;
+    std::shared_ptr<Display> display;
     bool halted;
 
     State() :
@@ -70,10 +72,11 @@ struct State
         interrupts = std::make_shared<Interrupt>(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
         timer = std::make_shared<Timer>(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                                         memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
-        
+        display = std::make_shared<Display>(memory);
 
         interrupts->AttachToSubject(memory);
         timer->AttachToSubject(memory);
+        display->AttachToSubject(timer);
     }
 
     ~State()
@@ -88,7 +91,7 @@ struct State
 
     void PrintState()
     {
-        printf("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X int:%d\n",
+        DBG("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X int:%d\n",
                a, b, c, d, e, h, l, pc, sp, flags.z, flags.n, flags.h, flags.c, interrupts->Enabled());
     }
 };

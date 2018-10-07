@@ -72,6 +72,8 @@ void Timer::AddCycle()
 
     *regDIV = newCounter >> 8;
     internalCounter = newCounter & 0xFF;
+
+    NotifyObservers(clocksPerCycle);
 }
 
 
