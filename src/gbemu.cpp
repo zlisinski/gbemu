@@ -202,14 +202,14 @@ int main(int argc, char **argv)
 
     uint8_t *mem = state.memory->GetBytePtr(0);
 
-    printf("\n");
+    /*printf("\n");
     DumpMemory(mem, 0xFF00, 0x48);
     printf("\n");
     DumpMemory(mem, 0x8000, 0x1800);
     printf("\n");
     DumpMemory(mem, 0x9800, 0x0400);
     printf("\n");
-    DumpMemory(mem, 0x9C00, 0x0400);
+    DumpMemory(mem, 0x9C00, 0x0400);*/
 
     delete [] romMemory;
 

@@ -155,7 +155,7 @@ void Display::SetMode(DisplayModes mode)
 void Display::UpdateScanline()
 {
     //DBG("LY=%u\n", *regLY);
-    //DBG("SCY=%u\n", *regSCY);
+    
 
     counter = 0;
 
@@ -167,6 +167,8 @@ void Display::UpdateScanline()
 
     if (*regLY == 0)
     {
+        SDL_UpdateWindowSurface(sdlWindow);
+        //printf("SCY=%u\n", *regSCY);
         //usleep(16700);
         //SDL_Delay(17);
     }
@@ -188,8 +190,8 @@ void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
         // if (SDL_MUSTLOCK(sdlSurface))
         //     SDL_LockSurface(sdlSurface);
 
-        uint8_t tileX = (scrollX + i) % TILES_PER_X;
-        uint8_t tileY = (scrollY + (scanline / TILE_PIXEL_SIZE)) % TILES_PER_Y;
+        uint8_t tileX = ((scrollX / TILE_PIXEL_SIZE) + i) % REAL_TILES_PER_SCREEN;
+        uint8_t tileY = ((scrollY / TILE_PIXEL_SIZE) + (scanline / TILE_PIXEL_SIZE)) % REAL_TILES_PER_SCREEN;
 
         uint16_t tileId = tileMap[tileX + (tileY * REAL_TILES_PER_SCREEN)];
         uint16_t tileOffset = (tileId * TILE_DATA_SIZE) + ((scanline % TILE_PIXEL_SIZE) * 2);
@@ -225,7 +227,7 @@ void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
     if (SDL_MUSTLOCK(sdlSurface))
         SDL_UnlockSurface(sdlSurface);
 
-    SDL_UpdateWindowSurface(sdlWindow);
+    //SDL_UpdateWindowSurface(sdlWindow);
     //CopyToScaledSurface();
 }
 
