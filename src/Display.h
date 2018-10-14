@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gbemu.h"
+#include "Interrupt.h"
 #include "TimerObserver.h"
 #include "TimerSubject.h"
 
@@ -11,7 +12,7 @@ class Memory;
 class Display : public TimerObserver, public std::enable_shared_from_this<Display>
 {
 public:
-    Display(std::shared_ptr<Memory> memory);
+    Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> interrupts);
     ~Display();
 
     // Inherited from TimerObserver.
@@ -36,6 +37,7 @@ private:
     void CopyToScaledSurface();
 
     std::shared_ptr<Memory> memory;
+    std::shared_ptr<Interrupt> interrupts;
 
     uint8_t *regLCDC;  // 0xFF40 LCD control
     uint8_t *regSTAT;  // 0xFF41 LCDC status

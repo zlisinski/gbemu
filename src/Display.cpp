@@ -48,8 +48,9 @@ enum LCDStatBits
     eLCDStatLYLCCheck = 0x40
 };
 
-Display::Display(std::shared_ptr<Memory> memory) :
+Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> interrupts) :
     memory(memory),
+    interrupts(interrupts),
     regLCDC(memory->GetBytePtr(eRegLCDC)),
     regSTAT(memory->GetBytePtr(eRegSTAT)),
     regSCY(memory->GetBytePtr(eRegSCY)),
@@ -170,8 +171,11 @@ void Display::UpdateScanline()
         SDL_UpdateWindowSurface(sdlWindow);
         //printf("SCY=%u\n", *regSCY);
         //usleep(16700);
+        usleep(100);
         //SDL_Delay(17);
     }
+    else if (*regLY == 144)
+        interrupts->RequestInterrupt(eIntVBlank);
 }
 
 

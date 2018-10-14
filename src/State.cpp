@@ -15,7 +15,7 @@ State::State() :
     interrupts = std::make_shared<Interrupt>(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
     timer = std::make_shared<Timer>(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                                     memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
-    display = std::make_shared<Display>(memory);
+    display = std::make_shared<Display>(memory, interrupts);
 
     interrupts->AttachToSubject(memory);
     timer->AttachToSubject(memory);
