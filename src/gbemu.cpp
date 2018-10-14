@@ -1,13 +1,10 @@
-#include <string.h>
 #include <SDL2/SDL.h>
 
 #include "gbemu.h"
 #include "State.h"
 #include "Emulator.h"
 
-const size_t BIOS_SIZE = 0x100;
-const size_t ROM_BANK_SIZE = 0x4000;
-
+bool runbootRom = false;
 bool debugOutput = false;
 
 
@@ -15,6 +12,7 @@ void Usage(const char *mesage, const char *prog)
 {
     printf("%s\n", mesage);
     printf("Usage: %s [-d] rom_filename\n", prog);
+    printf("  -b        Run boot ROM\n");
     printf("  -d        Debug output\n");
 
     exit(1);
@@ -25,10 +23,13 @@ int ParseArgs(int argc, char **argv)
 {
     int c;
 
-    while ((c = getopt(argc, argv, "d")) != -1)
+    while ((c = getopt(argc, argv, "bd")) != -1)
     {
         switch (c)
         {
+            case 'b':
+                runbootRom = true;
+                break;
             case 'd':
                 debugOutput = true;
                 break;
@@ -44,7 +45,7 @@ int ParseArgs(int argc, char **argv)
 }
 
 
-bool LoadBIOS(const char *filename, uint8_t *memory)
+bool LoadBootRom(const char *filename, std::array<uint8_t, BOOT_ROM_SIZE> &memory)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL)
@@ -53,8 +54,8 @@ bool LoadBIOS(const char *filename, uint8_t *memory)
         return false;
     }
 
-    size_t cnt = fread(memory, 1, BIOS_SIZE, file);
-    if (cnt != BIOS_SIZE)
+    size_t cnt = fread(memory.data(), 1, BOOT_ROM_SIZE, file);
+    if (cnt != BOOT_ROM_SIZE)
     {
         printf("Only read %ld bytes from %s", cnt, filename);
         return false;
@@ -64,11 +65,8 @@ bool LoadBIOS(const char *filename, uint8_t *memory)
 }
 
 
-bool loadROM(const char *filename, uint8_t **memory, long &size)
+bool loadGameRom(const char *filename, std::vector<uint8_t> &memory)
 {
-    *memory = NULL;
-    size = 0;
-
     FILE *file = fopen(filename, "r");
     if (file == NULL)
     {
@@ -77,12 +75,12 @@ bool loadROM(const char *filename, uint8_t **memory, long &size)
     }
 
     fseek(file, 0, SEEK_END);
-    size = ftell(file);
+    long size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    *memory = new uint8_t[size]();
+    memory.resize(size);
 
-    size_t cnt = fread(*memory, 1, size, file);
+    size_t cnt = fread(&memory[0], 1, size, file);
     if (cnt != (size_t)size)
     {
         printf("Only read %lu bytes of %ld from %s", cnt, size, filename);
@@ -127,82 +125,43 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
+    std::vector<uint8_t> gameRomMemory;
+
+    if (!LoadBootRom("data/BIOS.gb", bootRomMemory))
+    {
+        exit(1);
+    }
+
+    if (!loadGameRom(romFilename, gameRomMemory))
+    {
+        exit(1);
+    }
+
     State state;
-    uint8_t *romMemory = NULL;
-    long romSize = 0;
+    if (runbootRom)
+        state.SetRomMemory(bootRomMemory, gameRomMemory);
+    else
+        state.SetRomMemory(gameRomMemory);
     Emulator emulator(&state);
-
-    if (!LoadBIOS("data/BIOS.gb", state.memory->GetBytePtr(0)))
-    {
-        exit(1);
-    }
-
-    if (!loadROM(romFilename, &romMemory, romSize))
-    {
-        exit(1);
-    }
-
-    //memcpy(state.memory->GetBytePtr(0), romMemory, romSize);
-    memcpy(state.memory->GetBytePtr(BIOS_SIZE), romMemory + BIOS_SIZE, romSize - BIOS_SIZE);
-
-    // Set state to what it would be after running the BIOS.
-    /*state.a = 0x01;
-    state.f = 0xB0;
-    state.bc = 0x0013;
-    state.de = 0x00D8;
-    state.hl = 0x014D;
-    state.sp = 0xFFFE;
-    state.memory->WriteByte(eRegTIMA, 0x00);
-    state.memory->WriteByte(eRegTMA, 0x00);
-    state.memory->WriteByte(eRegTAC, 0x00);
-    state.memory->WriteByte(eRegNR10, 0x80);
-    state.memory->WriteByte(eRegNR11, 0xBF);
-    state.memory->WriteByte(eRegNR12, 0xF3);
-    state.memory->WriteByte(eRegNR14, 0xBF);
-    state.memory->WriteByte(eRegNR21, 0x3F);
-    state.memory->WriteByte(eRegNR22, 0x00);
-    state.memory->WriteByte(eRegNR24, 0xBF);
-    state.memory->WriteByte(eRegNR30, 0x7F);
-    state.memory->WriteByte(eRegNR31, 0xFF);
-    state.memory->WriteByte(eRegNR32, 0x9F);
-    state.memory->WriteByte(eRegNR34, 0xBF);
-    state.memory->WriteByte(eRegNR41, 0xFF);
-    state.memory->WriteByte(eRegNR42, 0x00);
-    state.memory->WriteByte(eRegNR43, 0x00);
-    state.memory->WriteByte(eRegNR44, 0xBF);
-    state.memory->WriteByte(eRegNR50, 0x77);
-    state.memory->WriteByte(eRegNR51, 0xF3);
-    state.memory->WriteByte(eRegNR52, 0xF1);
-    state.memory->WriteByte(eRegLCDC, 0x91);
-    state.memory->WriteByte(eRegSCY, 0x00);
-    state.memory->WriteByte(eRegSCX, 0x00);
-    state.memory->WriteByte(eRegLYC, 0x00);
-    state.memory->WriteByte(eRegBGP, 0xFC);
-    state.memory->WriteByte(eRegOBP0, 0xFF);
-    state.memory->WriteByte(eRegOBP1, 0xFF);
-    state.memory->WriteByte(eRegWY, 0x00);
-    state.memory->WriteByte(eRegWX, 0x00);
-    state.memory->WriteByte(eRegIE, 0x00);
-
-    state.pc = 0x0100;*/
 
     while (true)
     {
         emulator.ProcessOpCode();
         state.PrintState();
-        state.timer->PrintTimerData();
+        //state.timer->PrintTimerData();
         DBG("\n");
 
-        if (state.pc >= 0x100)
+        /*if (state.pc >= 0x100)
         {
             SDL_Delay(10000);
             break;
-        }
+        }*/
     }
 
-    uint8_t *mem = state.memory->GetBytePtr(0);
+    /*uint8_t *mem = state.memory->GetBytePtr(0);
 
-    /*printf("\n");
+    printf("\n");
     DumpMemory(mem, 0xFF00, 0x48);
     printf("\n");
     DumpMemory(mem, 0x8000, 0x1800);
@@ -210,8 +169,6 @@ int main(int argc, char **argv)
     DumpMemory(mem, 0x9800, 0x0400);
     printf("\n");
     DumpMemory(mem, 0x9C00, 0x0400);*/
-
-    delete [] romMemory;
 
     SDL_Quit();
 

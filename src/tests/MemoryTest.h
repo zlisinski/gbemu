@@ -12,5 +12,5 @@ protected:
     void SetUp() override;
     void TearDown() override;
 
-    Memory memory;
+    //Memory *memory;
 };

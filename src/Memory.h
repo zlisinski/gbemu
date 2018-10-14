@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include "gbemu.h"
 #include "MemoryByteSubject.h"
@@ -70,14 +71,24 @@ enum SpecialRegisters
     eRegWY    = 0xFF4A, // Window Y position
     eRegWX    = 0xFF4B, // Window X position
 
+    eRegBootDisable = 0xFF50, // Disables boot rom by remapping game rom over boot rom memory
+
     eRegIE    = 0xFFFF, // Interrupt enable
 };
+
+const size_t MEM_SIZE = 0xFFFF;
+const size_t ROM_BANK_SIZE = 0x4000;
+const size_t BOOT_ROM_SIZE = 0x100;
+
 
 class Memory : public MemoryByteSubject
 {
 public:
     Memory();
     virtual ~Memory();
+
+    void SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory);
+    void SetRomMemory(std::vector<uint8_t> &gameRomMemory);
 
     uint8_t ReadByte(uint16_t index) const;
     uint8_t *GetBytePtr(uint16_t index); // Bypasses checking of writes to special addresses. Don't use unless you know what you are doing.
@@ -88,5 +99,10 @@ public:
     void ClearMemory();
 
 private:
+    void DisableBootRom();
+
     std::array<uint8_t, MEM_SIZE> memory;
+
+    std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
+    std::vector<uint8_t> gameRomMemory;
 };

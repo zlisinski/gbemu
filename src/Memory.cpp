@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <sstream>
+
 #include "Memory.h"
 
 Memory::Memory()
@@ -9,6 +12,38 @@ Memory::Memory()
 Memory::~Memory()
 {
 
+}
+
+
+void Memory::SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory)
+{
+    // Makes a copy. Should I do this?
+    this->bootRomMemory = bootRomMemory;
+    this->gameRomMemory = gameRomMemory;
+
+    memcpy(memory.data(), bootRomMemory.data(), BOOT_ROM_SIZE);
+
+    if (gameRomMemory.size() <= BOOT_ROM_SIZE)
+    {
+        std::stringstream ss;
+        ss << "Size of gameRomMemory(" << gameRomMemory.size() << ") is less than " << BOOT_ROM_SIZE;
+        throw std::range_error(ss.str());
+    }
+
+    size_t size = std::min(gameRomMemory.size() - BOOT_ROM_SIZE, (ROM_BANK_SIZE * 2) - BOOT_ROM_SIZE);
+
+    memcpy(&memory[BOOT_ROM_SIZE], &gameRomMemory[BOOT_ROM_SIZE], size);
+}
+
+
+void Memory::SetRomMemory(std::vector<uint8_t> &gameRomMemory)
+{
+    // Makes a copy. Should I do this?
+    this->gameRomMemory = gameRomMemory;
+
+    size_t size = std::min(gameRomMemory.size(), ROM_BANK_SIZE * 2);
+
+    memcpy(&memory[0], &gameRomMemory[0], size);
 }
 
 
@@ -45,6 +80,11 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
                 memory[index] = byte;
             }
             return;
+
+        case eRegBootDisable: // 0xFF50
+            if (byte != 0)
+                DisableBootRom();
+            return;
     }
 
     // If we get here, it wasn't handled by the switch.
@@ -60,4 +100,10 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
 void Memory::ClearMemory()
 {
     memory.fill(0);
+}
+
+
+void Memory::DisableBootRom()
+{
+    memcpy(memory.data(), gameRomMemory.data(), BOOT_ROM_SIZE);
 }

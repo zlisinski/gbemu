@@ -268,7 +268,6 @@ void Emulator::ProcessOpCode()
     }
 
     uint8_t opcode = ReadPC8Bit();
-    DBG("opcode=%02X\n", opcode);
 
     switch (opcode)
     {
