@@ -49,6 +49,18 @@ void Memory::SetRomMemory(std::vector<uint8_t> &gameRomMemory)
 
 uint8_t Memory::ReadByte(uint16_t index) const
 {
+    // Reads from 0xFEA0-0xFEFF return 0x00.
+    if (index >= 0xFEA0 && index <= 0xFEFF)
+        return 0x00;
+
+    // Reads from 0xE000-0xFDFF mirror 0xC000-0xDDFF.
+    if (index >= 0xE000 && index <= 0xFDFF)
+        return memory[index - 0x2000];
+
+    // Stub out the joypad for now.
+    if (index == eRegP1)
+        return 0xFF;
+
     return memory[index];
 }
 
@@ -61,7 +73,7 @@ uint8_t *Memory::GetBytePtr(uint16_t index)
 
 uint8_t Memory::operator[](uint16_t index) const
 {
-    return memory[index];
+    return ReadByte(index);
 }
 
 
@@ -88,6 +100,14 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
     }
 
     // If we get here, it wasn't handled by the switch.
+
+    // Ignore writes to 0xFEA0-0xFEFF
+    if (index >= 0xFEA0 && index <= 0xFEFF)
+        return;
+
+    // Writes to 0xE000-0xFDFF get mirrored to 0xC000-0xDDFF.
+    if (index >= 0xE000 && index <= 0xFDFF)
+        index -= 0x2000;
 
     // Let observers handle the update. If there are no observers for this address, update the value.
     if (!NotifyObservers(index, byte))
