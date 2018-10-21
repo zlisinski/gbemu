@@ -27,6 +27,8 @@ const uint16_t OAM_RAM = 0xFE00;
 const uint16_t OAM_LEN = 0x009F;
 const uint16_t ClockPerScanline = 456;
 
+const uint8_t palette[4][3] = {{0xFF, 0xFF, 0xFF}, {0xB0, 0xB0, 0xB0}, {0x68, 0x68, 0x68}, {0x00, 0x00, 0x00}};
+
 enum LCDCBits
 {
     eLCDCBGEnabled = 0x01,
@@ -217,8 +219,8 @@ void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
             uint32_t *pixel = (uint32_t*)sdlSurface->pixels + yTimesW + x + (TILE_PIXEL_SIZE * i);
 
             // Set pixel color.
-            // TODO: Add palette support.
-            *pixel = pixelVal ? 0 : SDL_MapRGB(sdlSurface->format, 0xFF, 0xFF, 0xFF);
+            const uint8_t *color = palette[pixelVal];
+            *pixel = SDL_MapRGB(sdlSurface->format, color[0], color[1], color[2]);
         }
 
         // if (SDL_MUSTLOCK(sdlSurface))
