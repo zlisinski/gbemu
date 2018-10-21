@@ -16,10 +16,12 @@ State::State() :
     timer = std::make_shared<Timer>(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                                     memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
     display = std::make_shared<Display>(memory, interrupts);
+    input = std::make_shared<Input>(memory->GetBytePtr(eRegP1), interrupts);
 
     interrupts->AttachToSubject(memory);
     timer->AttachToSubject(memory);
     display->AttachToSubject(timer);
+    input->AttachToSubject(memory);
 }
 
 

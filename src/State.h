@@ -2,6 +2,7 @@
 
 #include "gbemu.h"
 #include "Display.h"
+#include "Input.h"
 #include "Interrupt.h"
 #include "Memory.h"
 #include "Timer.h"
@@ -57,6 +58,7 @@ public:
     std::shared_ptr<Interrupt> interrupts;
     std::shared_ptr<Timer> timer;
     std::shared_ptr<Display> display;
+    std::shared_ptr<Input> input;
     bool halted;
 
     State();

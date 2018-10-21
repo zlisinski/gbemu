@@ -1,8 +1,10 @@
 #include <SDL2/SDL.h>
 
 #include "gbemu.h"
-#include "State.h"
 #include "Emulator.h"
+#include "Input.h"
+#include "State.h"
+
 
 bool runbootRom = false;
 bool debugOutput = false;
@@ -103,6 +105,71 @@ void DumpMemory(uint8_t *mem, uint start, uint len)
 }
 
 
+void ProcessInput(const SDL_Event &e, std::shared_ptr<Input> input)
+{
+    if (e.type == SDL_KEYDOWN)
+    {
+        switch (e.key.keysym.sym)
+        {
+            case SDLK_w:
+                input->SetButtonUp(true);
+                break;
+            case SDLK_s:
+                input->SetButtonDown(true);
+                break;
+            case SDLK_a:
+                input->SetButtonLeft(true);
+                break;
+            case SDLK_d:
+                input->SetButtonRight(true);
+                break;
+            case SDLK_h:
+                input->SetButtonSelect(true);
+                break;
+            case SDLK_j:
+                input->SetButtonStart(true);
+                break;
+            case SDLK_k:
+                input->SetButtonB(true);
+                break;
+            case SDLK_l:
+                input->SetButtonA(true);
+                break;
+        }
+    }
+    else if (e.type == SDL_KEYUP)
+    {
+        switch (e.key.keysym.sym)
+        {
+            case SDLK_w:
+                input->SetButtonUp(false);
+                break;
+            case SDLK_s:
+                input->SetButtonDown(false);
+                break;
+            case SDLK_a:
+                input->SetButtonLeft(false);
+                break;
+            case SDLK_d:
+                input->SetButtonRight(false);
+                break;
+            case SDLK_h:
+                input->SetButtonSelect(false);
+                break;
+            case SDLK_j:
+                input->SetButtonStart(false);
+                break;
+            case SDLK_k:
+                input->SetButtonB(false);
+                break;
+            case SDLK_l:
+                input->SetButtonA(false);
+                break;
+        }
+    }
+}
+
+
 int main(int argc, char **argv)
 {
     int optind = ParseArgs(argc, argv);
@@ -145,18 +212,25 @@ int main(int argc, char **argv)
         state.SetRomMemory(gameRomMemory);
     Emulator emulator(&state);
 
-    while (true)
+    bool quit = false;
+    SDL_Event e;
+
+    while (!quit)
     {
+        while (SDL_PollEvent(&e) != 0)
+        {
+            if (e.type == SDL_QUIT)
+            {
+                quit = true;
+            }
+            else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
+                ProcessInput(e, state.input);
+        }
+
         emulator.ProcessOpCode();
         state.PrintState();
         //state.timer->PrintTimerData();
         DBG("\n");
-
-        /*if (state.pc >= 0x100)
-        {
-            SDL_Delay(10000);
-            break;
-        }*/
     }
 
     /*uint8_t *mem = state.memory->GetBytePtr(0);

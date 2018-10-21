@@ -5,9 +5,9 @@ TEST_LIBS=-lgtest -lpthread
 LDFLAGS=-L./lib $(LIBS)
 CPPFLAGS=-c -g -Wall -Wpedantic -std=c++11 -pthread $(INCLUDES)
 
-CLASSES = src/Emulator.cpp src/State.cpp src/Memory.cpp src/Timer.cpp src/Interrupt.cpp src/Display.cpp
+CLASSES = src/Emulator.cpp src/State.cpp src/Memory.cpp src/Timer.cpp src/Interrupt.cpp src/Display.cpp src/Input.cpp
 MAIN_SRC = $(CLASSES) src/gbemu.cpp
-TEST_SRC = $(CLASSES) src/tests/main.cpp src/tests/EmulatorTest.cpp src/tests/MemoryTest.cpp src/tests/DisplayTest.cpp
+TEST_SRC = $(CLASSES) src/tests/main.cpp src/tests/EmulatorTest.cpp src/tests/MemoryTest.cpp src/tests/DisplayTest.cpp src/tests/InputTest.cpp
 MAIN_OBJ = $(MAIN_SRC:%.cpp=%.o)
 TEST_OBJ = $(TEST_SRC:%.cpp=%.o)
 

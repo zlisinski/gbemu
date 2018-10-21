@@ -57,10 +57,6 @@ uint8_t Memory::ReadByte(uint16_t index) const
     if (index >= 0xE000 && index <= 0xFDFF)
         return memory[index - 0x2000];
 
-    // Stub out the joypad for now.
-    if (index == eRegP1)
-        return 0xFF;
-
     return memory[index];
 }
 

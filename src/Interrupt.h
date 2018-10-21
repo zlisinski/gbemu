@@ -41,7 +41,7 @@ public:
     void ClearInterrupt(eInterruptTypes type);
     
     // Inherited from MemoryByteObserver.
-    void AttachToSubject(std::shared_ptr<MemoryByteSubject> subject);
+    virtual void AttachToSubject(std::shared_ptr<MemoryByteSubject> subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 
 private:
