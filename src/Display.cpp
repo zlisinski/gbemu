@@ -15,7 +15,6 @@ const uint TILES_PER_X = SCREEN_X / TILE_PIXEL_SIZE;
 const uint TILES_PER_Y = SCREEN_Y / TILE_PIXEL_SIZE;
 const uint BG_SIZE = 256;
 const uint SCREEN_SCALE = 3;
-const uint BPP = 4;
 
 const uint16_t BG_TILE_MAP[] = {0x9800, 0x9C00};
 const uint16_t BG_TILE_MAP_LEN = 0x03FF;
@@ -66,8 +65,8 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
     regWY(memory->GetBytePtr(eRegWY)),
     regWX(memory->GetBytePtr(eRegWX)),
     sdlWindow(NULL),
-    sdlSurface(NULL),
-    //sdlScaledSurface(NULL),
+    sdlRenderer(NULL),
+    frameBuffer(NULL),
     counter(0)
 {
     DBG("SDL Display\n");
@@ -79,20 +78,21 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
         exit(1);
     }
 
-    sdlSurface = SDL_GetWindowSurface(sdlWindow);
+    sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_SOFTWARE);
+    SDL_RenderSetLogicalSize(sdlRenderer, SCREEN_X, SCREEN_Y);
 
-    //sdlSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, SCREEN_X, SCREEN_Y, BPP, 0, 0, 0, 0);
+    sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_X, SCREEN_Y);
 
-    SDL_FillRect(sdlSurface, NULL, SDL_MapRGB(sdlSurface->format, 0xFF, 0xFF, 0xFF));
-
-    SDL_UpdateWindowSurface(sdlWindow);
-    //CopyToScaledSurface();
+    frameBuffer = new uint32_t[SCREEN_X * SCREEN_Y]();
 }
 
 
 Display::~Display()
 {
+    delete [] frameBuffer;
     subject->DetachObserver(this);
+    SDL_DestroyTexture(sdlTexture);
+    SDL_DestroyRenderer(sdlRenderer);
     SDL_DestroyWindow(sdlWindow);
     DBG("SDL_Destroy\n");
 }
@@ -159,10 +159,8 @@ void Display::UpdateScanline()
 {
     //DBG("LY=%u\n", *regLY);
     
-
     counter = 0;
 
-    //RenderBackground();
     if (*regLY < 144)
         DrawScanline(*regLY, *regSCX, *regSCY);
 
@@ -170,7 +168,7 @@ void Display::UpdateScanline()
 
     if (*regLY == 0)
     {
-        SDL_UpdateWindowSurface(sdlWindow);
+        DrawScreen();
         //printf("SCY=%u\n", *regSCY);
         //usleep(16700);
         usleep(100);
@@ -183,9 +181,6 @@ void Display::UpdateScanline()
 
 void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
 {
-    if (SDL_MUSTLOCK(sdlSurface))
-        SDL_LockSurface(sdlSurface);
-
     uint16_t tileDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
     uint8_t *tileData = memory->GetBytePtr(tileDataOffset);
     uint16_t tileMapOffset = (*regLCDC & eLCDCBGTileMap) ? BG_TILE_MAP[1] : BG_TILE_MAP[0];
@@ -193,9 +188,6 @@ void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
 
     for (uint i = 0; i < TILES_PER_X; i++)
     {
-        // if (SDL_MUSTLOCK(sdlSurface))
-        //     SDL_LockSurface(sdlSurface);
-
         uint8_t tileX = ((scrollX / TILE_PIXEL_SIZE) + i) % REAL_TILES_PER_SCREEN;
         uint8_t tileY = ((scrollY / TILE_PIXEL_SIZE) + (scanline / TILE_PIXEL_SIZE)) % REAL_TILES_PER_SCREEN;
 
@@ -211,48 +203,22 @@ void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
             uint lowBit = ((tileData[tileOffset] >> (7-x)) & 0x1);
             uint highBit = ((tileData[tileOffset + 1] >> (6-x)) & 0x2);
             uint pixelVal = lowBit | highBit;
-
-            // FIgure out the SDL offset into the pixel array.
-            uint32_t yTimesW = scanline * sdlSurface->pitch / BPP;
+            const uint8_t *color = palette[pixelVal];
 
             // Get a pointer to the pixel.
-            uint32_t *pixel = (uint32_t*)sdlSurface->pixels + yTimesW + x + (TILE_PIXEL_SIZE * i);
+            uint32_t *pixel = &frameBuffer[x + (scanline * SCREEN_X) + (TILE_PIXEL_SIZE * i)];
 
             // Set pixel color.
-            const uint8_t *color = palette[pixelVal];
-            *pixel = SDL_MapRGB(sdlSurface->format, color[0], color[1], color[2]);
+            *pixel = (color[0] << 16) | (color[1] << 8) | color[2];
         }
-
-        // if (SDL_MUSTLOCK(sdlSurface))
-        //     SDL_UnlockSurface(sdlSurface);
-
-        // SDL_UpdateWindowSurface(sdlWindow);
-        //CopyToScaledSurface();
     }
-
-    if (SDL_MUSTLOCK(sdlSurface))
-        SDL_UnlockSurface(sdlSurface);
-
-    //SDL_UpdateWindowSurface(sdlWindow);
-    //CopyToScaledSurface();
 }
 
 
-void Display::CopyToScaledSurface()
+void Display::DrawScreen()
 {
-    SDL_Rect srcRect, destRect;
-
-    srcRect.x = 0;
-    srcRect.y = 0;
-    srcRect.w = SCREEN_X;
-    srcRect.h = SCREEN_Y;
-
-    destRect.x = 0;
-    destRect.y = 0;
-    destRect.w = SCREEN_X * SCREEN_SCALE;
-    destRect.h = SCREEN_Y * SCREEN_SCALE;
-
-    SDL_BlitScaled(sdlSurface, &srcRect, sdlScaledSurface, &destRect);
-
-    SDL_UpdateWindowSurface(sdlWindow);
+    SDL_UpdateTexture(sdlTexture, NULL, frameBuffer, SCREEN_X * 4);
+    SDL_RenderClear(sdlRenderer);
+    SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL);
+    SDL_RenderPresent(sdlRenderer);
 }

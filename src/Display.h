@@ -7,6 +7,8 @@
 
 struct SDL_Window;
 struct SDL_Surface;
+struct SDL_Renderer;
+struct SDL_Texture;
 class Memory;
 
 class Display : public TimerObserver, public std::enable_shared_from_this<Display>
@@ -34,7 +36,7 @@ private:
     void RenderBackground();
     void RenderTile(uint16_t tileId, uint xPos, uint yPos);
 
-    void CopyToScaledSurface();
+    void DrawScreen();
 
     std::shared_ptr<Memory> memory;
     std::shared_ptr<Interrupt> interrupts;
@@ -53,8 +55,10 @@ private:
     uint8_t *regWX;    // 0xFF4B Window X position
 
     SDL_Window *sdlWindow;
-    SDL_Surface *sdlSurface;
-    SDL_Surface *sdlScaledSurface;
+    SDL_Renderer *sdlRenderer;
+    SDL_Texture *sdlTexture;
+
+    uint32_t *frameBuffer;
 
     uint16_t counter;
 };
