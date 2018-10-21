@@ -201,8 +201,8 @@ void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
             // bit of byte one and byte two. The pixel at x,y=1,0 is the second most significant
             // bits of byte one and two, etc. 
             uint lowBit = ((tileData[tileOffset] >> (7-x)) & 0x1);
-            uint highBit = ((tileData[tileOffset + 1] >> (6-x)) & 0x2);
-            uint pixelVal = lowBit | highBit;
+            uint highBit = ((tileData[tileOffset + 1] >> (7-x)) & 0x1);
+            uint pixelVal = lowBit | (highBit << 1);
             const uint8_t *color = palette[pixelVal];
 
             // Get a pointer to the pixel.
