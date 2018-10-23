@@ -3,15 +3,18 @@
 
 #include "Memory.h"
 
-Memory::Memory()
+Memory::Memory() :
+    isDmaActive(false),
+    dmaOffset(0)
 {
-    
+    ClearMemory();
 }
 
 
 Memory::~Memory()
 {
-
+    if (subject)
+        subject->DetachObserver(this);
 }
 
 
@@ -89,6 +92,13 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
             }
             return;
 
+        case eRegDMA: // 0xFF46
+            // Start a DMA transfer next cycle, if one is already active, start over at the beginning.
+            memory[eRegDMA] = byte;
+            dmaOffset = 0;
+            isDmaActive = true;
+            return;
+
         case eRegBootDisable: // 0xFF50
             if (byte != 0)
                 DisableBootRom();
@@ -119,7 +129,41 @@ void Memory::ClearMemory()
 }
 
 
+void Memory::AttachToSubject(std::shared_ptr<TimerSubject> subject)
+{
+    this->subject = subject;
+    subject->AttachObserver(shared_from_this());
+}
+
+
+void Memory::UpdateTimer(uint value)
+{
+    // Return if we're not doing a DMA transfer.
+    if (!isDmaActive)
+        return;
+
+    for (uint i = 0; i < value / 4; i++)
+    {
+        if (dmaOffset >= OAM_RAM_LEN)
+        {
+            // End DMA when end is reached.
+            isDmaActive = false;
+            dmaOffset = 0;
+            break;
+        }
+
+        uint16_t srcAddr = (memory[eRegDMA] << 8) | dmaOffset;
+        uint16_t destAddr = OAM_RAM_START | dmaOffset;
+        uint8_t byte = ReadByte(srcAddr); // Call ReadByte() in case we're reading from a special address.
+        memory[destAddr] = byte; // Write directly to memory, since there is no special processing to do on OAM memory.
+
+        dmaOffset++;
+    }
+}
+
+
 void Memory::DisableBootRom()
 {
+    // TODO: Fix this segfaulting when gameRomMemory isn't set.
     memcpy(memory.data(), gameRomMemory.data(), BOOT_ROM_SIZE);
 }

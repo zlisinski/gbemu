@@ -18,10 +18,14 @@ State::State() :
     display = std::make_shared<Display>(memory, interrupts);
     input = std::make_shared<Input>(memory->GetBytePtr(eRegP1), interrupts);
 
+    // Setup Memory observers.
     interrupts->AttachToSubject(memory);
     timer->AttachToSubject(memory);
-    display->AttachToSubject(timer);
     input->AttachToSubject(memory);
+
+    // Setup Timer observers.
+    display->AttachToSubject(timer);
+    memory->AttachToSubject(timer);
 }
 
 

@@ -85,3 +85,75 @@ TEST_F(MemoryTest, TEST_DisableBootRom)
     ASSERT_EQ(memory[0xFF], 0x22);
     ASSERT_EQ(memory[0x100], 0x22);
 }
+
+TEST_F(MemoryTest, TEST_DMA)
+{
+    Memory memory;
+    const uint8_t dmaStart = 0x02;
+    uint8_t *src = memory.GetBytePtr(dmaStart << 8);
+    uint8_t *dest = memory.GetBytePtr(OAM_RAM_START);
+    const uint8_t byte = 0x11;
+
+    memset(src, byte, OAM_RAM_LEN);
+
+    ASSERT_EQ(dest[0], 0);
+
+    memory.WriteByte(eRegDMA, dmaStart);
+
+    ASSERT_EQ(dest[0], 0);
+
+    memory.UpdateTimer(4);
+
+    ASSERT_EQ(dest[0], byte);
+    ASSERT_EQ(dest[1], 0);
+
+    memory.UpdateTimer(4);
+
+    ASSERT_EQ(dest[0], byte);
+    ASSERT_EQ(dest[1], byte);
+    ASSERT_EQ(dest[2], 0);
+
+    for (uint8_t i = 2; i < OAM_RAM_LEN; i++)
+    {
+        memory.UpdateTimer(4);
+    }
+
+    ASSERT_EQ(dest[OAM_RAM_LEN - 1], byte);
+    ASSERT_EQ(dest[OAM_RAM_LEN], 0);
+}
+
+TEST_F(MemoryTest, TEST_Start_new_DMA_in_middle_of_DMA)
+{
+    Memory memory;
+    uint8_t dmaStart = 0x02;
+    uint8_t *src = memory.GetBytePtr(dmaStart << 8);
+    uint8_t *dest = memory.GetBytePtr(OAM_RAM_START);
+    uint8_t byte = 0x11;
+
+    memset(src, byte, OAM_RAM_LEN);
+
+    // Start first DMA and finish half of it.
+    memory.WriteByte(eRegDMA, dmaStart);
+    for (uint8_t i = 0; i < OAM_RAM_LEN / 2; i++)
+        memory.UpdateTimer(4);
+
+    ASSERT_EQ(dest[0], byte);
+    ASSERT_EQ(dest[(OAM_RAM_LEN / 2) - 1], byte);
+    ASSERT_EQ(dest[(OAM_RAM_LEN / 2)], 0);
+
+    // Start second DMA.
+    dmaStart = 0x03;
+    src = memory.GetBytePtr(dmaStart << 8);
+    uint8_t byte2 = 0x22;
+    memset(src, byte2, OAM_RAM_LEN);
+    memory.WriteByte(eRegDMA, dmaStart);
+    memory.UpdateTimer(4);
+
+    ASSERT_EQ(dest[0], byte2);
+    ASSERT_EQ(dest[1], byte);
+
+    for (uint8_t i = 1; i < OAM_RAM_LEN; i++)
+        memory.UpdateTimer(4);
+
+    ASSERT_EQ(dest[OAM_RAM_LEN - 1], byte2);
+}

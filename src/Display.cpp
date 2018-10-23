@@ -90,7 +90,10 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
 Display::~Display()
 {
     delete [] frameBuffer;
-    subject->DetachObserver(this);
+
+    if (subject)
+        subject->DetachObserver(this);
+
     SDL_DestroyTexture(sdlTexture);
     SDL_DestroyRenderer(sdlRenderer);
     SDL_DestroyWindow(sdlWindow);

@@ -18,7 +18,7 @@ public:
     ~Display();
 
     // Inherited from TimerObserver.
-    void AttachToSubject(std::shared_ptr<TimerSubject> subject);
+    virtual void AttachToSubject(std::shared_ptr<TimerSubject> subject);
     virtual void UpdateTimer(uint value);
 
 private:
