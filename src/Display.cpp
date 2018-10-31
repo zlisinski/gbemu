@@ -171,6 +171,7 @@ void Display::UpdateScanline()
 
     if (*regLY == 0)
     {
+        DrawSprites();
         DrawScreen();
         //printf("SCY=%u\n", *regSCY);
         //usleep(16700);
@@ -184,6 +185,13 @@ void Display::UpdateScanline()
 
 void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
 {
+    DrawBackground(scanline, scrollX, scrollY);
+    //DrawSprites(scanline, scrollX, scrollY);
+}
+
+
+void Display::DrawBackground(uint scanline, uint scrollX, uint scrollY)
+{
     uint16_t tileDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
     uint8_t *tileData = memory->GetBytePtr(tileDataOffset);
     uint16_t tileMapOffset = (*regLCDC & eLCDCBGTileMap) ? BG_TILE_MAP[1] : BG_TILE_MAP[0];
@@ -194,26 +202,70 @@ void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
         uint8_t tileX = ((scrollX / TILE_PIXEL_SIZE) + i) % REAL_TILES_PER_SCREEN;
         uint8_t tileY = ((scrollY / TILE_PIXEL_SIZE) + (scanline / TILE_PIXEL_SIZE)) % REAL_TILES_PER_SCREEN;
 
-        uint16_t tileId = tileMap[tileX + (tileY * REAL_TILES_PER_SCREEN)];
+        uint8_t tileId = tileMap[tileX + (tileY * REAL_TILES_PER_SCREEN)];
+        if (tileDataOffset == BG_DATA_OFFSET[0])
+        {
+            // When BG data is 0x8800, tild id is a signed byte with 0 in the middle of the range.
+            tileId = (int8_t)tileId + 0x80;
+        }
         uint16_t tileOffset = (tileId * TILE_DATA_SIZE) + ((scanline % TILE_PIXEL_SIZE) * 2);
 
-        for (uint x = 0; x < TILE_PIXEL_SIZE; x++)
+        DrawLine(tileData[tileOffset], tileData[tileOffset + 1], TILE_PIXEL_SIZE * i, scanline, *regBGP, false, true);
+    }
+}
+
+
+//void Display::DrawSprites(uint scanline, uint scrollX, uint scrollY)
+void Display::DrawSprites()
+{
+    //y, x, chr_code, attr_data
+    const uint8_t spriteSize = (*regLCDC & eLCDCSpriteSize) ? 16 : 8;
+    const uint8_t *oamRam = memory->GetBytePtr(OAM_RAM);
+    const uint8_t *spriteData = memory->GetBytePtr(BG_DATA_OFFSET[1]);
+
+    for (uint i = 0; i < 160; i += 4)
+    {
+        uint8_t yPos = oamRam[i + 0];
+        uint8_t xPos = oamRam[i + 1];
+        uint8_t spriteId = oamRam[i + 2];
+        uint8_t spriteAttr = oamRam[i + 3];
+
+        // Sprites with a position of 0 are not displayed.
+        if (xPos == 0 || yPos == 0)
+            continue;
+
+        // Sprite position needs to be offset because of 0 not being displayed.
+        xPos -= 8;
+        yPos -= 16;
+
+        for (uint line = 0; line < spriteSize; line++)
         {
-            // Each tile is 16 bytes for 8x8 pixels. There are two bits per pixel, and each
-            // pixel is split across two bytes. The pixel at x,y=0,0 is the most significant
-            // bit of byte one and byte two. The pixel at x,y=1,0 is the second most significant
-            // bits of byte one and two, etc. 
-            uint lowBit = ((tileData[tileOffset] >> (7-x)) & 0x1);
-            uint highBit = ((tileData[tileOffset + 1] >> (7-x)) & 0x1);
-            uint pixelVal = lowBit | (highBit << 1);
-            const uint8_t *color = palette[pixelVal];
-
-            // Get a pointer to the pixel.
-            uint32_t *pixel = &frameBuffer[x + (scanline * SCREEN_X) + (TILE_PIXEL_SIZE * i)];
-
-            // Set pixel color.
-            *pixel = (color[0] << 16) | (color[1] << 8) | color[2];
+            uint16_t spriteOffset = (spriteId * spriteSize * 2) + (line * 2);
+            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line, *regOBP0, false, true);
         }
+    }
+}
+
+
+void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool priority)
+{
+    for (uint x = 0; x < TILE_PIXEL_SIZE; x++)
+    {
+        // Each tile is 16 bytes for 8x8 pixels. There are two bits per pixel, and each
+        // pixel is split across two bytes. The pixel at x,y=0,0 is the most significant
+        // bit of byte one and byte two. The pixel at x,y=1,0 is the second most significant
+        // bits of byte one and two, etc.
+        uint lowBit = ((byte1 >> (7-x)) & 0x1);
+        uint highBit = ((byte2 >> (7-x)) & 0x1);
+        uint pixelVal = lowBit | (highBit << 1);
+        //const uint8_t *color = palette[(paletteReg >> (pixelVal * 2)) * 0x03];
+        const uint8_t *color = palette[pixelVal];
+
+        // Get a pointer to the pixel.
+        uint32_t *pixel = &frameBuffer[(yPos * SCREEN_X) + xPos + x];
+
+        // Set pixel color.
+        *pixel = (color[0] << 16) | (color[1] << 8) | color[2];
     }
 }
 

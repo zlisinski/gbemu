@@ -33,8 +33,9 @@ private:
     void SetMode(DisplayModes mode);
     void UpdateScanline();
     void DrawScanline(uint scanline, uint scrollX, uint scrollY);
-    void RenderBackground();
-    void RenderTile(uint16_t tileId, uint xPos, uint yPos);
+    void DrawBackground(uint scanline, uint scrollX, uint scrollY);
+    void DrawSprites();
+    void DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool priority);
 
     void DrawScreen();
 
