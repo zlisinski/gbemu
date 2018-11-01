@@ -49,6 +49,14 @@ enum LCDStatBits
     eLCDStatLYLCCheck = 0x40
 };
 
+enum SpriteAttrBits
+{
+    eSpriteAttrPalette = 0x10,
+    eSpriteAttrFlipX = 0x20,
+    eSpriteAttrFlipY = 0x40,
+    eSpriteAttrBgPriority = 0x80
+};
+
 Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> interrupts) :
     memory(memory),
     interrupts(interrupts),
@@ -230,6 +238,11 @@ void Display::DrawSprites()
         uint8_t spriteId = oamRam[i + 2];
         uint8_t spriteAttr = oamRam[i + 3];
 
+        uint8_t paletteReg = spriteAttr & eSpriteAttrPalette ? *regOBP1 : *regOBP0;
+        bool flipX = spriteAttr & eSpriteAttrFlipX;
+        bool flipY = spriteAttr & eSpriteAttrFlipY;
+        bool bgPriority = spriteAttr & eSpriteAttrBgPriority;
+
         // Sprites with a position of 0 are not displayed.
         if (xPos == 0 || yPos == 0)
             continue;
@@ -241,13 +254,13 @@ void Display::DrawSprites()
         for (uint line = 0; line < spriteSize; line++)
         {
             uint16_t spriteOffset = (spriteId * spriteSize * 2) + (line * 2);
-            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line, *regOBP0, false, true);
+            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line, paletteReg, flipX, bgPriority);
         }
     }
 }
 
 
-void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool priority)
+void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority)
 {
     for (uint x = 0; x < TILE_PIXEL_SIZE; x++)
     {
@@ -258,8 +271,7 @@ void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos,
         uint lowBit = ((byte1 >> (7-x)) & 0x1);
         uint highBit = ((byte2 >> (7-x)) & 0x1);
         uint pixelVal = lowBit | (highBit << 1);
-        //const uint8_t *color = palette[(paletteReg >> (pixelVal * 2)) * 0x03];
-        const uint8_t *color = palette[pixelVal];
+        const uint8_t *color = palette[(paletteReg >> (pixelVal * 2)) & 0x03];
 
         // Get a pointer to the pixel.
         uint32_t *pixel = &frameBuffer[(yPos * SCREEN_X) + xPos + x];

@@ -35,7 +35,7 @@ private:
     void DrawScanline(uint scanline, uint scrollX, uint scrollY);
     void DrawBackground(uint scanline, uint scrollX, uint scrollY);
     void DrawSprites();
-    void DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool priority);
+    void DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority);
 
     void DrawScreen();
 
