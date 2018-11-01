@@ -7,8 +7,6 @@
 const uint TILE_DATA_SIZE = 16; // Tile is 16 bytes.
 const uint TILE_PIXEL_SIZE = 8; // Tile is 8x8 pixels.
 
-const uint SCREEN_X = 160;
-const uint SCREEN_Y = 144;
 const uint REAL_SCREEN_SIZE = 256;
 const uint REAL_TILES_PER_SCREEN = REAL_SCREEN_SIZE / TILE_PIXEL_SIZE;
 const uint TILES_PER_X = SCREEN_X / TILE_PIXEL_SIZE;
@@ -74,7 +72,6 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
     regWX(memory->GetBytePtr(eRegWX)),
     sdlWindow(NULL),
     sdlRenderer(NULL),
-    frameBuffer(NULL),
     counter(0)
 {
     DBG("SDL Display\n");
@@ -90,15 +87,11 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
     SDL_RenderSetLogicalSize(sdlRenderer, SCREEN_X, SCREEN_Y);
 
     sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_X, SCREEN_Y);
-
-    frameBuffer = new uint32_t[SCREEN_X * SCREEN_Y]();
 }
 
 
 Display::~Display()
 {
-    delete [] frameBuffer;
-
     if (subject)
         subject->DetachObserver(this);
 
@@ -218,7 +211,7 @@ void Display::DrawBackground(uint scanline, uint scrollX, uint scrollY)
         }
         uint16_t tileOffset = (tileId * TILE_DATA_SIZE) + ((scanline % TILE_PIXEL_SIZE) * 2);
 
-        DrawLine(tileData[tileOffset], tileData[tileOffset + 1], TILE_PIXEL_SIZE * i, scanline, *regBGP, false, true);
+        DrawLine(tileData[tileOffset], tileData[tileOffset + 1], TILE_PIXEL_SIZE * i, scanline, *regBGP, false, false, true);
     }
 }
 
@@ -238,7 +231,7 @@ void Display::DrawSprites()
         uint8_t spriteId = oamRam[i + 2];
         uint8_t spriteAttr = oamRam[i + 3];
 
-        uint8_t paletteReg = spriteAttr & eSpriteAttrPalette ? *regOBP1 : *regOBP0;
+        uint8_t paletteReg = (spriteAttr & eSpriteAttrPalette) ? *regOBP1 : *regOBP0;
         bool flipX = spriteAttr & eSpriteAttrFlipX;
         bool flipY = spriteAttr & eSpriteAttrFlipY;
         bool bgPriority = spriteAttr & eSpriteAttrBgPriority;
@@ -254,13 +247,13 @@ void Display::DrawSprites()
         for (uint line = 0; line < spriteSize; line++)
         {
             uint16_t spriteOffset = (spriteId * spriteSize * 2) + (line * 2);
-            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line, paletteReg, flipX, bgPriority);
+            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line, paletteReg, flipX, bgPriority, false);
         }
     }
 }
 
 
-void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority)
+void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg)
 {
     for (uint x = 0; x < TILE_PIXEL_SIZE; x++)
     {
@@ -273,11 +266,21 @@ void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos,
         uint pixelVal = lowBit | (highBit << 1);
         const uint8_t *color = palette[(paletteReg >> (pixelVal * 2)) & 0x03];
 
-        // Get a pointer to the pixel.
-        uint32_t *pixel = &frameBuffer[(yPos * SCREEN_X) + xPos + x];
+        uint pixelOffset = (yPos * SCREEN_X) + xPos + x;
+
+        // Save the 2-bit color to use for sprite/BG priority.
+        if (isBg)
+        {
+            bgColorMap[pixelOffset] = pixelVal;
+        }
 
         // Set pixel color.
-        *pixel = (color[0] << 16) | (color[1] << 8) | color[2];
+        if (isBg || // Background or window
+            (!isBg && !bgPriority) || // Sprite, without BG priority
+            (!isBg && bgPriority && bgColorMap[pixelOffset] == 0)) // Sprite, with BG priority, and BG color is 0
+        {
+            frameBuffer[pixelOffset] = (color[0] << 16) | (color[1] << 8) | color[2];
+        }
     }
 }
 

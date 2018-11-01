@@ -11,6 +11,9 @@ struct SDL_Renderer;
 struct SDL_Texture;
 class Memory;
 
+const uint SCREEN_X = 160;
+const uint SCREEN_Y = 144;
+
 class Display : public TimerObserver, public std::enable_shared_from_this<Display>
 {
 public:
@@ -35,7 +38,7 @@ private:
     void DrawScanline(uint scanline, uint scrollX, uint scrollY);
     void DrawBackground(uint scanline, uint scrollX, uint scrollY);
     void DrawSprites();
-    void DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority);
+    void DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg);
 
     void DrawScreen();
 
@@ -59,7 +62,8 @@ private:
     SDL_Renderer *sdlRenderer;
     SDL_Texture *sdlTexture;
 
-    uint32_t *frameBuffer;
+    uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
+    uint8_t bgColorMap[SCREEN_X * SCREEN_Y];
 
     uint16_t counter;
 };
