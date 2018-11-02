@@ -244,10 +244,14 @@ void Display::DrawSprites()
         xPos -= 8;
         yPos -= 16;
 
-        for (uint line = 0; line < spriteSize; line++)
+        for (uint line_ = 0; line_ < spriteSize; line_++)
         {
+            uint line = line_;
+            if (flipY)
+                line = (spriteSize - 1) - line_;
+
             uint16_t spriteOffset = (spriteId * spriteSize * 2) + (line * 2);
-            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line, paletteReg, flipX, bgPriority, false);
+            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line_, paletteReg, flipX, bgPriority, false);
         }
     }
 }
@@ -255,8 +259,12 @@ void Display::DrawSprites()
 
 void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg)
 {
-    for (uint x = 0; x < TILE_PIXEL_SIZE; x++)
+    for (uint x_ = 0; x_ < TILE_PIXEL_SIZE; x_++)
     {
+        uint x = x_;
+        if (flipX)
+            x = (TILE_PIXEL_SIZE - 1) - x_;
+
         // Each tile is 16 bytes for 8x8 pixels. There are two bits per pixel, and each
         // pixel is split across two bytes. The pixel at x,y=0,0 is the most significant
         // bit of byte one and byte two. The pixel at x,y=1,0 is the second most significant
@@ -266,7 +274,7 @@ void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos,
         uint pixelVal = lowBit | (highBit << 1);
         const uint8_t *color = palette[(paletteReg >> (pixelVal * 2)) & 0x03];
 
-        uint pixelOffset = (yPos * SCREEN_X) + xPos + x;
+        uint pixelOffset = (yPos * SCREEN_X) + xPos + x_;
 
         // Save the 2-bit color to use for sprite/BG priority.
         if (isBg)
