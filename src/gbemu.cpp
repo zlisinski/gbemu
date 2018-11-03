@@ -107,6 +107,7 @@ void DumpMemory(uint8_t *mem, uint start, uint len)
 
 void ProcessInput(const SDL_Event &e, std::shared_ptr<Input> input)
 {
+    printf("e.type=%d\n", e.type);
     if (e.type == SDL_KEYDOWN)
     {
         switch (e.key.keysym.sym)
@@ -167,6 +168,18 @@ void ProcessInput(const SDL_Event &e, std::shared_ptr<Input> input)
                 break;
         }
     }
+    else if (e.type == SDL_JOYBUTTONUP)
+    {
+        printf("Button = %d\n", e.jbutton.button);
+    }
+    else if (e.type == SDL_JOYBUTTONDOWN)
+    {
+        printf("Button = %d\n", e.jbutton.button);
+    }
+    else if (e.type == SDL_JOYHATMOTION)
+    {
+        printf("Hat = %d\n", e.jhat.value);
+    }
 }
 
 
@@ -186,7 +199,7 @@ int main(int argc, char **argv)
 
     const char *romFilename = argv[optind];
 
-    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0)
     {
         printf("SDL_Init Error: %s\n", SDL_GetError());
         exit(1);
@@ -214,6 +227,18 @@ int main(int argc, char **argv)
 
     bool quit = false;
     SDL_Event e;
+    SDL_Joystick *joystick = NULL;
+
+    if (SDL_NumJoysticks() >= 1)
+    {
+        joystick = SDL_JoystickOpen(0);
+        if (joystick == NULL)
+            printf("Cant open joystick\n");
+        else
+            printf("Opened joystick\n");
+    }
+    else
+        printf("No joysticks found\n");
 
     while (!quit)
     {
@@ -243,6 +268,9 @@ int main(int argc, char **argv)
     DumpMemory(mem, 0x9800, 0x0400);
     printf("\n");
     DumpMemory(mem, 0x9C00, 0x0400);*/
+
+    if (joystick)
+        SDL_JoystickClose(joystick);
 
     SDL_Quit();
 
