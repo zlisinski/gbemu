@@ -276,10 +276,16 @@ void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos,
 
         uint pixelOffset = (yPos * SCREEN_X) + xPos + x_;
 
-        // Save the 2-bit color to use for sprite/BG priority.
         if (isBg)
         {
+            // Save the 2-bit color to use for sprite/BG priority.
             bgColorMap[pixelOffset] = pixelVal;
+        }
+        else
+        {
+            // Sprite color 0 is transparent.
+            if (pixelVal == 0)
+                continue;
         }
 
         // Set pixel color.
