@@ -35,10 +35,11 @@ private:
 
     void SetMode(DisplayModes mode);
     void UpdateScanline();
-    void DrawScanline(uint scanline, uint scrollX, uint scrollY);
-    void DrawBackground(uint scanline, uint scrollX, uint scrollY);
+    void DrawScanline(uint scanline);
+    void DrawBackgroundScanline(uint scanline, uint scrollX, uint scrollY);
+    void DrawWindowScanline(uint scanline, uint windowX, uint windowY);
     void DrawSprites();
-    void DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg);
+    void DrawTileLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg);
 
     void DrawScreen();
 
