@@ -15,6 +15,8 @@ public:
     // warnings. I'm ignoring them for now, as this lets me focus on getting the rest of the emulator working. Regardless, it works
     // for now, so I'm not going to change it until I care about cross platform/compiler, or even anything other than G++ 7.3.0 (LLVM,
     // Visual Studio, etc). This is a personal project, and is not meant to compile/run in whatever _your_ chosen platform or compiler is.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     union {
         struct {
             union {
@@ -52,6 +54,8 @@ public:
         };
         uint16_t hl;
     };
+#pragma GCC diagnostic pop
+
     uint16_t pc;
     uint16_t sp;
     std::shared_ptr<Memory> memory;
