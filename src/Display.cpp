@@ -116,7 +116,7 @@ void Display::UpdateTimer(uint value)
     {
         counter = 0;
         *regLY = 0;
-        SetMode(eMode1VBlank);
+        SetMode(eMode0HBlank);
         return;
     }
 
@@ -128,7 +128,7 @@ void Display::UpdateTimer(uint value)
         else
             SetMode(eMode1VBlank);
     }
-    if (counter == 0 || counter >= 448)
+    else if (counter == 0 || counter >= 448)
     {
         SetMode(eMode0HBlank);
     }
