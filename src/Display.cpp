@@ -70,6 +70,7 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
     regOBP1(memory->GetBytePtr(eRegOBP1)),
     regWY(memory->GetBytePtr(eRegWY)),
     regWX(memory->GetBytePtr(eRegWX)),
+    displayMode(eMode0HBlank),
     sdlWindow(NULL),
     sdlRenderer(NULL),
     counter(0)
@@ -120,6 +121,8 @@ void Display::UpdateTimer(uint value)
         return;
     }
 
+    bool oldStatCheck = GetStatCheck();
+
     // Set display mode bits. This is probably wrong. TCAGBD and GBCPUman have very different values for when the mode switches.
     if (*regLY >= 144)
     {
@@ -147,14 +150,22 @@ void Display::UpdateTimer(uint value)
     // Draw scanline when counter reaches an HBlank.
     if (counter >= ClockPerScanline)
         UpdateScanline();
+
+    bool newStatCheck = GetStatCheck();
+
+    // Trigger Stat interrupt only when check goes from 0 to 1.
+    if (!oldStatCheck && newStatCheck)
+        if (interrupts)
+            interrupts->RequestInterrupt(eIntLCDC);
 }
 
 
 void Display::SetMode(DisplayModes mode)
 {
+    displayMode = mode;
+
     // Clear mode bits.
     *regSTAT &= 0xFC;
-
     *regSTAT |= mode;
 }
 
@@ -182,6 +193,31 @@ void Display::UpdateScanline()
     }
     else if (*regLY == 144)
         interrupts->RequestInterrupt(eIntVBlank);
+
+    // LY==LYC bit gets updated regardless of LY==LYC check bit.
+    if (*regLY == *regLYC)
+    {
+        *regSTAT |= eLCDStatLYLYCCompare;
+    }
+    else
+    {
+        *regSTAT &= ~eLCDStatLYLYCCompare;
+    }
+}
+
+
+bool Display::GetStatCheck()
+{
+    if ((*regLY == *regLYC) && (*regSTAT & eLCDStatLYLCCheck))
+        return true;
+    if ((displayMode == eMode0HBlank) && (*regSTAT & eLCDStatMode0HBlank))
+        return true;
+    if ((displayMode == eMode1VBlank) && ((*regSTAT & eLCDStatMode1Vblank) || (*regSTAT & eLCDStatMode2OAM)))
+        return true;
+    if ((displayMode == eMode2SearchingOAM) && (*regSTAT & eLCDStatMode2OAM))
+        return true;
+
+    return false;
 }
 
 

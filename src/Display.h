@@ -35,6 +35,9 @@ private:
 
     void SetMode(DisplayModes mode);
     void UpdateScanline();
+
+    bool GetStatCheck();
+
     void DrawScanline(uint scanline);
     void DrawBackgroundScanline(uint scanline, uint scrollX, uint scrollY);
     void DrawWindowScanline(uint scanline, uint windowX, uint windowY);
@@ -58,6 +61,8 @@ private:
     uint8_t *regOBP1;  // 0xFF49 Object palette 1 data
     uint8_t *regWY;    // 0xFF4A Window Y position
     uint8_t *regWX;    // 0xFF4B Window X position
+
+    DisplayModes displayMode;
 
     SDL_Window *sdlWindow;
     SDL_Renderer *sdlRenderer;
