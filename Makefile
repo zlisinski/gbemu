@@ -15,7 +15,8 @@ CLASSES_SRC = $(SRC_DIR)/Emulator.cpp \
 	$(SRC_DIR)/Timer.cpp \
 	$(SRC_DIR)/Interrupt.cpp \
 	$(SRC_DIR)/Display.cpp \
-	$(SRC_DIR)/Input.cpp
+	$(SRC_DIR)/Input.cpp \
+	$(SRC_DIR)/Buttons.cpp
 MAIN_SRC = $(SRC_DIR)/gbemu.cpp $(CLASSES_SRC)
 
 # Files needed to build unit tests.

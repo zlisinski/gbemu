@@ -15,14 +15,7 @@ enum ButtonMask
 Input::Input(uint8_t *regP1, std::shared_ptr<Interrupt> interrupts) :
     regP1(regP1),
     interrupts(interrupts),
-    buttonUp(false),
-    buttonDown(false),
-    buttonLeft(false),
-    buttonRight(false),
-    buttonSelect(false),
-    buttonStart(false),
-    buttonB(false),
-    buttonA(false)
+    buttonData()
 {
     // Start out with all buttons released.
     *regP1 = 0xFF;
@@ -54,58 +47,9 @@ void Input::UpdateMemoryAddr(uint16_t addr, uint8_t value)
 }
 
 
-void Input::SetButtonUp(bool pressed)
+void Input::SetButtons(const Buttons &buttons)
 {
-    buttonUp = pressed;
-    UpdateRegP1(*regP1);
-}
-
-
-void Input::SetButtonDown(bool pressed)
-{
-    buttonDown = pressed;
-    UpdateRegP1(*regP1);
-}
-
-
-void Input::SetButtonLeft(bool pressed)
-{
-    buttonLeft = pressed;
-    UpdateRegP1(*regP1);
-}
-
-
-void Input::SetButtonRight(bool pressed)
-{
-    buttonRight = pressed;
-    UpdateRegP1(*regP1);
-}
-
-
-void Input::SetButtonSelect(bool pressed)
-{
-    buttonSelect = pressed;
-    UpdateRegP1(*regP1);
-}
-
-
-void Input::SetButtonStart(bool pressed)
-{
-    buttonStart = pressed;
-    UpdateRegP1(*regP1);
-}
-
-
-void Input::SetButtonB(bool pressed)
-{
-    buttonB = pressed;
-    UpdateRegP1(*regP1);
-}
-
-
-void Input::SetButtonA(bool pressed)
-{
-    buttonA = pressed;
+    buttonData = buttons;
     UpdateRegP1(*regP1);
 }
 
@@ -124,22 +68,22 @@ void Input::UpdateRegP1(uint8_t newP1)
 
     if ((newP1 & eMaskDirection) == 0)
     {
-        if (buttonUp)
+        if (buttonData.IsUpPressed())
         {
             newP1 &= eMaskSelectUp;
             DBG("Up pressed\n");
         }
-        if (buttonDown)
+        if (buttonData.IsDownPressed())
         {
             newP1 &= eMaskStartDown;
             DBG("Down pressed\n");
         }
-        if (buttonLeft)
+        if (buttonData.IsLeftPressed())
         {
             newP1 &= eMaskBLeft;
             DBG("Left pressed\n");
         }
-        if (buttonRight)
+        if (buttonData.IsRightPressed())
         {
             newP1 &= eMaskARight;
             DBG("Right pressed\n");
@@ -147,22 +91,22 @@ void Input::UpdateRegP1(uint8_t newP1)
     }
     else if ((newP1 & eMaskButtons) == 0)
     {
-        if (buttonSelect)
+        if (buttonData.IsSelectPressed())
         {
             newP1 &= eMaskSelectUp;
             DBG("Select pressed\n");
         }
-        if (buttonStart)
+        if (buttonData.IsStartPressed())
         {
             newP1 &= eMaskStartDown;
             DBG("Start pressed\n");
         }
-        if (buttonB)
+        if (buttonData.IsBPressed())
         {
             newP1 &= eMaskBLeft;
             DBG("B pressed\n");
         }
-        if (buttonA)
+        if (buttonData.IsAPressed())
         {
             newP1 &= eMaskARight;
             DBG("A pressed\n");

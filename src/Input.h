@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gbemu.h"
+#include "Buttons.h"
 #include "Interrupt.h"
 #include "MemoryByteObserver.h"
 #include "MemoryByteSubject.h"
@@ -11,14 +12,7 @@ public:
     Input(uint8_t *regP1, std::shared_ptr<Interrupt> interrupts);
     virtual ~Input();
 
-    void SetButtonUp(bool pressed);
-    void SetButtonDown(bool pressed);
-    void SetButtonLeft(bool pressed);
-    void SetButtonRight(bool pressed);
-    void SetButtonSelect(bool pressed);
-    void SetButtonStart(bool pressed);
-    void SetButtonB(bool pressed);
-    void SetButtonA(bool pressed);
+    void SetButtons(const Buttons &buttons);
 
     // Inherited from MemoryByteObserver.
     virtual void AttachToSubject(std::shared_ptr<MemoryByteSubject> subject);
@@ -30,12 +24,5 @@ private:
     uint8_t *regP1;
     std::shared_ptr<Interrupt> interrupts;
 
-    bool buttonUp;
-    bool buttonDown;
-    bool buttonLeft;
-    bool buttonRight;
-    bool buttonSelect;
-    bool buttonStart;
-    bool buttonB;
-    bool buttonA;
+    Buttons buttonData;
 };

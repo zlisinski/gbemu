@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <map>
 
 #include "gbemu.h"
 #include "Emulator.h"
@@ -8,6 +9,23 @@
 
 bool runbootRom = false;
 bool debugOutput = false;
+
+const std::map<SDL_Keycode, Buttons::Button> keymap = {
+    {SDLK_w, Buttons::Button::eButtonUp},
+    {SDLK_s, Buttons::Button::eButtonDown},
+    {SDLK_a, Buttons::Button::eButtonLeft},
+    {SDLK_d, Buttons::Button::eButtonRight},
+    {SDLK_h, Buttons::Button::eButtonSelect},
+    {SDLK_j, Buttons::Button::eButtonStart},
+    {SDLK_k, Buttons::Button::eButtonB},
+    {SDLK_l, Buttons::Button::eButtonA}
+};
+const std::map<uint8_t, Buttons::Button> joymap = {
+    {6, Buttons::Button::eButtonSelect},
+    {7, Buttons::Button::eButtonStart},
+    {2, Buttons::Button::eButtonB},
+    {0, Buttons::Button::eButtonA}
+};
 
 
 void Usage(const char *mesage, const char *prog)
@@ -105,168 +123,39 @@ void DumpMemory(uint8_t *mem, uint start, uint len)
 }
 
 
-void ProcessInput(const SDL_Event &e, std::shared_ptr<Input> input)
+void ProcessInput(const SDL_Event &e, Buttons &buttons, std::shared_ptr<Input> input)
 {
-    if (e.type == SDL_KEYDOWN)
+    uint8_t oldButtonData = buttons.data;
+
+    if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
     {
-        switch (e.key.keysym.sym)
+        auto it = keymap.find(e.key.keysym.sym);
+        if (it != keymap.end())
         {
-            case SDLK_w:
-                input->SetButtonUp(true);
-                break;
-            case SDLK_s:
-                input->SetButtonDown(true);
-                break;
-            case SDLK_a:
-                input->SetButtonLeft(true);
-                break;
-            case SDLK_d:
-                input->SetButtonRight(true);
-                break;
-            case SDLK_h:
-                input->SetButtonSelect(true);
-                break;
-            case SDLK_j:
-                input->SetButtonStart(true);
-                break;
-            case SDLK_k:
-                input->SetButtonB(true);
-                break;
-            case SDLK_l:
-                input->SetButtonA(true);
-                break;
+            if (e.type == SDL_KEYDOWN)
+                buttons.data |= it->second;
+            else
+                buttons.data &= ~it->second;
         }
     }
-    else if (e.type == SDL_KEYUP)
+    else if (e.type == SDL_JOYBUTTONDOWN || e.type == SDL_JOYBUTTONUP)
     {
-        switch (e.key.keysym.sym)
+        auto it = joymap.find(e.jbutton.button);
+        if (it != joymap.end())
         {
-            case SDLK_w:
-                input->SetButtonUp(false);
-                break;
-            case SDLK_s:
-                input->SetButtonDown(false);
-                break;
-            case SDLK_a:
-                input->SetButtonLeft(false);
-                break;
-            case SDLK_d:
-                input->SetButtonRight(false);
-                break;
-            case SDLK_h:
-                input->SetButtonSelect(false);
-                break;
-            case SDLK_j:
-                input->SetButtonStart(false);
-                break;
-            case SDLK_k:
-                input->SetButtonB(false);
-                break;
-            case SDLK_l:
-                input->SetButtonA(false);
-                break;
-        }
-    }
-    else if (e.type == SDL_JOYBUTTONDOWN)
-    {
-        printf("Button down = %d\n", e.jbutton.button);
-        switch (e.jbutton.button)
-        {
-            case 0:
-                input->SetButtonA(true);
-                break;
-            case 2:
-                input->SetButtonB(true);
-                break;
-            case 6:
-                input->SetButtonSelect(true);
-                break;
-            case 7:
-                input->SetButtonStart(true);
-                break;
-        }
-    }
-    else if (e.type == SDL_JOYBUTTONUP)
-    {
-        printf("Button up = %d\n", e.jbutton.button);
-        switch (e.jbutton.button)
-        {
-            case 0:
-                input->SetButtonA(false);
-                break;
-            case 2:
-                input->SetButtonB(false);
-                break;
-            case 6:
-                input->SetButtonSelect(false);
-                break;
-            case 7:
-                input->SetButtonStart(false);
-                break;
+            if (e.type == SDL_JOYBUTTONDOWN)
+                buttons.data |= it->second;
+            else
+                buttons.data &= ~it->second;
         }
     }
     else if (e.type == SDL_JOYHATMOTION)
     {
-        printf("Hat = %d\n", e.jhat.value);
-        // 1 = up, 2 = right, 4 = down, 8 = left
-        switch (e.jhat.value)
-        {
-            case 0:
-                input->SetButtonUp(false);
-                input->SetButtonRight(false);
-                input->SetButtonDown(false);
-                input->SetButtonLeft(false);
-                break;
-            case 1:
-                input->SetButtonUp(true);
-                input->SetButtonRight(false);
-                input->SetButtonDown(false);
-                input->SetButtonLeft(false);
-                break;
-            case 2:
-                input->SetButtonUp(false);
-                input->SetButtonRight(true);
-                input->SetButtonDown(false);
-                input->SetButtonLeft(false);
-                break;
-            case 3:
-                input->SetButtonUp(true);
-                input->SetButtonRight(true);
-                input->SetButtonDown(false);
-                input->SetButtonLeft(false);
-                break;
-            case 4:
-                input->SetButtonUp(false);
-                input->SetButtonRight(false);
-                input->SetButtonDown(true);
-                input->SetButtonLeft(false);
-                break;
-            case 6:
-                input->SetButtonUp(false);
-                input->SetButtonRight(true);
-                input->SetButtonDown(true);
-                input->SetButtonLeft(false);
-                break;
-            case 8:
-                input->SetButtonUp(false);
-                input->SetButtonRight(false);
-                input->SetButtonDown(false);
-                input->SetButtonLeft(true);
-                break;
-            case 9:
-                input->SetButtonUp(true);
-                input->SetButtonRight(false);
-                input->SetButtonDown(false);
-                input->SetButtonLeft(true);
-                break;
-            case 12:
-                input->SetButtonUp(false);
-                input->SetButtonRight(false);
-                input->SetButtonDown(true);
-                input->SetButtonLeft(true);
-                break;
-        }
+        buttons.data = (buttons.data & 0xF0) | (e.jhat.value & 0x0F);
     }
+
+    if (buttons.data != oldButtonData)
+        input->SetButtons(buttons);
 }
 
 
@@ -315,6 +204,7 @@ int main(int argc, char **argv)
     bool quit = false;
     SDL_Event e;
     SDL_Joystick *joystick = NULL;
+    Buttons buttons;
 
     if (SDL_NumJoysticks() >= 1)
     {
@@ -336,7 +226,7 @@ int main(int argc, char **argv)
                 quit = true;
             }
             else
-                ProcessInput(e, state.input);
+                ProcessInput(e, buttons, state.input);
         }
 
         emulator.ProcessOpCode();
