@@ -107,7 +107,6 @@ void DumpMemory(uint8_t *mem, uint start, uint len)
 
 void ProcessInput(const SDL_Event &e, std::shared_ptr<Input> input)
 {
-    printf("e.type=%d\n", e.type);
     if (e.type == SDL_KEYDOWN)
     {
         switch (e.key.keysym.sym)
@@ -168,17 +167,105 @@ void ProcessInput(const SDL_Event &e, std::shared_ptr<Input> input)
                 break;
         }
     }
-    else if (e.type == SDL_JOYBUTTONUP)
-    {
-        printf("Button = %d\n", e.jbutton.button);
-    }
     else if (e.type == SDL_JOYBUTTONDOWN)
     {
-        printf("Button = %d\n", e.jbutton.button);
+        printf("Button down = %d\n", e.jbutton.button);
+        switch (e.jbutton.button)
+        {
+            case 0:
+                input->SetButtonA(true);
+                break;
+            case 2:
+                input->SetButtonB(true);
+                break;
+            case 6:
+                input->SetButtonSelect(true);
+                break;
+            case 7:
+                input->SetButtonStart(true);
+                break;
+        }
+    }
+    else if (e.type == SDL_JOYBUTTONUP)
+    {
+        printf("Button up = %d\n", e.jbutton.button);
+        switch (e.jbutton.button)
+        {
+            case 0:
+                input->SetButtonA(false);
+                break;
+            case 2:
+                input->SetButtonB(false);
+                break;
+            case 6:
+                input->SetButtonSelect(false);
+                break;
+            case 7:
+                input->SetButtonStart(false);
+                break;
+        }
     }
     else if (e.type == SDL_JOYHATMOTION)
     {
         printf("Hat = %d\n", e.jhat.value);
+        // 1 = up, 2 = right, 4 = down, 8 = left
+        switch (e.jhat.value)
+        {
+            case 0:
+                input->SetButtonUp(false);
+                input->SetButtonRight(false);
+                input->SetButtonDown(false);
+                input->SetButtonLeft(false);
+                break;
+            case 1:
+                input->SetButtonUp(true);
+                input->SetButtonRight(false);
+                input->SetButtonDown(false);
+                input->SetButtonLeft(false);
+                break;
+            case 2:
+                input->SetButtonUp(false);
+                input->SetButtonRight(true);
+                input->SetButtonDown(false);
+                input->SetButtonLeft(false);
+                break;
+            case 3:
+                input->SetButtonUp(true);
+                input->SetButtonRight(true);
+                input->SetButtonDown(false);
+                input->SetButtonLeft(false);
+                break;
+            case 4:
+                input->SetButtonUp(false);
+                input->SetButtonRight(false);
+                input->SetButtonDown(true);
+                input->SetButtonLeft(false);
+                break;
+            case 6:
+                input->SetButtonUp(false);
+                input->SetButtonRight(true);
+                input->SetButtonDown(true);
+                input->SetButtonLeft(false);
+                break;
+            case 8:
+                input->SetButtonUp(false);
+                input->SetButtonRight(false);
+                input->SetButtonDown(false);
+                input->SetButtonLeft(true);
+                break;
+            case 9:
+                input->SetButtonUp(true);
+                input->SetButtonRight(false);
+                input->SetButtonDown(false);
+                input->SetButtonLeft(true);
+                break;
+            case 12:
+                input->SetButtonUp(false);
+                input->SetButtonRight(false);
+                input->SetButtonDown(true);
+                input->SetButtonLeft(true);
+                break;
+        }
     }
 }
 
@@ -248,7 +335,7 @@ int main(int argc, char **argv)
             {
                 quit = true;
             }
-            else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)
+            else
                 ProcessInput(e, state.input);
         }
 
