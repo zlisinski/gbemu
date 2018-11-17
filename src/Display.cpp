@@ -12,7 +12,7 @@ const uint REAL_TILES_PER_SCREEN = REAL_SCREEN_SIZE / TILE_PIXEL_SIZE;
 const uint TILES_PER_X = SCREEN_X / TILE_PIXEL_SIZE;
 const uint TILES_PER_Y = SCREEN_Y / TILE_PIXEL_SIZE;
 const uint BG_SIZE = 256;
-const uint SCREEN_SCALE = 3;
+const uint SCREEN_SCALE = 4;
 
 const uint16_t BG_TILE_MAP[] = {0x9800, 0x9C00};
 const uint16_t BG_TILE_MAP_LEN = 0x03FF;
@@ -70,6 +70,7 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
     regOBP1(memory->GetBytePtr(eRegOBP1)),
     regWY(memory->GetBytePtr(eRegWY)),
     regWX(memory->GetBytePtr(eRegWX)),
+    displayMode(eMode0HBlank),
     sdlWindow(NULL),
     sdlRenderer(NULL),
     counter(0)
@@ -116,9 +117,11 @@ void Display::UpdateTimer(uint value)
     {
         counter = 0;
         *regLY = 0;
-        SetMode(eMode1VBlank);
+        SetMode(eMode0HBlank);
         return;
     }
+
+    bool oldStatCheck = GetStatCheck();
 
     // Set display mode bits. This is probably wrong. TCAGBD and GBCPUman have very different values for when the mode switches.
     if (*regLY >= 144)
@@ -128,7 +131,7 @@ void Display::UpdateTimer(uint value)
         else
             SetMode(eMode1VBlank);
     }
-    if (counter == 0 || counter >= 448)
+    else if (counter == 0 || counter >= 448)
     {
         SetMode(eMode0HBlank);
     }
@@ -147,14 +150,22 @@ void Display::UpdateTimer(uint value)
     // Draw scanline when counter reaches an HBlank.
     if (counter >= ClockPerScanline)
         UpdateScanline();
+
+    bool newStatCheck = GetStatCheck();
+
+    // Trigger Stat interrupt only when check goes from 0 to 1.
+    if (!oldStatCheck && newStatCheck)
+        if (interrupts)
+            interrupts->RequestInterrupt(eIntLCDC);
 }
 
 
 void Display::SetMode(DisplayModes mode)
 {
+    displayMode = mode;
+
     // Clear mode bits.
     *regSTAT &= 0xFC;
-
     *regSTAT |= mode;
 }
 
@@ -166,13 +177,14 @@ void Display::UpdateScanline()
     counter = 0;
 
     if (*regLY < 144)
-        DrawScanline(*regLY, *regSCX, *regSCY);
+        DrawScanline(*regLY);
 
     *regLY = (*regLY + 1) % 154;
 
     if (*regLY == 0)
     {
-        DrawSprites();
+        if (*regLCDC & eLCDCSpriteEnabled)
+            DrawSprites();
         DrawScreen();
         //printf("SCY=%u\n", *regSCY);
         //usleep(16700);
@@ -181,17 +193,46 @@ void Display::UpdateScanline()
     }
     else if (*regLY == 144)
         interrupts->RequestInterrupt(eIntVBlank);
+
+    // LY==LYC bit gets updated regardless of LY==LYC check bit.
+    if (*regLY == *regLYC)
+    {
+        *regSTAT |= eLCDStatLYLYCCompare;
+    }
+    else
+    {
+        *regSTAT &= ~eLCDStatLYLYCCompare;
+    }
 }
 
 
-void Display::DrawScanline(uint scanline, uint scrollX, uint scrollY)
+bool Display::GetStatCheck()
 {
-    DrawBackground(scanline, scrollX, scrollY);
-    //DrawSprites(scanline, scrollX, scrollY);
+    if ((*regLY == *regLYC) && (*regSTAT & eLCDStatLYLCCheck))
+        return true;
+    if ((displayMode == eMode0HBlank) && (*regSTAT & eLCDStatMode0HBlank))
+        return true;
+    if ((displayMode == eMode1VBlank) && ((*regSTAT & eLCDStatMode1Vblank) || (*regSTAT & eLCDStatMode2OAM)))
+        return true;
+    if ((displayMode == eMode2SearchingOAM) && (*regSTAT & eLCDStatMode2OAM))
+        return true;
+
+    return false;
 }
 
 
-void Display::DrawBackground(uint scanline, uint scrollX, uint scrollY)
+void Display::DrawScanline(uint scanline)
+{
+    if (*regLCDC & eLCDCBGEnabled)
+        DrawBackgroundScanline(scanline, *regSCX, *regSCY);
+    if (*regLCDC & eLCDCWindowEnable)
+        DrawWindowScanline(scanline, *regWX, *regWY);
+    // if (*regLCDC & eLCDCSpriteEnabled)
+    //     DrawSprites(scanline, *regSCX, *regSCY);
+}
+
+
+void Display::DrawBackgroundScanline(uint scanline, uint scrollX, uint scrollY)
 {
     uint16_t tileDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
     uint8_t *tileData = memory->GetBytePtr(tileDataOffset);
@@ -211,7 +252,41 @@ void Display::DrawBackground(uint scanline, uint scrollX, uint scrollY)
         }
         uint16_t tileOffset = (tileId * TILE_DATA_SIZE) + ((scanline % TILE_PIXEL_SIZE) * 2);
 
-        DrawLine(tileData[tileOffset], tileData[tileOffset + 1], TILE_PIXEL_SIZE * i, scanline, *regBGP, false, false, true);
+        DrawTileLine(tileData[tileOffset], tileData[tileOffset + 1], TILE_PIXEL_SIZE * i, scanline, *regBGP, false, false, true);
+    }
+}
+
+
+void Display::DrawWindowScanline(uint scanline, uint windowX, uint windowY)
+{
+    // Return if current scanline is above the window.
+    if (scanline < windowY)
+        return;
+
+    uint16_t tileDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
+    uint8_t *tileData = memory->GetBytePtr(tileDataOffset);
+    uint16_t tileMapOffset = (*regLCDC & eLCDCWindowTileMap) ? BG_TILE_MAP[1] : BG_TILE_MAP[0];
+    uint8_t *tileMap = memory->GetBytePtr(tileMapOffset);
+
+    for (uint i = 0; i < TILES_PER_X; i++)
+    {
+        uint8_t tileX = i;
+        uint8_t tileY = (scanline - windowY) / TILE_PIXEL_SIZE;
+
+        if (((tileX * TILE_PIXEL_SIZE) + windowX) > SCREEN_X)
+            return;
+
+        uint8_t tileId = tileMap[tileX + (tileY * REAL_TILES_PER_SCREEN)];
+        if (tileDataOffset == BG_DATA_OFFSET[0])
+        {
+            // When BG data is 0x8800, tild id is a signed byte with 0 in the middle of the range.
+            tileId = (int8_t)tileId + 0x80;
+        }
+        uint16_t tileOffset = (tileId * TILE_DATA_SIZE) + ((scanline % TILE_PIXEL_SIZE) * 2);
+
+        uint8_t xPos = (windowX - 7) + (TILE_PIXEL_SIZE * i);
+
+        DrawTileLine(tileData[tileOffset], tileData[tileOffset + 1], xPos, scanline, *regBGP, false, false, true);
     }
 }
 
@@ -251,16 +326,22 @@ void Display::DrawSprites()
                 line = (spriteSize - 1) - line_;
 
             uint16_t spriteOffset = (spriteId * spriteSize * 2) + (line * 2);
-            DrawLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line_, paletteReg, flipX, bgPriority, false);
+            DrawTileLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line_, paletteReg, flipX, bgPriority, false);
         }
     }
 }
 
 
-void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg)
+void Display::DrawTileLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg)
 {
+    if (yPos > SCREEN_Y)
+        return;
+
     for (uint x_ = 0; x_ < TILE_PIXEL_SIZE; x_++)
     {
+        if ((xPos + x_) > SCREEN_X)
+            return;
+
         uint x = x_;
         if (flipX)
             x = (TILE_PIXEL_SIZE - 1) - x_;
@@ -276,10 +357,16 @@ void Display::DrawLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos,
 
         uint pixelOffset = (yPos * SCREEN_X) + xPos + x_;
 
-        // Save the 2-bit color to use for sprite/BG priority.
         if (isBg)
         {
+            // Save the 2-bit color to use for sprite/BG priority.
             bgColorMap[pixelOffset] = pixelVal;
+        }
+        else
+        {
+            // Sprite color 0 is transparent.
+            if (pixelVal == 0)
+                continue;
         }
 
         // Set pixel color.
