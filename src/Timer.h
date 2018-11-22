@@ -22,7 +22,7 @@ public:
     void WriteTAC(uint8_t newValue);
 
     // Inherited from MemoryByteObserver.
-    void AttachToSubject(std::shared_ptr<MemoryByteSubject> subject);
+    void AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 
     void PrintTimerData();

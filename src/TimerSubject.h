@@ -11,22 +11,22 @@ class TimerSubject
 public:
     virtual void AttachObserver(std::weak_ptr<TimerObserver> observer)
     {
-        observers.push_back(observer);
+        timerObservers.push_back(observer);
     }
 
     virtual void DetachObserver(TimerObserver *observer)
     {
-        for (auto it = observers.begin(); it != observers.end(); ++it)
+        for (auto it = timerObservers.begin(); it != timerObservers.end(); ++it)
         {
             if (it->lock().get() == observer)
-                observers.erase(it);
+                timerObservers.erase(it);
             break;
         }
     }
 
     virtual void NotifyObservers(uint value)
     {
-        for (auto it = observers.begin(); it != observers.end(); ++it)
+        for (auto it = timerObservers.begin(); it != timerObservers.end(); ++it)
         {
             std::shared_ptr<TimerObserver> observer = it->lock();
             if (observer)
@@ -37,5 +37,5 @@ public:
     }
 
 protected:
-    std::list<std::weak_ptr<TimerObserver>> observers;
+    std::list<std::weak_ptr<TimerObserver>> timerObservers;
 };

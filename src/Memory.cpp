@@ -13,8 +13,8 @@ Memory::Memory() :
 
 Memory::~Memory()
 {
-    if (subject)
-        subject->DetachObserver(this);
+    if (timerSubject)
+        timerSubject->DetachObserver(this);
 }
 
 
@@ -129,9 +129,9 @@ void Memory::ClearMemory()
 }
 
 
-void Memory::AttachToSubject(std::shared_ptr<TimerSubject> subject)
+void Memory::AttachToTimerSubject(std::shared_ptr<TimerSubject> subject)
 {
-    this->subject = subject;
+    this->timerSubject = subject;
     subject->AttachObserver(shared_from_this());
 }
 

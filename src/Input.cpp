@@ -24,16 +24,16 @@ Input::Input(uint8_t *regP1, std::shared_ptr<Interrupt> interrupts) :
 
 Input::~Input()
 {
-    if (subject)
+    if (memorySubject)
     {
-        subject->DetachObserver(eRegP1, this);
+        memorySubject->DetachObserver(eRegP1, this);
     }
 }
 
 
-void Input::AttachToSubject(std::shared_ptr<MemoryByteSubject> subject)
+void Input::AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject)
 {
-    this->subject = subject;
+    this->memorySubject = subject;
 
     subject->AttachObserver(eRegP1, shared_from_this());
 }

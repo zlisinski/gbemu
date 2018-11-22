@@ -15,10 +15,10 @@ Interrupt::Interrupt(uint8_t *regIE, uint8_t *regIF) :
 
 Interrupt::~Interrupt()
 {
-    if (subject)
+    if (memorySubject)
     {
-        subject->DetachObserver(eRegIE, this);
-        subject->DetachObserver(eRegIF, this);
+        memorySubject->DetachObserver(eRegIE, this);
+        memorySubject->DetachObserver(eRegIF, this);
     }
 }
 
@@ -79,9 +79,9 @@ void Interrupt::ClearInterrupt(eInterruptTypes type)
 }
 
 
-void Interrupt::AttachToSubject(std::shared_ptr<MemoryByteSubject> subject)
+void Interrupt::AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject)
 {
-    this->subject = subject;
+    this->memorySubject = subject;
 
     subject->AttachObserver(eRegIE, shared_from_this());
     subject->AttachObserver(eRegIF, shared_from_this());

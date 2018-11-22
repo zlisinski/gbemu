@@ -15,7 +15,7 @@ public:
     void SetButtons(const Buttons &buttons);
 
     // Inherited from MemoryByteObserver.
-    virtual void AttachToSubject(std::shared_ptr<MemoryByteSubject> subject);
+    virtual void AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 
 private:

@@ -19,13 +19,13 @@ State::State() :
     input = std::make_shared<Input>(memory->GetBytePtr(eRegP1), interrupts);
 
     // Setup Memory observers.
-    interrupts->AttachToSubject(memory);
-    timer->AttachToSubject(memory);
-    input->AttachToSubject(memory);
+    interrupts->AttachToMemorySubject(memory);
+    timer->AttachToMemorySubject(memory);
+    input->AttachToMemorySubject(memory);
 
     // Setup Timer observers.
-    display->AttachToSubject(timer);
-    memory->AttachToSubject(timer);
+    display->AttachToTimerSubject(timer);
+    memory->AttachToTimerSubject(timer);
 }
 
 

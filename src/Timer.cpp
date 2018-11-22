@@ -31,20 +31,20 @@ Timer::Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV
 
 Timer::~Timer()
 {
-    if (subject)
+    if (memorySubject)
     {
-        //subject->DetachObserver(eRegTIMA, shared_from_this());
-        //subject->DetachObserver(eRegTMA, shared_from_this());
-        subject->DetachObserver(eRegTAC, this);
-        subject->DetachObserver(eRegDIV, this);
+        //memorySubject->DetachObserver(eRegTIMA, shared_from_this());
+        //memorySubject->DetachObserver(eRegTMA, shared_from_this());
+        memorySubject->DetachObserver(eRegTAC, this);
+        memorySubject->DetachObserver(eRegDIV, this);
     }
 }
 
 
 // This has to be called after construction.
-void Timer::AttachToSubject(std::shared_ptr<MemoryByteSubject> subject)
+void Timer::AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject)
 {
-    this->subject = subject;
+    this->memorySubject = subject;
     //subject->AttachObserver(eRegTIMA, shared_from_this());
     //subject->AttachObserver(eRegTMA, shared_from_this());
     subject->AttachObserver(eRegTAC, shared_from_this());
@@ -85,7 +85,7 @@ void Timer::ProcessCounterChange(uint16_t oldValue, uint16_t newValue)
     
     uint16_t frequencySelectMask = frequencyMapMask[*regTAC & 0x03];
 
-    DBG("CounterChange: %u %u %u\n", frequencySelectMask, (oldValue & frequencySelectMask), (newValue & frequencySelectMask));
+    //DBG("CounterChange: %u %u %u\n", frequencySelectMask, (oldValue & frequencySelectMask), (newValue & frequencySelectMask));
 
     // Check for an overflow of the bit selected by TAC.
     if ((oldValue & frequencySelectMask) && !(newValue & frequencySelectMask))

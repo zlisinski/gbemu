@@ -93,8 +93,8 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
 
 Display::~Display()
 {
-    if (subject)
-        subject->DetachObserver(this);
+    if (timerSubject)
+        timerSubject->DetachObserver(this);
 
     SDL_DestroyTexture(sdlTexture);
     SDL_DestroyRenderer(sdlRenderer);
@@ -103,9 +103,9 @@ Display::~Display()
 }
 
 
-void Display::AttachToSubject(std::shared_ptr<TimerSubject> subject)
+void Display::AttachToTimerSubject(std::shared_ptr<TimerSubject> subject)
 {
-    this->subject = subject;
+    this->timerSubject = subject;
     subject->AttachObserver(shared_from_this());
 }
 

@@ -105,7 +105,7 @@ public:
     void ClearMemory();
 
     // Inherited from TimerObserver.
-    virtual void AttachToSubject(std::shared_ptr<TimerSubject> subject);
+    virtual void AttachToTimerSubject(std::shared_ptr<TimerSubject> subject);
     virtual void UpdateTimer(uint value);
 
 private:

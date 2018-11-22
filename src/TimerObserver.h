@@ -7,12 +7,12 @@ class TimerSubject;
 class TimerObserver
 {
 public:
-    TimerObserver() : subject(NULL) {}
+    TimerObserver() : timerSubject(NULL) {}
 
-    virtual void AttachToSubject(std::shared_ptr<TimerSubject>) = 0;
+    virtual void AttachToTimerSubject(std::shared_ptr<TimerSubject>) = 0;
     
     virtual void UpdateTimer(uint value) = 0;
 
 protected:
-    std::shared_ptr<TimerSubject> subject;
+    std::shared_ptr<TimerSubject> timerSubject;
 };
