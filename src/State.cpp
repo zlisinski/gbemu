@@ -17,15 +17,18 @@ State::State() :
                                     memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
     display = std::make_shared<Display>(memory, interrupts);
     input = std::make_shared<Input>(memory->GetBytePtr(eRegP1), interrupts);
+    serial = std::make_shared<Serial>(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
 
     // Setup Memory observers.
     interrupts->AttachToMemorySubject(memory);
     timer->AttachToMemorySubject(memory);
     input->AttachToMemorySubject(memory);
+    serial->AttachToMemorySubject(memory);
 
     // Setup Timer observers.
     display->AttachToTimerSubject(timer);
     memory->AttachToTimerSubject(timer);
+    serial->AttachToTimerSubject(timer);
 }
 
 

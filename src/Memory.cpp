@@ -60,6 +60,9 @@ uint8_t Memory::ReadByte(uint16_t index) const
     if (index >= 0xE000 && index <= 0xFDFF)
         return memory[index - 0x2000];
 
+    if (index == eRegSC) // Unused regSC bits are always 1.
+        return memory[index] | 0x7E;
+
     return memory[index];
 }
 
@@ -80,18 +83,6 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
 {
     switch (index)
     {
-        case eRegSC: // 0xFF02
-            if (byte & 0x80)
-            {
-                FILE *file = fopen("serial.txt", "a");
-                fputc(memory[eRegSB], file);
-                fclose(file);
-                DBG("Serial: %02X, '%c'\n", memory[eRegSB], memory[eRegSB]);
-
-                memory[index] = byte;
-            }
-            return;
-
         case eRegDMA: // 0xFF46
             // Start a DMA transfer next cycle, if one is already active, start over at the beginning.
             memory[eRegDMA] = byte;

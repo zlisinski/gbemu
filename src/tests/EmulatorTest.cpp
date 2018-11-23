@@ -715,8 +715,8 @@ TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_N)
     // LD A, (0xFF00+N)
     ResetState();
     memory[0] = 0xF0;
-    memory[1] = 0x02;
-    memory[0xFF02] = 1;
+    memory[1] = 0xFE;
+    memory[0xFFFE] = 1;
     emulator.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);

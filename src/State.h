@@ -5,6 +5,7 @@
 #include "Input.h"
 #include "Interrupt.h"
 #include "Memory.h"
+#include "Serial.h"
 #include "Timer.h"
 
 class State
@@ -63,6 +64,7 @@ public:
     std::shared_ptr<Timer> timer;
     std::shared_ptr<Display> display;
     std::shared_ptr<Input> input;
+    std::shared_ptr<Serial> serial;
     bool halted;
 
     State();
