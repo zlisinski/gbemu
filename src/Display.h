@@ -20,6 +20,8 @@ public:
     Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> interrupts);
     ~Display();
 
+    void SetWindowTitle(const char *title);
+
     // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(std::shared_ptr<TimerSubject> subject);
     virtual void UpdateTimer(uint value);

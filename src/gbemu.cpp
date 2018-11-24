@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <map>
+#include <sstream>
 
 #include "gbemu.h"
 #include "Emulator.h"
@@ -202,9 +203,15 @@ int main(int argc, char **argv)
     Emulator emulator(&state);
 
     bool quit = false;
+    bool pause = false;
     SDL_Event e;
     SDL_Joystick *joystick = NULL;
     Buttons buttons;
+
+    std::stringstream ss;
+    ss << "gbemu " << romFilename;
+    std::string title = ss.str();
+    state.display->SetWindowTitle(title.c_str());
 
     if (SDL_NumJoysticks() >= 1)
     {
@@ -225,14 +232,22 @@ int main(int argc, char **argv)
             {
                 quit = true;
             }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
+            {
+                pause = !pause;
+                state.display->SetWindowTitle(pause ? (title + " Paused").c_str() : title.c_str());
+            }
             else
                 ProcessInput(e, buttons, state.input);
         }
 
-        emulator.ProcessOpCode();
-        state.PrintState();
-        //state.timer->PrintTimerData();
-        DBG("\n");
+        if (!pause)
+        {
+            emulator.ProcessOpCode();
+            state.PrintState();
+            //state.timer->PrintTimerData();
+            DBG("\n");
+        }
     }
 
     /*uint8_t *mem = state.memory->GetBytePtr(0);

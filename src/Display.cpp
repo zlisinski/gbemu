@@ -103,6 +103,12 @@ Display::~Display()
 }
 
 
+void Display::SetWindowTitle(const char *title)
+{
+    SDL_SetWindowTitle(sdlWindow, title);
+}
+
+
 void Display::AttachToTimerSubject(std::shared_ptr<TimerSubject> subject)
 {
     this->timerSubject = subject;
