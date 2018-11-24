@@ -41,6 +41,11 @@ TEST_F(MemoryTest, TEST_SetRomMemory_memcpy)
     memset(bootRomMemory.data(), 0x11, BOOT_ROM_SIZE);
     memset(gameRomMemory.data(), 0x22, gameRomMemory.size());
 
+    // Set MBC, RomSize, and RamSize bytes so SetRomMemory doesn't throw exceptions.
+    gameRomMemory[0x0147] = 0x00;
+    gameRomMemory[0x0148] = 0x00;
+    gameRomMemory[0x0149] = 0x00;
+
     Memory memory;
     memory.SetRomMemory(bootRomMemory, gameRomMemory);
 
@@ -55,6 +60,11 @@ TEST_F(MemoryTest, TEST_SetRomMemory_memcpy2)
 {
     std::vector<uint8_t> gameRomMemory(ROM_BANK_SIZE * 2);
     memset(gameRomMemory.data(), 0x22, gameRomMemory.size());
+
+    // Set MBC, RomSize, and RamSize bytes so SetRomMemory doesn't throw exceptions.
+    gameRomMemory[0x0147] = 0x00;
+    gameRomMemory[0x0148] = 0x00;
+    gameRomMemory[0x0149] = 0x00;
 
     Memory memory;
     memory.SetRomMemory(gameRomMemory);
@@ -72,6 +82,11 @@ TEST_F(MemoryTest, TEST_DisableBootRom)
     std::vector<uint8_t> gameRomMemory(ROM_BANK_SIZE * 2);
     memset(bootRomMemory.data(), 0x11, BOOT_ROM_SIZE);
     memset(gameRomMemory.data(), 0x22, gameRomMemory.size());
+
+    // Set MBC, RomSize, and RamSize bytes so SetRomMemory doesn't throw exceptions.
+    gameRomMemory[0x0147] = 0x00;
+    gameRomMemory[0x0148] = 0x00;
+    gameRomMemory[0x0149] = 0x00;
 
     Memory memory;
     memory.SetRomMemory(bootRomMemory, gameRomMemory);

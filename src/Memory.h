@@ -78,6 +78,15 @@ enum SpecialRegisters
     eRegIE    = 0xFFFF, // Interrupt enable
 };
 
+enum MbcTypes
+{
+    eMbcNone,
+    eMbc1,
+    eMbc2,
+    eMbc3,
+    eMbc5
+};
+
 const size_t MEM_SIZE = 0xFFFF;
 const size_t ROM_BANK_SIZE = 0x4000;
 const size_t BOOT_ROM_SIZE = 0x100;
@@ -110,6 +119,8 @@ public:
 
 private:
     void DisableBootRom();
+    void CheckRom();
+    void MapRomBank(uint bank);
 
     std::array<uint8_t, MEM_SIZE> memory;
 
@@ -118,4 +129,8 @@ private:
 
     bool isDmaActive;
     uint8_t dmaOffset;
+
+    MbcTypes mbcType;
+    uint8_t romBankCount;
+    uint8_t ramBankCount;
 };
