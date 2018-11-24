@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "Exceptions.h"
+
 extern bool debugOutput;
 
 #if 1

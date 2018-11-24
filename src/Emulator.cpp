@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "gbemu.h"
 #include "Emulator.h"
 #include "RegisterByteProxy.h"
@@ -37,8 +39,12 @@ Emulator::Emulator(State *state) :
 
 void Emulator::NotYetImplemented()
 {
-    printf("NYI opcode %02X at %04X\n", state->memory->ReadByte(state->pc-1), state->pc-1); // state->pc is advanced in ReadPC8Bit, so subtract 1.
-    exit(1);
+    // state->pc is advanced in ReadPC8Bit, so subtract 1 to get the real address of the error.
+    uint16_t addr = state->pc - 1;
+
+    std::stringstream ss;
+    ss << "NYI opcode 0x" << std::hex << std::uppercase << (int)state->memory->ReadByte(addr) << " at 0x" << (int)addr;
+    throw NotYetImplementedException(ss.str());
 }
 
 
