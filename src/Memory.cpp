@@ -85,6 +85,8 @@ void Memory::SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std
     memcpy(&memory[BOOT_ROM_SIZE], &gameRomMemory[BOOT_ROM_SIZE], size);
 
     CheckRom();
+
+    mbc = std::unique_ptr<MemoryBankController>(new MemoryBankController(mbcType, romBankCount, ramBankCount, this));
 }
 
 
@@ -98,6 +100,8 @@ void Memory::SetRomMemory(std::vector<uint8_t> &gameRomMemory)
     memcpy(&memory[0], &gameRomMemory[0], size);
 
     CheckRom();
+
+    mbc = std::unique_ptr<MemoryBankController>(new MemoryBankController(mbcType, romBankCount, ramBankCount, this));
 }
 
 
@@ -161,17 +165,8 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
     if (index < 0x8000)
     {
         DBG("Write to ROM area 0x%04X value 0x%02X\n", index, byte);
-
-        if (index >= 0x2000 && index <= 0x3FFF)
-        {
-            uint8_t bank = byte & 0x1F;
-
-            // Can't select bank 0.
-            if (bank == 0)
-                bank = 1;
-
-            MapRomBank(bank);
-        }
+        if (mbc)
+            mbc->WriteByte(index, byte);
     }
 
     // Let observers handle the update. If there are no observers for this address, update the value.
@@ -185,6 +180,7 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
 void Memory::ClearMemory()
 {
     memory.fill(0);
+    ramBanks.clear();
 }
 
 
@@ -279,5 +275,17 @@ void Memory::MapRomBank(uint bank)
 
     //printf("Copying ROM bank 0x%02X\n", bank);
 
-    memcpy(&memory[ROM_BANK_SIZE], &gameRomMemory[bank * ROM_BANK_SIZE], ROM_BANK_SIZE);
+    memcpy(&memory[SWITCHABLE_ROM_BANK_OFFSET], &gameRomMemory[bank * ROM_BANK_SIZE], ROM_BANK_SIZE);
+}
+
+
+void Memory::MapRamBank(uint bank)
+{
+
+}
+
+
+void Memory::EnableRam(bool enable)
+{
+    printf("Enable RAM = %s\n", enable ? "true" : "false");
 }

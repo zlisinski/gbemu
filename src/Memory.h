@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "gbemu.h"
+#include "MemoryBankController.h"
 #include "MemoryByteSubject.h"
 #include "TimerObserver.h"
 #include "TimerSubject.h"
@@ -78,17 +79,14 @@ enum SpecialRegisters
     eRegIE    = 0xFFFF, // Interrupt enable
 };
 
-enum MbcTypes
-{
-    eMbcNone,
-    eMbc1,
-    eMbc2,
-    eMbc3,
-    eMbc5
-};
 
 const size_t MEM_SIZE = 0xFFFF;
+
+const size_t SWITCHABLE_ROM_BANK_OFFSET = 0x4000;
 const size_t ROM_BANK_SIZE = 0x4000;
+const size_t SWITCHABLE_RAM_BANK_OFFSET = 0xA000;
+const size_t RAM_BANK_SIZE = 0x2000;
+
 const size_t BOOT_ROM_SIZE = 0x100;
 
 const uint16_t OAM_RAM_START = 0xFE00; // OAM(sprite) RAM is 0xFE00-0xFE9F.
@@ -96,7 +94,7 @@ const uint8_t OAM_RAM_LEN = 0xA0;
 
 // This could be a problem that Memory and Timer both observe each other. Both hold shared pointers to each other.
 // Fix this later, possibly move DMA to its own class.
-class Memory : public MemoryByteSubject, public TimerObserver, public std::enable_shared_from_this<Memory>
+class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver, public std::enable_shared_from_this<Memory>
 {
 public:
     Memory();
@@ -117,15 +115,25 @@ public:
     virtual void AttachToTimerSubject(std::shared_ptr<TimerSubject> subject);
     virtual void UpdateTimer(uint value);
 
+protected:
+    virtual void MapRomBank(uint bank);
+    virtual void MapRamBank(uint bank);
+    virtual void EnableRam(bool enable);
+
 private:
     void DisableBootRom();
     void CheckRom();
-    void MapRomBank(uint bank);
+
+    void LoadRamBanks();
+    void SaveRamBanks();
 
     std::array<uint8_t, MEM_SIZE> memory;
 
     std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
     std::vector<uint8_t> gameRomMemory;
+    std::vector<uint8_t[ROM_BANK_SIZE]> ramBanks;
+
+    std::unique_ptr<MemoryBankController> mbc;
 
     bool isDmaActive;
     uint8_t dmaOffset;
