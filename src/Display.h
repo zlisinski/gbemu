@@ -9,6 +9,8 @@ struct SDL_Window;
 struct SDL_Surface;
 struct SDL_Renderer;
 struct SDL_Texture;
+struct _TTF_Font;
+typedef struct _TTF_Font TTF_Font;
 class Memory;
 
 const uint SCREEN_X = 160;
@@ -47,6 +49,7 @@ private:
     void DrawTileLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg);
 
     void DrawScreen();
+    void DrawFPS();
 
     std::shared_ptr<Memory> memory;
     std::shared_ptr<Interrupt> interrupts;
@@ -69,9 +72,14 @@ private:
     SDL_Window *sdlWindow;
     SDL_Renderer *sdlRenderer;
     SDL_Texture *sdlTexture;
+    SDL_Texture *sdlFpsTexture;
+    TTF_Font *sdlFont;
 
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
     uint8_t bgColorMap[SCREEN_X * SCREEN_Y];
 
     uint16_t counter;
+
+    uint32_t frameTicks;
+    uint32_t frameCount;
 };

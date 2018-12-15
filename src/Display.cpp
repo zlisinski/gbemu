@@ -1,4 +1,7 @@
+#include <iomanip>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <sstream>
 #include <unistd.h>
 
 #include "Display.h"
@@ -12,7 +15,7 @@ const uint REAL_TILES_PER_SCREEN = REAL_SCREEN_SIZE / TILE_PIXEL_SIZE;
 const uint TILES_PER_X = SCREEN_X / TILE_PIXEL_SIZE;
 const uint TILES_PER_Y = SCREEN_Y / TILE_PIXEL_SIZE;
 const uint BG_SIZE = 256;
-const uint SCREEN_SCALE = 4;
+const uint8_t SCREEN_SCALE = 6;
 
 const uint16_t BG_TILE_MAP[] = {0x9800, 0x9C00};
 const uint16_t BG_TILE_MAP_LEN = 0x03FF;
@@ -73,7 +76,12 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
     displayMode(eMode0HBlank),
     sdlWindow(NULL),
     sdlRenderer(NULL),
-    counter(0)
+    sdlTexture(NULL),
+    sdlFpsTexture(NULL),
+    sdlFont(NULL),
+    counter(0),
+    frameTicks(0),
+    frameCount(0)
 {
     DBG("SDL Display\n");
     sdlWindow = SDL_CreateWindow("gbemu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_X*SCREEN_SCALE, SCREEN_Y*SCREEN_SCALE, SDL_WINDOW_SHOWN);
@@ -88,6 +96,14 @@ Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> inte
     SDL_RenderSetLogicalSize(sdlRenderer, SCREEN_X, SCREEN_Y);
 
     sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_X, SCREEN_Y);
+
+    sdlFont = TTF_OpenFont("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12);
+    if (sdlFont == NULL)
+    {
+        printf("TTF_OpenFont Error: %s\n", TTF_GetError());
+        SDL_Quit();
+        exit(1);
+    }
 }
 
 
@@ -96,7 +112,9 @@ Display::~Display()
     if (timerSubject)
         timerSubject->DetachObserver(this);
 
+    TTF_CloseFont(sdlFont);
     SDL_DestroyTexture(sdlTexture);
+    SDL_DestroyTexture(sdlFpsTexture);
     SDL_DestroyRenderer(sdlRenderer);
     SDL_DestroyWindow(sdlWindow);
     DBG("SDL_Destroy\n");
@@ -194,7 +212,7 @@ void Display::UpdateScanline()
         DrawScreen();
         //printf("SCY=%u\n", *regSCY);
         //usleep(16700);
-        usleep(100);
+        //usleep(100);
         //SDL_Delay(17);
     }
     else if (*regLY == 144)
@@ -391,5 +409,50 @@ void Display::DrawScreen()
     SDL_UpdateTexture(sdlTexture, NULL, frameBuffer, SCREEN_X * 4);
     SDL_RenderClear(sdlRenderer);
     SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL);
+
+    DrawFPS();
+
     SDL_RenderPresent(sdlRenderer);
+}
+
+
+void Display::DrawFPS()
+{
+    uint32_t curTicks = SDL_GetTicks();
+
+    // Only update the texture once a second, or if this is the first time.
+    if ((curTicks - frameTicks) > 1000 || sdlFpsTexture == NULL)
+    {
+        int fps = frameCount / ((curTicks - frameTicks) / 1000.0);
+
+        std::stringstream ss;
+        ss << fps << " FPS";
+
+        // Render text onto surface.
+        SDL_Color c = {0, 255, 0};
+        SDL_Color c2 = {0, 0, 0};
+        SDL_Surface *s = TTF_RenderText_Shaded(sdlFont, ss.str().c_str(), c, c2);
+
+        // (re)create the texture from the surface.
+        if (sdlFpsTexture)
+            SDL_DestroyTexture(sdlFpsTexture);
+        sdlFpsTexture = SDL_CreateTextureFromSurface(sdlRenderer, s);
+        SDL_FreeSurface(s);
+        s = NULL;
+
+        // Update ticks and count.
+        frameTicks = SDL_GetTicks();
+        frameCount = 0;
+    }
+    else
+    {
+        frameCount++;
+    }
+
+    // Calculate display size based on texture size, factoring in screen scaling.
+    int w, h;
+    SDL_QueryTexture(sdlFpsTexture, NULL, NULL, &w, &h);
+    SDL_Rect rect = {1, 1, w/SCREEN_SCALE, h/SCREEN_SCALE};
+
+    SDL_RenderCopy(sdlRenderer, sdlFpsTexture, NULL, &rect);
 }

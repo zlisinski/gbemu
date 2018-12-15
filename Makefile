@@ -1,6 +1,6 @@
 CPP=g++
 INCLUDES=#-I/usr/include/gtest
-LIBS=-lSDL2
+LIBS=-lSDL2 -lSDL2_ttf
 TEST_LIBS=-lgtest -lpthread
 LDFLAGS=-L./lib $(LIBS)
 CPPFLAGS=-c -g -Wall -Wpedantic -std=c++11 -pthread $(INCLUDES)
