@@ -37,19 +37,27 @@ private:
         eMode3TranferData = 3,
     };
 
+    struct SpriteData
+    {
+        uint8_t x;
+        uint8_t i;
+    };
+
     void SetMode(DisplayModes mode);
     void UpdateScanline();
 
     bool GetStatCheck();
 
-    void DrawScanline(uint scanline);
-    void DrawBackgroundScanline(uint scanline, uint scrollX, uint scrollY);
-    void DrawWindowScanline(uint scanline, uint windowX, uint windowY);
-    void DrawSprites();
+    void DrawScanline(uint8_t scanline);
+    void DrawBackgroundScanline(uint8_t scanline, uint8_t scrollX, uint8_t scrollY);
+    void DrawWindowScanline(uint8_t scanline, uint8_t windowX, uint8_t windowY);
+    void DrawSprites(uint8_t scanline);
     void DrawTileLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg);
 
     void DrawScreen();
     void DrawFPS();
+
+    static bool SpriteSort(const SpriteData &a, const SpriteData &b);
 
     std::shared_ptr<Memory> memory;
     std::shared_ptr<Interrupt> interrupts;

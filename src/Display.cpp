@@ -1,4 +1,4 @@
-#include <iomanip>
+#include <algorithm>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <sstream>
@@ -207,8 +207,6 @@ void Display::UpdateScanline()
 
     if (*regLY == 0)
     {
-        if (*regLCDC & eLCDCSpriteEnabled)
-            DrawSprites();
         DrawScreen();
         //printf("SCY=%u\n", *regSCY);
         //usleep(16700);
@@ -245,18 +243,18 @@ bool Display::GetStatCheck()
 }
 
 
-void Display::DrawScanline(uint scanline)
+void Display::DrawScanline(uint8_t scanline)
 {
     if (*regLCDC & eLCDCBGEnabled)
         DrawBackgroundScanline(scanline, *regSCX, *regSCY);
     if (*regLCDC & eLCDCWindowEnable)
         DrawWindowScanline(scanline, *regWX, *regWY);
-    // if (*regLCDC & eLCDCSpriteEnabled)
-    //     DrawSprites(scanline, *regSCX, *regSCY);
+    if (*regLCDC & eLCDCSpriteEnabled)
+        DrawSprites(scanline);
 }
 
 
-void Display::DrawBackgroundScanline(uint scanline, uint scrollX, uint scrollY)
+void Display::DrawBackgroundScanline(uint8_t scanline, uint8_t scrollX, uint8_t scrollY)
 {
     uint16_t tileDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
     uint8_t *tileData = memory->GetBytePtr(tileDataOffset);
@@ -281,7 +279,7 @@ void Display::DrawBackgroundScanline(uint scanline, uint scrollX, uint scrollY)
 }
 
 
-void Display::DrawWindowScanline(uint scanline, uint windowX, uint windowY)
+void Display::DrawWindowScanline(uint8_t scanline, uint8_t windowX, uint8_t windowY)
 {
     // Return if current scanline is above the window.
     if (scanline < windowY)
@@ -315,43 +313,81 @@ void Display::DrawWindowScanline(uint scanline, uint windowX, uint windowY)
 }
 
 
-//void Display::DrawSprites(uint scanline, uint scrollX, uint scrollY)
-void Display::DrawSprites()
+void Display::DrawSprites(uint8_t scanline)
 {
-    //y, x, chr_code, attr_data
+    const uint8_t xDisplayOffset = 8;
+    const uint8_t yDisplayOffset = 16;
     const uint8_t spriteSize = (*regLCDC & eLCDCSpriteSize) ? 16 : 8;
     const uint8_t *oamRam = memory->GetBytePtr(OAM_RAM);
     const uint8_t *spriteData = memory->GetBytePtr(BG_DATA_OFFSET[1]);
 
-    for (uint i = 0; i < 160; i += 4)
+    std::vector<SpriteData> sprites;
+
+    // Find all sprites on scanline.
+    for (uint8_t i = 0; i < 160; i += 4)
     {
+        uint8_t yPos = oamRam[i + 0];
+        uint8_t xPos = oamRam[i + 1];
+
+        // Skip sprites that are off screen in the y pos. Include sprites off the screen in the x pos,
+        // since this affects the number of sprites drawn per scanline.
+        if (yPos == 0 || yPos >= (SCREEN_Y + yDisplayOffset))
+            continue;
+
+        // Sprite position needs to be offset because of 0 not being displayed.
+        yPos -= yDisplayOffset;
+
+        // Add sprites that are on this scanline.
+        if (scanline >= yPos && scanline < (yPos + spriteSize))
+        {
+            sprites.push_back({xPos, i});
+        }
+    }
+
+    // Return if there are no sprites to draw on this scanline.
+    if (sprites.size() == 0)
+        return;
+
+    // Sort sprites according to x and i priority.
+    std::sort(sprites.begin(), sprites.end(), Display::SpriteSort);
+
+    uint8_t spriteCount = 0;
+    for (const SpriteData &sprite : sprites)
+    {
+        // GB can only display 10 sprites per scanline.
+        spriteCount++;
+        if (spriteCount > 10)
+            break;
+
+        uint8_t i = sprite.i;
+
         uint8_t yPos = oamRam[i + 0];
         uint8_t xPos = oamRam[i + 1];
         uint8_t spriteId = oamRam[i + 2];
         uint8_t spriteAttr = oamRam[i + 3];
-
         uint8_t paletteReg = (spriteAttr & eSpriteAttrPalette) ? *regOBP1 : *regOBP0;
         bool flipX = spriteAttr & eSpriteAttrFlipX;
         bool flipY = spriteAttr & eSpriteAttrFlipY;
         bool bgPriority = spriteAttr & eSpriteAttrBgPriority;
+
+        // In 8x16 mode, only even sprites can be used.
+        if (spriteSize == 16)
+            spriteId &= 0xFE;
 
         // Sprites with a position of 0 are not displayed.
         if (xPos == 0 || yPos == 0)
             continue;
 
         // Sprite position needs to be offset because of 0 not being displayed.
-        xPos -= 8;
-        yPos -= 16;
+        xPos -= xDisplayOffset;
+        yPos -= yDisplayOffset;
 
-        for (uint line_ = 0; line_ < spriteSize; line_++)
-        {
-            uint line = line_;
-            if (flipY)
-                line = (spriteSize - 1) - line_;
+        uint8_t line = (scanline - yPos);
+        if (flipY)
+            line = (spriteSize - 1) - line;
+        uint16_t spriteDataOffset = (spriteId * TILE_DATA_SIZE) + (line * 2);
 
-            uint16_t spriteOffset = (spriteId * spriteSize * 2) + (line * 2);
-            DrawTileLine(spriteData[spriteOffset], spriteData[spriteOffset + 1], xPos, yPos + line_, paletteReg, flipX, bgPriority, false);
-        }
+        DrawTileLine(spriteData[spriteDataOffset], spriteData[spriteDataOffset + 1], xPos, scanline, paletteReg, flipX, bgPriority, false);
     }
 }
 
@@ -455,4 +491,13 @@ void Display::DrawFPS()
     SDL_Rect rect = {1, 1, w/SCREEN_SCALE, h/SCREEN_SCALE};
 
     SDL_RenderCopy(sdlRenderer, sdlFpsTexture, NULL, &rect);
+}
+
+
+bool Display::SpriteSort(const SpriteData &a, const SpriteData &b)
+{
+    if (a.x == b.x)
+        return a.i > b.i;
+
+    return a.x > b.x;
 }
