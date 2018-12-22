@@ -202,12 +202,12 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    State state;
+    State* state = new State();
     if (runbootRom)
-        state.SetRomMemory(bootRomMemory, gameRomMemory);
+        state->SetRomMemory(bootRomMemory, gameRomMemory);
     else
-        state.SetRomMemory(gameRomMemory);
-    Emulator emulator(&state);
+        state->SetRomMemory(gameRomMemory);
+    Emulator emulator(state);
 
     bool quit = false;
     bool pause = false;
@@ -218,7 +218,7 @@ int main(int argc, char **argv)
     std::stringstream ss;
     ss << "gbemu " << romFilename;
     std::string title = ss.str();
-    state.display->SetWindowTitle(title.c_str());
+    state->display->SetWindowTitle(title.c_str());
 
     if (SDL_NumJoysticks() >= 1)
     {
@@ -242,16 +242,16 @@ int main(int argc, char **argv)
             else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
             {
                 pause = !pause;
-                state.display->SetWindowTitle(pause ? (title + " Paused").c_str() : title.c_str());
+                state->display->SetWindowTitle(pause ? (title + " Paused").c_str() : title.c_str());
             }
             else
-                ProcessInput(e, buttons, state.input);
+                ProcessInput(e, buttons, state->input);
         }
 
         if (!pause)
         {
             emulator.ProcessOpCode();
-            state.PrintState();
+            state->PrintState();
             //state.timer->PrintTimerData();
             DBG("\n");
         }
@@ -267,6 +267,8 @@ int main(int argc, char **argv)
     DumpMemory(mem, 0x9800, 0x0400);
     printf("\n");
     DumpMemory(mem, 0x9C00, 0x0400);*/
+
+    delete state;
 
     if (joystick)
         SDL_JoystickClose(joystick);
