@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "Display.h"
+#include "Globals.h"
 #include "Memory.h"
 
 const uint TILE_DATA_SIZE = 16; // Tile is 16 bytes.
@@ -81,7 +82,8 @@ Display::Display(Memory* memory, Interrupt* interrupts) :
     sdlFont(NULL),
     counter(0),
     frameTicks(0),
-    frameCount(0)
+    frameCount(0),
+    lastFrameTicks(SDL_GetTicks())
 {
     DBG("SDL Display\n");
     sdlWindow = SDL_CreateWindow("gbemu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_X*SCREEN_SCALE, SCREEN_Y*SCREEN_SCALE, SDL_WINDOW_SHOWN);
@@ -447,9 +449,21 @@ void Display::DrawScreen()
     SDL_RenderClear(sdlRenderer);
     SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL);
 
-    DrawFPS();
+    if (Globals::getInstance().showFps)
+        DrawFPS();
 
     SDL_RenderPresent(sdlRenderer);
+
+    uint32_t ticks = SDL_GetTicks();
+
+    // Cap frame rate.
+    const float frameMillis = 1.0 / 60 * 1000;
+    if (Globals::getInstance().capFps && (ticks - lastFrameTicks) < frameMillis)
+    {
+        usleep((frameMillis - (ticks - lastFrameTicks)) * 1000);
+    }
+
+    lastFrameTicks = ticks;
 }
 
 

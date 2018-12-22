@@ -5,6 +5,7 @@
 
 #include "gbemu.h"
 #include "Emulator.h"
+#include "Globals.h"
 #include "Input.h"
 #include "State.h"
 
@@ -243,6 +244,14 @@ int main(int argc, char **argv)
             {
                 pause = !pause;
                 state->display->SetWindowTitle(pause ? (title + " Paused").c_str() : title.c_str());
+            }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_F10)
+            {
+                Globals::getInstance().showFps = !Globals::getInstance().showFps;
+            }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_F11)
+            {
+                Globals::getInstance().capFps = !Globals::getInstance().capFps;
             }
             else
                 ProcessInput(e, buttons, state->input);

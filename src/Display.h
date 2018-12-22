@@ -90,4 +90,5 @@ private:
 
     uint32_t frameTicks;
     uint32_t frameCount;
+    uint32_t lastFrameTicks;
 };
