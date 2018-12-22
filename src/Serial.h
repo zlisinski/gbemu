@@ -11,7 +11,7 @@
 class Serial : public MemoryByteObserver, public TimerObserver
 {
 public:
-    Serial(uint8_t *regSB, uint8_t *regSC, std::shared_ptr<Interrupt> interrupts);
+    Serial(uint8_t *regSB, uint8_t *regSC, Interrupt* interrupts);
     virtual ~Serial();
 
     virtual void AttachToMemorySubject(MemoryByteSubject* subject);
@@ -23,7 +23,7 @@ public:
 private:
     uint8_t *regSB;
     uint8_t *regSC;
-    std::shared_ptr<Interrupt> interrupts;
+    Interrupt* interrupts;
 
     uint counter;
     bool inProgress;

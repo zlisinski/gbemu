@@ -19,8 +19,8 @@ const uint SCREEN_Y = 144;
 class Display : public TimerObserver
 {
 public:
-    Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> interrupts);
-    ~Display();
+    Display(Memory* memory, Interrupt* interrupts);
+    virtual ~Display();
 
     void SetWindowTitle(const char *title);
 
@@ -59,8 +59,8 @@ private:
 
     static bool SpriteSort(const SpriteData &a, const SpriteData &b);
 
-    std::shared_ptr<Memory> memory;
-    std::shared_ptr<Interrupt> interrupts;
+    Memory* memory;
+    Interrupt* interrupts;
 
     uint8_t *regLCDC;  // 0xFF40 LCD control
     uint8_t *regSTAT;  // 0xFF41 LCDC status

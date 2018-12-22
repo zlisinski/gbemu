@@ -13,7 +13,7 @@
 class Timer : public MemoryByteObserver, public TimerSubject
 {
 public:
-    Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, std::shared_ptr<Interrupt> interrupts);
+    Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, Interrupt* interrupts);
     virtual ~Timer();
 
     void AddCycle();
@@ -41,5 +41,5 @@ private:
 
     bool regTIMAOverflowed;
 
-    std::shared_ptr<Interrupt> interrupts;
+    Interrupt* interrupts;
 };

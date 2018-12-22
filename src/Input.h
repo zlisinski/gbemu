@@ -9,7 +9,7 @@
 class Input : public MemoryByteObserver
 {
 public:
-    Input(uint8_t *regP1, std::shared_ptr<Interrupt> interrupts);
+    Input(uint8_t *regP1, Interrupt* interrupts);
     virtual ~Input();
 
     void SetButtons(const Buttons &buttons);
@@ -22,7 +22,7 @@ private:
     void UpdateRegP1(uint8_t newP1);
 
     uint8_t *regP1;
-    std::shared_ptr<Interrupt> interrupts;
+    Interrupt* interrupts;
 
     Buttons buttonData;
 };

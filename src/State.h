@@ -59,12 +59,12 @@ public:
 
     uint16_t pc;
     uint16_t sp;
-    std::shared_ptr<Memory> memory;
-    std::shared_ptr<Interrupt> interrupts;
-    std::shared_ptr<Timer> timer;
-    std::shared_ptr<Display> display;
-    std::shared_ptr<Input> input;
-    std::shared_ptr<Serial> serial;
+    Memory* memory;
+    Interrupt* interrupts;
+    Timer* timer;
+    Display* display;
+    Input* input;
+    Serial* serial;
     bool halted;
 
     State();

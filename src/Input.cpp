@@ -12,7 +12,7 @@ enum ButtonMask
 };
 
 
-Input::Input(uint8_t *regP1, std::shared_ptr<Interrupt> interrupts) :
+Input::Input(uint8_t *regP1, Interrupt* interrupts) :
     regP1(regP1),
     interrupts(interrupts),
     buttonData()

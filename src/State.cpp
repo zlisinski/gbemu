@@ -11,30 +11,35 @@ State::State() :
     sp(0),
     halted(false)
 {
-    memory = std::make_shared<Memory>();
-    interrupts = std::make_shared<Interrupt>(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
-    timer = std::make_shared<Timer>(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
-                                    memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
-    display = std::make_shared<Display>(memory, interrupts);
-    input = std::make_shared<Input>(memory->GetBytePtr(eRegP1), interrupts);
-    serial = std::make_shared<Serial>(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
+    memory = new Memory();
+    interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
+    timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
+                      memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
+    display = new Display(memory, interrupts);
+    input = new Input(memory->GetBytePtr(eRegP1), interrupts);
+    serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
 
     // Setup Memory observers.
-    interrupts->AttachToMemorySubject(memory.get());
-    timer->AttachToMemorySubject(memory.get());
-    input->AttachToMemorySubject(memory.get());
-    serial->AttachToMemorySubject(memory.get());
+    interrupts->AttachToMemorySubject(memory);
+    timer->AttachToMemorySubject(memory);
+    input->AttachToMemorySubject(memory);
+    serial->AttachToMemorySubject(memory);
 
     // Setup Timer observers.
-    display->AttachToTimerSubject(timer.get());
-    memory->AttachToTimerSubject(timer.get());
-    serial->AttachToTimerSubject(timer.get());
+    display->AttachToTimerSubject(timer);
+    memory->AttachToTimerSubject(timer);
+    serial->AttachToTimerSubject(timer);
 }
 
 
 State::~State()
 {
-
+    delete serial;
+    delete input;
+    delete display;
+    delete timer;
+    delete interrupts;
+    delete memory;
 }
 
 

@@ -3,7 +3,7 @@
 
 const uint cyclesPerBit = 8;
 
-Serial::Serial(uint8_t *regSB, uint8_t *regSC, std::shared_ptr<Interrupt> interrupts) :
+Serial::Serial(uint8_t *regSB, uint8_t *regSC, Interrupt* interrupts) :
     regSB(regSB),
     regSC(regSC),
     interrupts(interrupts),

@@ -16,7 +16,7 @@ const uint8_t timerEnabledMask = 0x04;
 const uint8_t clocksPerCycle = 4;
 
 
-Timer::Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, std::shared_ptr<Interrupt> interrupts) :
+Timer::Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, Interrupt* interrupts) :
     regTIMA(regTIMA),
     regTMA(regTMA),
     regTAC(regTAC),
@@ -33,8 +33,8 @@ Timer::~Timer()
 {
     if (memorySubject)
     {
-        //memorySubject->DetachObserver(eRegTIMA, shared_from_this());
-        //memorySubject->DetachObserver(eRegTMA, shared_from_this());
+        //memorySubject->DetachObserver(eRegTIMA, this);
+        //memorySubject->DetachObserver(eRegTMA, this);
         memorySubject->DetachObserver(eRegTAC, this);
         memorySubject->DetachObserver(eRegDIV, this);
     }

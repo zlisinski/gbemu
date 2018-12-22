@@ -53,9 +53,9 @@ ByteProxy Emulator::GetByteProxy(uint8_t bits)
     uint8_t *ptr = regMap8Bit[bits & 0x07];
 
     if (ptr != NULL)
-        return std::make_shared<RegisterByteProxy>(ptr);
+        return new RegisterByteProxy(ptr);
 
-    return std::make_shared<MemoryByteProxy>(state->hl, state->memory.get());
+    return new MemoryByteProxy(state->hl, state->memory);
 }
 
 
@@ -306,6 +306,9 @@ void Emulator::ProcessOpCode()
                 DBG("%02X: LD %s, %s\n", opcode, destStr, srcStr);
 
                 *dest = src->Value();
+
+                delete dest;
+                delete src;
             }
             break;
 
@@ -329,6 +332,8 @@ void Emulator::ProcessOpCode()
                 DBG("%02X %02X: LD %s, %02X\n", opcode, x, destStr, x);
 
                 *dest = x;
+
+                delete dest;
             }
             break;
 
@@ -573,6 +578,8 @@ void Emulator::ProcessOpCode()
                 DBG("%02X: ADD A, %s\n", opcode, srcStr);
 
                 state->a = Add8Bit(state->a, *src);
+
+                delete src;
             }
             break;
         case 0xC6: // ADD A, n
@@ -602,6 +609,8 @@ void Emulator::ProcessOpCode()
                 DBG("%02X: ADC A, %s, %d\n", opcode, srcStr, state->flags.c);
 
                 state->a = Add8Bit(state->a, *src, state->flags.c);
+
+                delete src;
             }
             break;
         case 0xCE: // ADC A, n
@@ -631,6 +640,8 @@ void Emulator::ProcessOpCode()
                 DBG("%02X: SUB A, %s\n", opcode, srcStr);
 
                 state->a = Sub8Bit(state->a, *src);
+
+                delete src;
             }
             break;
         case 0xD6: // SUB A, n
@@ -660,6 +671,8 @@ void Emulator::ProcessOpCode()
                 DBG("%02X: SBC A, %s, %d\n", opcode, srcStr, state->flags.c);
 
                 state->a = Sub8Bit(state->a, *src, state->flags.c);
+
+                delete src;
             }
             break;
         case 0xDE: // SBC A, n
@@ -734,6 +747,8 @@ void Emulator::ProcessOpCode()
                 state->ClearFlags();
                 state->flags.h = 1;
                 state->flags.z = !state->a;
+
+                delete src;
             }
             break;
         case 0xE6: // AND A, n
@@ -772,6 +787,8 @@ void Emulator::ProcessOpCode()
 
                 state->ClearFlags();
                 state->flags.z = !state->a;
+
+                delete src;
             }
             break;
         case 0xEE: // XOR A, n
@@ -809,6 +826,8 @@ void Emulator::ProcessOpCode()
 
                 state->ClearFlags();
                 state->flags.z = !state->a;
+
+                delete src;
             }
             break;
         case 0xF6: // OR A, n
@@ -844,6 +863,8 @@ void Emulator::ProcessOpCode()
 
                 // Subtract and don't save result.
                 Sub8Bit(state->a, *src);
+
+                delete src;
             }
             break;
         case 0xFE: // CP A, n
@@ -898,6 +919,8 @@ void Emulator::ProcessOpCode()
                 uint8_t oldCarry = state->flags.c;
                 *src = Add8Bit(srcVal, 1);
                 state->flags.c = oldCarry;
+
+                delete src;
             }
             break;
             
@@ -928,6 +951,8 @@ void Emulator::ProcessOpCode()
                 uint8_t oldCarry = state->flags.c;
                 *src = Sub8Bit(srcVal, 1);
                 state->flags.c = oldCarry;
+
+                delete src;
             }
             break;
 
@@ -1304,6 +1329,8 @@ void Emulator::ProcessOpCode()
                         }
                         break;
                 }
+
+                delete src;
             }
             break;
 

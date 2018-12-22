@@ -125,7 +125,7 @@ void DumpMemory(uint8_t *mem, uint start, uint len)
 }
 
 
-void ProcessInput(const SDL_Event &e, Buttons &buttons, std::shared_ptr<Input> input)
+void ProcessInput(const SDL_Event &e, Buttons &buttons, Input* input)
 {
     uint8_t oldButtonData = buttons.data;
 
@@ -271,6 +271,7 @@ int main(int argc, char **argv)
     if (joystick)
         SDL_JoystickClose(joystick);
 
+    TTF_Quit();
     SDL_Quit();
 
     return 0;

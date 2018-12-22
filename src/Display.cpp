@@ -58,7 +58,7 @@ enum SpriteAttrBits
     eSpriteAttrBgPriority = 0x80
 };
 
-Display::Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> interrupts) :
+Display::Display(Memory* memory, Interrupt* interrupts) :
     memory(memory),
     interrupts(interrupts),
     regLCDC(memory->GetBytePtr(eRegLCDC)),

@@ -92,8 +92,7 @@ const size_t BOOT_ROM_SIZE = 0x100;
 const uint16_t OAM_RAM_START = 0xFE00; // OAM(sprite) RAM is 0xFE00-0xFE9F.
 const uint8_t OAM_RAM_LEN = 0xA0;
 
-// This could be a problem that Memory and Timer both observe each other. Both hold shared pointers to each other.
-// Fix this later, possibly move DMA to its own class.
+
 class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver
 {
 public:
