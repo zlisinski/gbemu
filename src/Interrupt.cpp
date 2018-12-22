@@ -79,12 +79,12 @@ void Interrupt::ClearInterrupt(eInterruptTypes type)
 }
 
 
-void Interrupt::AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject)
+void Interrupt::AttachToMemorySubject(MemoryByteSubject* subject)
 {
     this->memorySubject = subject;
 
-    subject->AttachObserver(eRegIE, shared_from_this());
-    subject->AttachObserver(eRegIF, shared_from_this());
+    subject->AttachObserver(eRegIE, this);
+    subject->AttachObserver(eRegIF, this);
 }
 
 

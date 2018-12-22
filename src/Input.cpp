@@ -31,11 +31,11 @@ Input::~Input()
 }
 
 
-void Input::AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject)
+void Input::AttachToMemorySubject(MemoryByteSubject* subject)
 {
     this->memorySubject = subject;
 
-    subject->AttachObserver(eRegP1, shared_from_this());
+    subject->AttachObserver(eRegP1, this);
 }
 
 

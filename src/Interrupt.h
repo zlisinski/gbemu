@@ -24,7 +24,7 @@ enum eInterruptBits
 };
 
 
-class Interrupt : public MemoryByteObserver, public std::enable_shared_from_this<Interrupt>
+class Interrupt : public MemoryByteObserver
 {
 public:
     Interrupt(uint8_t *regIE, uint8_t *regIF);
@@ -41,7 +41,7 @@ public:
     void ClearInterrupt(eInterruptTypes type);
     
     // Inherited from MemoryByteObserver.
-    virtual void AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject);
+    virtual void AttachToMemorySubject(MemoryByteSubject* subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 
 private:

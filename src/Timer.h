@@ -10,7 +10,7 @@
 // The memory for the timer registers belongs to the Memory class, but the Timer class 'owns' the access to the memory.
 // Because of this, we use direct pointers to the memory, and any writes that happen through the Memory class will get
 // sent to this class for processing.
-class Timer : public MemoryByteObserver, public TimerSubject, public std::enable_shared_from_this<Timer>
+class Timer : public MemoryByteObserver, public TimerSubject
 {
 public:
     Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, std::shared_ptr<Interrupt> interrupts);
@@ -22,7 +22,7 @@ public:
     void WriteTAC(uint8_t newValue);
 
     // Inherited from MemoryByteObserver.
-    void AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject);
+    void AttachToMemorySubject(MemoryByteSubject* subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 
     void PrintTimerData();

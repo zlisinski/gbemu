@@ -42,13 +42,13 @@ Timer::~Timer()
 
 
 // This has to be called after construction.
-void Timer::AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject)
+void Timer::AttachToMemorySubject(MemoryByteSubject* subject)
 {
     this->memorySubject = subject;
-    //subject->AttachObserver(eRegTIMA, shared_from_this());
-    //subject->AttachObserver(eRegTMA, shared_from_this());
-    subject->AttachObserver(eRegTAC, shared_from_this());
-    subject->AttachObserver(eRegDIV, shared_from_this());
+    //subject->AttachObserver(eRegTIMA, this);
+    //subject->AttachObserver(eRegTMA, this);
+    subject->AttachObserver(eRegTAC, this);
+    subject->AttachObserver(eRegDIV, this);
 }
 
 

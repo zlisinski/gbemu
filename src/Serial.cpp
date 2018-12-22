@@ -25,10 +25,10 @@ Serial::~Serial()
 }
 
 
-void Serial::AttachToMemorySubject(std::shared_ptr<MemoryByteSubject> subject)
+void Serial::AttachToMemorySubject(MemoryByteSubject* subject)
 {
    this->memorySubject = subject;
-    subject->AttachObserver(eRegSC, shared_from_this());
+    subject->AttachObserver(eRegSC, this);
 }
 
 

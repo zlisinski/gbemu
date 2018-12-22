@@ -20,10 +20,10 @@ State::State() :
     serial = std::make_shared<Serial>(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
 
     // Setup Memory observers.
-    interrupts->AttachToMemorySubject(memory);
-    timer->AttachToMemorySubject(memory);
-    input->AttachToMemorySubject(memory);
-    serial->AttachToMemorySubject(memory);
+    interrupts->AttachToMemorySubject(memory.get());
+    timer->AttachToMemorySubject(memory.get());
+    input->AttachToMemorySubject(memory.get());
+    serial->AttachToMemorySubject(memory.get());
 
     // Setup Timer observers.
     display->AttachToTimerSubject(timer.get());
