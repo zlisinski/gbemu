@@ -24,7 +24,7 @@ const uint16_t BG_DATA_LEN = 0x0FFF;
 const uint16_t WIN_TILE_MAP[] = {0x9800, 0x9C00};
 const uint16_t WIN_TILE_MAP_LEN = 0x03FF;
 const uint16_t OAM_RAM = 0xFE00;
-const uint16_t OAM_LEN = 0x009F;
+const uint16_t OAM_LEN = 0x00A0;
 const uint16_t ClockPerScanline = 456;
 
 const uint8_t palette[4][3] = {{0xFF, 0xFF, 0xFF}, {0xB0, 0xB0, 0xB0}, {0x68, 0x68, 0x68}, {0x00, 0x00, 0x00}};
@@ -127,10 +127,10 @@ void Display::SetWindowTitle(const char *title)
 }
 
 
-void Display::AttachToTimerSubject(std::shared_ptr<TimerSubject> subject)
+void Display::AttachToTimerSubject(TimerSubject* subject)
 {
     this->timerSubject = subject;
-    subject->AttachObserver(shared_from_this());
+    subject->AttachObserver(this);
 }
 
 
@@ -322,9 +322,10 @@ void Display::DrawSprites(uint8_t scanline)
     const uint8_t *spriteData = memory->GetBytePtr(BG_DATA_OFFSET[1]);
 
     std::vector<SpriteData> sprites;
+    sprites.reserve(OAM_LEN);
 
     // Find all sprites on scanline.
-    for (uint8_t i = 0; i < 160; i += 4)
+    for (uint8_t i = 0; i < OAM_LEN; i += 4)
     {
         uint8_t yPos = oamRam[i + 0];
         uint8_t xPos = oamRam[i + 1];

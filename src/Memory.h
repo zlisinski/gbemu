@@ -94,7 +94,7 @@ const uint8_t OAM_RAM_LEN = 0xA0;
 
 // This could be a problem that Memory and Timer both observe each other. Both hold shared pointers to each other.
 // Fix this later, possibly move DMA to its own class.
-class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver, public std::enable_shared_from_this<Memory>
+class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver
 {
 public:
     Memory();
@@ -112,7 +112,7 @@ public:
     void ClearMemory();
 
     // Inherited from TimerObserver.
-    virtual void AttachToTimerSubject(std::shared_ptr<TimerSubject> subject);
+    virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
 
 protected:

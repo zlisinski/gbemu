@@ -5,37 +5,41 @@
 #include "gbemu.h"
 #include "TimerObserver.h"
 
-
+// std::vector was a significant slowdown. Using a static array of pointers speeds this up significantly,
+// since NotifyObservers() is called at least once per opcode.
 class TimerSubject
 {
 public:
-    virtual void AttachObserver(std::weak_ptr<TimerObserver> observer)
+    TimerSubject() : timerObserverCount(0)
     {
-        timerObservers.push_back(observer);
+        for (int i = 0; i < timerObserversMax; i++)
+            timerObservers[i] = NULL;
+    }
+
+    virtual void AttachObserver(TimerObserver* observer)
+    {
+        timerObservers[timerObserverCount++] = observer;
     }
 
     virtual void DetachObserver(TimerObserver *observer)
     {
-        for (auto it = timerObservers.begin(); it != timerObservers.end(); ++it)
-        {
-            if (it->lock().get() == observer)
-                timerObservers.erase(it);
-            break;
-        }
+        // Don't worry about this for now, since the only time this is called is when
+        // the application exits anyway.
     }
 
     virtual void NotifyObservers(uint value)
     {
-        for (auto it = timerObservers.begin(); it != timerObservers.end(); ++it)
+        for (int i = 0; i < timerObserverCount; i++)
         {
-            std::shared_ptr<TimerObserver> observer = it->lock();
-            if (observer)
+            if (timerObservers[i])
             {
-                observer->UpdateTimer(value);
+                timerObservers[i]->UpdateTimer(value);
             }
         }
     }
 
 protected:
-    std::list<std::weak_ptr<TimerObserver>> timerObservers;
+    static const int timerObserversMax = 3;
+    int timerObserverCount;
+    TimerObserver* timerObservers[timerObserversMax];
 };

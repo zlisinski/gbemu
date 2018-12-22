@@ -26,9 +26,9 @@ State::State() :
     serial->AttachToMemorySubject(memory);
 
     // Setup Timer observers.
-    display->AttachToTimerSubject(timer);
-    memory->AttachToTimerSubject(timer);
-    serial->AttachToTimerSubject(timer);
+    display->AttachToTimerSubject(timer.get());
+    memory->AttachToTimerSubject(timer.get());
+    serial->AttachToTimerSubject(timer.get());
 }
 
 

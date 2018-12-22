@@ -49,10 +49,10 @@ void Serial::UpdateMemoryAddr(uint16_t addr, uint8_t value)
 }
 
 
-void Serial::AttachToTimerSubject(std::shared_ptr<TimerSubject> subject)
+void Serial::AttachToTimerSubject(TimerSubject* subject)
 {
     this->timerSubject = subject;
-    subject->AttachObserver(shared_from_this());
+    subject->AttachObserver(this);
 }
 
 

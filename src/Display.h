@@ -16,7 +16,7 @@ class Memory;
 const uint SCREEN_X = 160;
 const uint SCREEN_Y = 144;
 
-class Display : public TimerObserver, public std::enable_shared_from_this<Display>
+class Display : public TimerObserver
 {
 public:
     Display(std::shared_ptr<Memory> memory, std::shared_ptr<Interrupt> interrupts);
@@ -25,7 +25,7 @@ public:
     void SetWindowTitle(const char *title);
 
     // Inherited from TimerObserver.
-    virtual void AttachToTimerSubject(std::shared_ptr<TimerSubject> subject);
+    virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
 
 private:

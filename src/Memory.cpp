@@ -184,10 +184,10 @@ void Memory::ClearMemory()
 }
 
 
-void Memory::AttachToTimerSubject(std::shared_ptr<TimerSubject> subject)
+void Memory::AttachToTimerSubject(TimerSubject* subject)
 {
     this->timerSubject = subject;
-    subject->AttachObserver(shared_from_this());
+    subject->AttachObserver(this);
 }
 
 
