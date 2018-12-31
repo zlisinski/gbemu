@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "Exceptions.h"
+#include "Utils.h"
 
 extern bool debugOutput;
 

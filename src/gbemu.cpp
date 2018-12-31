@@ -114,18 +114,6 @@ bool loadGameRom(const char *filename, std::vector<uint8_t> &memory)
 }
 
 
-void DumpMemory(uint8_t *mem, uint start, uint len)
-{
-    for (uint i = 0; i < len; i += 16)
-    {
-        uint off = start + i;
-        uint8_t *b = mem + off;
-        printf("%04X: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n", off,
-            b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
-    }
-}
-
-
 void ProcessInput(const SDL_Event &e, Buttons &buttons, Input* input)
 {
     uint8_t oldButtonData = buttons.data;
@@ -266,16 +254,16 @@ int main(int argc, char **argv)
         }
     }
 
-    /*uint8_t *mem = state.memory->GetBytePtr(0);
+    /*uint8_t *mem = state->memory->GetBytePtr(0);
 
     printf("\n");
-    DumpMemory(mem, 0xFF00, 0x48);
+    HexDump(mem, 0xFF00, 0x48);
     printf("\n");
-    DumpMemory(mem, 0x8000, 0x1800);
+    HexDump(mem, 0x8000, 0x1800);
     printf("\n");
-    DumpMemory(mem, 0x9800, 0x0400);
+    HexDump(mem, 0x9800, 0x0400);
     printf("\n");
-    DumpMemory(mem, 0x9C00, 0x0400);*/
+    HexDump(mem, 0x9C00, 0x0400);*/
 
     delete state;
 
