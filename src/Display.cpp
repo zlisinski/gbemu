@@ -99,7 +99,7 @@ Display::Display(Memory* memory, Interrupt* interrupts) :
 
     sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_X, SCREEN_Y);
 
-    sdlFont = TTF_OpenFont("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12);
+    sdlFont = TTF_OpenFont("./font/FreeSans.ttf", 12);
     if (sdlFont == NULL)
     {
         printf("TTF_OpenFont Error: %s\n", TTF_GetError());
