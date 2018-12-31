@@ -167,6 +167,8 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
         DBG("Write to ROM area 0x%04X value 0x%02X\n", index, byte);
         if (mbc)
             mbc->WriteByte(index, byte);
+
+        return;
     }
 
     // Let observers handle the update. If there are no observers for this address, update the value.
@@ -273,7 +275,7 @@ void Memory::MapRomBank(uint bank)
         //throw std::range_error(ss.str());
     }
 
-    //printf("Copying ROM bank 0x%02X\n", bank);
+    DBG("Copying ROM bank 0x%02X\n", bank);
 
     memcpy(&memory[SWITCHABLE_ROM_BANK_OFFSET], &gameRomMemory[bank * ROM_BANK_SIZE], ROM_BANK_SIZE);
 }
