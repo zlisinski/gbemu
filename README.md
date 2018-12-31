@@ -4,12 +4,12 @@ This project is primarily written to work on Ubuntu 18.04, using g++ 7.3.0 and g
 
 Building on Ubuntu:
 
-	```sudo apt-get install build-essential libsdl2-dev libsdl2-ttf-dev```
+	`sudo apt-get install build-essential libsdl2-dev libsdl2-ttf-dev`
 
-	```make```
+	`make`
 
 Building on CentOS:
 
-	```sudo yum install gcc-c++ make SDL2-devel SDL2_ttf-devel```
-	```make```
+	`sudo yum install gcc-c++ make SDL2-devel SDL2_ttf-devel`
+	`make`
 
