@@ -94,7 +94,7 @@ Display::Display(Memory* memory, Interrupt* interrupts) :
         exit(1);
     }
 
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_SOFTWARE);
+    sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_ACCELERATED);
     SDL_RenderSetLogicalSize(sdlRenderer, SCREEN_X, SCREEN_Y);
 
     sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_X, SCREEN_Y);
