@@ -8,7 +8,7 @@
 #include "Interrupt.h"
 
 
-typedef AbsByteProxy* ByteProxy;
+typedef std::unique_ptr<AbsByteProxy> ByteProxy;
 
 class Emulator
 {
