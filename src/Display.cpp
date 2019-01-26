@@ -258,59 +258,82 @@ void Display::DrawScanline(uint8_t scanline)
 
 void Display::DrawBackgroundScanline(uint8_t scanline, uint8_t scrollX, uint8_t scrollY)
 {
-    uint16_t tileDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
-    uint8_t *tileData = memory->GetBytePtr(tileDataOffset);
-    uint16_t tileMapOffset = (*regLCDC & eLCDCBGTileMap) ? BG_TILE_MAP[1] : BG_TILE_MAP[0];
-    uint8_t *tileMap = memory->GetBytePtr(tileMapOffset);
+    const uint16_t tilesetDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
+    const uint8_t * const tilesetData = memory->GetBytePtr(tilesetDataOffset);
+    const uint16_t tileMapOffset = (*regLCDC & eLCDCBGTileMap) ? BG_TILE_MAP[1] : BG_TILE_MAP[0];
+    const uint8_t * const tileMap = memory->GetBytePtr(tileMapOffset);
 
-    for (uint i = 0; i < TILES_PER_X; i++)
+    const uint y = scanline + scrollY;
+    const uint8_t tileY = (y / TILE_PIXEL_SIZE) & (REAL_TILES_PER_SCREEN - 1);
+
+    for (uint i = 0; i < SCREEN_X; i++)
     {
-        uint8_t tileX = ((scrollX / TILE_PIXEL_SIZE) + i) % REAL_TILES_PER_SCREEN;
-        uint8_t tileY = ((scrollY / TILE_PIXEL_SIZE) + (scanline / TILE_PIXEL_SIZE)) % REAL_TILES_PER_SCREEN;
+        const uint x = i + scrollX;
+        const uint8_t tileX = (x / TILE_PIXEL_SIZE) & (REAL_TILES_PER_SCREEN - 1);
 
         uint8_t tileId = tileMap[tileX + (tileY * REAL_TILES_PER_SCREEN)];
-        if (tileDataOffset == BG_DATA_OFFSET[0])
+        if (tilesetDataOffset == BG_DATA_OFFSET[0])
         {
-            // When BG data is 0x8800, tild id is a signed byte with 0 in the middle of the range.
+            // When BG data is 0x8800, tile id is a signed byte with 0 in the middle of the range.
             tileId = (int8_t)tileId + 0x80;
         }
-        uint16_t tileOffset = (tileId * TILE_DATA_SIZE) + ((scanline % TILE_PIXEL_SIZE) * 2);
 
-        DrawTileLine(tileData[tileOffset], tileData[tileOffset + 1], TILE_PIXEL_SIZE * i, scanline, *regBGP, false, false, true);
+        const uint16_t tileDataOffset = (tileId * TILE_DATA_SIZE) + ((y & 7) * 2);
+        const uint8_t *tileData = &tilesetData[tileDataOffset];
+        const uint8_t lowBit = ((tileData[0] >> (7 - (x & 7))) & 0x01);
+        const uint8_t highBit = ((tileData[1] >> (7 - (x & 7))) & 0x01);
+        const uint8_t pixelVal = lowBit | (highBit << 1);
+        const uint8_t * const color = palette[(*regBGP >> (pixelVal * 2)) & 0x03];
+        const uint16_t pixelOffset = (scanline * SCREEN_X) + i;
+
+        bgColorMap[pixelOffset] = pixelVal;
+        frameBuffer[pixelOffset] = (color[0] << 16) | (color[1] << 8) | color[2];
     }
 }
 
 
 void Display::DrawWindowScanline(uint8_t scanline, uint8_t windowX, uint8_t windowY)
 {
+    // TODO: Handle wx changing between vblanks.
     // Return if current scanline is above the window.
     if (scanline < windowY)
         return;
 
-    uint16_t tileDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
-    uint8_t *tileData = memory->GetBytePtr(tileDataOffset);
-    uint16_t tileMapOffset = (*regLCDC & eLCDCWindowTileMap) ? BG_TILE_MAP[1] : BG_TILE_MAP[0];
-    uint8_t *tileMap = memory->GetBytePtr(tileMapOffset);
+    // wx is offset by 7.
+    if (windowX < 7)
+        return;
+    windowX -= 7;
 
-    for (uint i = 0; i < TILES_PER_X; i++)
+    const uint16_t tilesetDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
+    const uint8_t * const tilesetData = memory->GetBytePtr(tilesetDataOffset);
+    const uint16_t tileMapOffset = (*regLCDC & eLCDCWindowTileMap) ? BG_TILE_MAP[1] : BG_TILE_MAP[0];
+    const uint8_t * const tileMap = memory->GetBytePtr(tileMapOffset);
+
+    const uint y = scanline - windowY;
+    const uint8_t tileY = (y / TILE_PIXEL_SIZE);
+
+    for (uint i = windowX; i < SCREEN_X; i++)
     {
-        uint8_t tileX = i;
-        uint8_t tileY = (scanline - windowY) / TILE_PIXEL_SIZE;
-
-        if (((tileX * TILE_PIXEL_SIZE) + windowX) > SCREEN_X)
-            return;
+        const uint x = i - windowX;
+        const uint8_t tileX = x / TILE_PIXEL_SIZE;
 
         uint8_t tileId = tileMap[tileX + (tileY * REAL_TILES_PER_SCREEN)];
-        if (tileDataOffset == BG_DATA_OFFSET[0])
+        if (tilesetDataOffset == BG_DATA_OFFSET[0])
         {
-            // When BG data is 0x8800, tild id is a signed byte with 0 in the middle of the range.
+            // When BG data is 0x8800, tile id is a signed byte with 0 in the middle of the range.
             tileId = (int8_t)tileId + 0x80;
         }
-        uint16_t tileOffset = (tileId * TILE_DATA_SIZE) + ((scanline % TILE_PIXEL_SIZE) * 2);
 
-        uint8_t xPos = (windowX - 7) + (TILE_PIXEL_SIZE * i);
+        const uint16_t tileDataOffset = (tileId * TILE_DATA_SIZE) + ((y & 7) * 2);
+        const uint8_t *tileData = &tilesetData[tileDataOffset];
+        const uint8_t lowBit = ((tileData[0] >> (7 - (x & 7))) & 0x01);
+        const uint8_t highBit = ((tileData[1] >> (7 - (x & 7))) & 0x01);
+        const uint8_t pixelVal = lowBit | (highBit << 1);
+        const uint8_t * const color = palette[(*regBGP >> (pixelVal * 2)) & 0x03];
+        const uint16_t pixelOffset = (scanline * SCREEN_X) + i;
 
-        DrawTileLine(tileData[tileOffset], tileData[tileOffset + 1], xPos, scanline, *regBGP, false, false, true);
+        bgColorMap[pixelOffset] = pixelVal;
+        frameBuffer[pixelOffset] = (color[0] << 16) | (color[1] << 8) | color[2];
     }
 }
 
