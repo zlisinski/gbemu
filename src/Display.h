@@ -39,7 +39,7 @@ private:
 
     struct SpriteData
     {
-        uint8_t x;
+        int16_t x;
         uint8_t i;
     };
 

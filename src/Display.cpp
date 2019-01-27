@@ -27,6 +27,7 @@ const uint16_t WIN_TILE_MAP_LEN = 0x03FF;
 const uint16_t OAM_RAM = 0xFE00;
 const uint16_t OAM_LEN = 0x00A0;
 const uint16_t ClockPerScanline = 456;
+const uint8_t MAX_SPRITES_PER_SCANLINE = 10;
 
 const uint8_t palette[4][3] = {{0xFF, 0xFF, 0xFF}, {0xB0, 0xB0, 0xB0}, {0x68, 0x68, 0x68}, {0x00, 0x00, 0x00}};
 
@@ -343,30 +344,31 @@ void Display::DrawSprites(uint8_t scanline)
     const uint8_t xDisplayOffset = 8;
     const uint8_t yDisplayOffset = 16;
     const uint8_t spriteSize = (*regLCDC & eLCDCSpriteSize) ? 16 : 8;
-    const uint8_t *oamRam = memory->GetBytePtr(OAM_RAM);
-    const uint8_t *spriteData = memory->GetBytePtr(BG_DATA_OFFSET[1]);
+    const uint8_t * const oamRam = memory->GetBytePtr(OAM_RAM);
+    const uint8_t * const spriteData = memory->GetBytePtr(BG_DATA_OFFSET[1]);
 
     std::vector<SpriteData> sprites;
-    sprites.reserve(OAM_LEN);
+    sprites.reserve(MAX_SPRITES_PER_SCANLINE);
+
+    uint8_t spriteCount = 0;
 
     // Find all sprites on scanline.
     for (uint8_t i = 0; i < OAM_LEN; i += 4)
     {
-        uint8_t yPos = oamRam[i + 0];
-        uint8_t xPos = oamRam[i + 1];
-
-        // Skip sprites that are off screen in the y pos. Include sprites off the screen in the x pos,
-        // since this affects the number of sprites drawn per scanline.
-        if (yPos == 0 || yPos >= (SCREEN_Y + yDisplayOffset))
-            continue;
-
-        // Sprite position needs to be offset because of 0 not being displayed.
-        yPos -= yDisplayOffset;
+        const int16_t yPos = oamRam[i + 0] - yDisplayOffset;
+        const int16_t xPos = oamRam[i + 1] - xDisplayOffset;
 
         // Add sprites that are on this scanline.
         if (scanline >= yPos && scanline < (yPos + spriteSize))
         {
-            sprites.push_back({xPos, i});
+            // GB can only display 10 sprites per scanline.
+            spriteCount++;
+            if (spriteCount > MAX_SPRITES_PER_SCANLINE)
+                break;
+
+            // Sprites with a 0 x position aren't displayed, but still count towards the number of sprites drawn.
+            if (xPos + xDisplayOffset > 0)
+                sprites.push_back({xPos, i});
         }
     }
 
@@ -377,90 +379,51 @@ void Display::DrawSprites(uint8_t scanline)
     // Sort sprites according to x and i priority.
     std::sort(sprites.begin(), sprites.end(), Display::SpriteSort);
 
-    uint8_t spriteCount = 0;
     for (const SpriteData &sprite : sprites)
     {
-        // GB can only display 10 sprites per scanline.
-        spriteCount++;
-        if (spriteCount > 10)
-            break;
-
-        uint8_t i = sprite.i;
-
-        uint8_t yPos = oamRam[i + 0];
-        uint8_t xPos = oamRam[i + 1];
+        const uint8_t i = sprite.i;
+        const int16_t yPos = oamRam[i + 0] - yDisplayOffset;
+        const int16_t xPos = oamRam[i + 1] - xDisplayOffset;
         uint8_t spriteId = oamRam[i + 2];
-        uint8_t spriteAttr = oamRam[i + 3];
-        uint8_t paletteReg = (spriteAttr & eSpriteAttrPalette) ? *regOBP1 : *regOBP0;
-        bool flipX = spriteAttr & eSpriteAttrFlipX;
-        bool flipY = spriteAttr & eSpriteAttrFlipY;
-        bool bgPriority = spriteAttr & eSpriteAttrBgPriority;
+        const uint8_t spriteAttr = oamRam[i + 3];
+        const uint8_t paletteReg = (spriteAttr & eSpriteAttrPalette) ? *regOBP1 : *regOBP0;
+        const bool flipX = spriteAttr & eSpriteAttrFlipX;
+        const bool flipY = spriteAttr & eSpriteAttrFlipY;
+        const bool bgPriority = spriteAttr & eSpriteAttrBgPriority;
 
         // In 8x16 mode, only even sprites can be used.
         if (spriteSize == 16)
             spriteId &= 0xFE;
 
-        // Sprites with a position of 0 are not displayed.
-        if (xPos == 0 || yPos == 0)
-            continue;
-
-        // Sprite position needs to be offset because of 0 not being displayed.
-        xPos -= xDisplayOffset;
-        yPos -= yDisplayOffset;
-
-        uint8_t line = (scanline - yPos);
+        uint8_t line = (scanline - yPos); // TODO: is this right?
         if (flipY)
             line = (spriteSize - 1) - line;
-        uint16_t spriteDataOffset = (spriteId * TILE_DATA_SIZE) + (line * 2);
+        const uint16_t spriteDataOffset = (spriteId * TILE_DATA_SIZE) + (line * 2);
+        const uint8_t * const tileData = &spriteData[spriteDataOffset];
 
-        DrawTileLine(spriteData[spriteDataOffset], spriteData[spriteDataOffset + 1], xPos, scanline, paletteReg, flipX, bgPriority, false);
-    }
-}
-
-
-void Display::DrawTileLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg)
-{
-    if (yPos > SCREEN_Y)
-        return;
-
-    for (uint x_ = 0; x_ < TILE_PIXEL_SIZE; x_++)
-    {
-        if ((xPos + x_) > SCREEN_X)
-            return;
-
-        uint x = x_;
-        if (flipX)
-            x = (TILE_PIXEL_SIZE - 1) - x_;
-
-        // Each tile is 16 bytes for 8x8 pixels. There are two bits per pixel, and each
-        // pixel is split across two bytes. The pixel at x,y=0,0 is the most significant
-        // bit of byte one and byte two. The pixel at x,y=1,0 is the second most significant
-        // bits of byte one and two, etc.
-        uint lowBit = ((byte1 >> (7-x)) & 0x1);
-        uint highBit = ((byte2 >> (7-x)) & 0x1);
-        uint pixelVal = lowBit | (highBit << 1);
-        const uint8_t *color = palette[(paletteReg >> (pixelVal * 2)) & 0x03];
-
-        uint pixelOffset = (yPos * SCREEN_X) + xPos + x_;
-
-        if (isBg)
+        for (uint i = 0; i < TILE_PIXEL_SIZE; i++)
         {
-            // Save the 2-bit color to use for sprite/BG priority.
-            bgColorMap[pixelOffset] = pixelVal;
-        }
-        else
-        {
+            // xPos can be < 0 if the sprite is only partially on-screen.
+            if (xPos + (int)i < 0)
+                continue;
+
+            uint x = i;
+            if (flipX)
+                x = (TILE_PIXEL_SIZE - 1) - i;
+            const uint8_t lowBit = ((tileData[0] >> (7 - x)) & 0x01);
+            const uint8_t highBit = ((tileData[1] >> (7 - x)) & 0x01);
+            const uint8_t pixelVal = lowBit | (highBit << 1);
+
             // Sprite color 0 is transparent.
             if (pixelVal == 0)
                 continue;
-        }
 
-        // Set pixel color.
-        if (isBg || // Background or window
-            (!isBg && !bgPriority) || // Sprite, without BG priority
-            (!isBg && bgPriority && bgColorMap[pixelOffset] == 0)) // Sprite, with BG priority, and BG color is 0
-        {
-            frameBuffer[pixelOffset] = (color[0] << 16) | (color[1] << 8) | color[2];
+            const uint8_t * const color = palette[(paletteReg >> (pixelVal * 2)) & 0x03];
+            const uint16_t pixelOffset = (scanline * SCREEN_X) + xPos + i;
+
+            // Only draw pixel if background doesn't have priority, or background is 0.
+            if (!bgPriority || (bgPriority && bgColorMap[pixelOffset] == 0))
+                frameBuffer[pixelOffset] = (color[0] << 16) | (color[1] << 8) | color[2];
         }
     }
 }
