@@ -287,7 +287,9 @@ void Display::DrawBackgroundScanline(uint8_t scanline, uint8_t scrollX, uint8_t 
         const uint8_t * const color = palette[(*regBGP >> (pixelVal * 2)) & 0x03];
         const uint16_t pixelOffset = (scanline * SCREEN_X) + i;
 
+        // Save palette index for this pixel to use later for sprite priority.
         bgColorMap[pixelOffset] = pixelVal;
+
         frameBuffer[pixelOffset] = (color[0] << 16) | (color[1] << 8) | color[2];
     }
 }
@@ -333,7 +335,9 @@ void Display::DrawWindowScanline(uint8_t scanline, uint8_t windowX, uint8_t wind
         const uint8_t * const color = palette[(*regBGP >> (pixelVal * 2)) & 0x03];
         const uint16_t pixelOffset = (scanline * SCREEN_X) + i;
 
+        // Save palette index for this pixel to use later for sprite priority.
         bgColorMap[pixelOffset] = pixelVal;
+
         frameBuffer[pixelOffset] = (color[0] << 16) | (color[1] << 8) | color[2];
     }
 }
