@@ -245,7 +245,8 @@ int main(int argc, char **argv)
                 ProcessInput(e, buttons, state->input);
         }
 
-        if (!pause)
+        // Process 1000 instructions before polling for events.
+        for (int i = 0; i < 1000 && !pause; i++)
         {
             emulator.ProcessOpCode();
             state->PrintState();

@@ -21,6 +21,6 @@ public:
 private:
     Globals() :
         showFps(true),
-        capFps(false)
+        capFps(true)
     {}
 };
