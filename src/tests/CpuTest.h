@@ -1,8 +1,11 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include "../State.h"
-#include "../Cpu.h"
+
+class Cpu;
+class Interrupt;
+class Memory;
+class Timer;
 
 class CpuTest : public ::testing::Test
 {
@@ -15,7 +18,10 @@ protected:
 
     void ResetState();
 
-    State state;
-    Cpu cpu;
+    Cpu *cpu;
+    Memory *memory_;
+    Timer *timer;
+    Interrupt *interrupts;
+    
     uint8_t *memory;
 };

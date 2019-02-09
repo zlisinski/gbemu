@@ -1,8 +1,11 @@
 #include "gbemu.h"
 #include "Cpu.h"
 #include "EmulatorMgr.h"
+#include "Display.h"
 #include "Input.h"
-#include "State.h"
+#include "Memory.h"
+#include "Serial.h"
+#include "Timer.h"
 
 
 bool debugOutput = false;
@@ -12,7 +15,13 @@ EmulatorMgr::EmulatorMgr(void (*drawFrameCallback)(uint32_t *)) :
     quit(false),
     drawFrameCallback(drawFrameCallback),
     buttons(),
-    state(NULL)
+    cpu(NULL),
+    display(NULL),
+    input(NULL),
+    interrupts(NULL),
+    memory(NULL),
+    serial(NULL),
+    timer(NULL)
 {
 
 }
@@ -39,10 +48,10 @@ bool EmulatorMgr::LoadRom(const char *filename)
     long size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    std::vector<uint8_t> *memory = new std::vector<uint8_t>();
-    memory->resize(size);
+    std::vector<uint8_t> *romMemory = new std::vector<uint8_t>();
+    romMemory->resize(size);
 
-    size_t cnt = fread(&(*memory)[0], 1, size, file);
+    size_t cnt = fread(&(*romMemory)[0], 1, size, file);
     if (cnt != (size_t)size)
     {
         printf("Only read %lu bytes of %ld from %s", cnt, size, filename);
@@ -50,7 +59,7 @@ bool EmulatorMgr::LoadRom(const char *filename)
     }
 
     quit = false;
-    workThread = std::thread(&EmulatorMgr::ThreadFunc, this, memory);
+    workThread = std::thread(&EmulatorMgr::ThreadFunc, this, romMemory);
 
     return true;
 }
@@ -79,8 +88,8 @@ void EmulatorMgr::ButtonPressed(Buttons::Button button)
     // Set bit for button.
     buttons.data |= button;
 
-    if (state && buttons.data != oldButtonData)
-        state->input->SetButtons(buttons);
+    if (input && buttons.data != oldButtonData)
+        input->SetButtons(buttons);
 }
 
 
@@ -91,37 +100,68 @@ void EmulatorMgr::ButtonReleased(Buttons::Button button)
     // Clear bit for button.
     buttons.data &= ~button;
 
-    if (state && buttons.data != oldButtonData)
-        state->input->SetButtons(buttons);
+    if (input && buttons.data != oldButtonData)
+        input->SetButtons(buttons);
 }
 
 
 void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
 {
-    state = new State(drawFrameCallback);
-    Cpu cpu(state);
+    memory = new Memory();
+    interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
+    timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
+                      memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
+    display = new Display(memory, interrupts, drawFrameCallback);
+    input = new Input(memory->GetBytePtr(eRegP1), interrupts);
+    serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
+    cpu = new Cpu(interrupts, memory, timer);
+
+    // Setup Memory observers.
+    interrupts->AttachToMemorySubject(memory);
+    timer->AttachToMemorySubject(memory);
+    input->AttachToMemorySubject(memory);
+    serial->AttachToMemorySubject(memory);
+
+    // Setup Timer observers.
+    display->AttachToTimerSubject(timer);
+    memory->AttachToTimerSubject(timer);
+    serial->AttachToTimerSubject(timer);
+
     /*if (runbootRom)
-        state->SetRomMemory(bootRomMemory, gameRomMemory);
+        memory->SetRomMemory(bootRomMemory, *gameRomMemory);
     else*/
     {
-        state->SetRomMemory(*gameRomMemory);
-        SetBootState(state->memory, &cpu);
+        memory->SetRomMemory(*gameRomMemory);
+        SetBootState(memory, cpu);
     }
 
     while (!quit)
     {
         if (!paused)
         {
-            cpu.ProcessOpCode();
-            //state->PrintState();
-            //state.timer->PrintTimerData();
+            cpu->ProcessOpCode();
+            //cpu->PrintState();
+            //timer->PrintTimerData();
             DBG("\n");
         }
     }
 
     delete gameRomMemory;
-    delete state;
-    state = NULL;
+
+    delete cpu;
+    cpu = NULL;
+    delete display;
+    display = NULL;
+    delete input;
+    input = NULL;
+    delete interrupts;
+    interrupts = NULL;
+    delete serial;
+    serial = NULL;
+    delete timer;
+    timer = NULL;
+    delete memory;
+    memory = NULL;
 }
 
 

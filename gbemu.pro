@@ -42,7 +42,6 @@ HEADERS += src/ui/MainWindow.h \
 	src/Memory.h \
 	src/RegisterByteProxy.h \
 	src/Serial.h \
-	src/State.h \
 	src/Timer.h \
 	src/TimerObserver.h \
 	src/TimerSubject.h \
@@ -59,7 +58,6 @@ SOURCES += src/main.cpp \
 	src/MemoryBankController.cpp \
 	src/Memory.cpp \
 	src/Serial.cpp \
-	src/State.cpp \
 	src/Timer.cpp \
 	src/Utils.cpp
 

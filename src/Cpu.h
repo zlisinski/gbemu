@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "gbemu.h"
-#include "State.h"
 #include "AbsByteProxy.h"
 #include "Interrupt.h"
 
@@ -81,11 +80,14 @@ struct Registers
 
 typedef std::unique_ptr<AbsByteProxy> ByteProxy;
 
+class Interrupt;
+class Memory;
+class Timer;
 
 class Cpu
 {
 public:
-    Cpu(State *state);
+    Cpu(Interrupt *interrupts, Memory *memory, Timer *timer);
 
     uint8_t ReadPC8Bit();
     uint16_t ReadPC16Bit();
@@ -123,7 +125,9 @@ private:
 
     void ProcessInterrupt(eInterruptTypes intType);
 
-    State *state;
+    Interrupt *interrupts;
+    Memory *memory;
+    Timer *timer;
     bool enableInterruptsDelay;
     bool halted;
     bool haltBug;

@@ -1,23 +1,23 @@
 #include "main.h"
 #include "InputTest.h"
+#include "../Memory.h"
 
 
-InputTest::InputTest() :
-    state(DrawFrame)
+InputTest::InputTest()
 {
-
+    memory = new Memory();
 }
 
 
 InputTest::~InputTest()
 {
-
+    delete memory;
 }
 
 
 void InputTest::SetUp()
 {
-    state.memory->ClearMemory();
+    memory->ClearMemory();
 }
 
 

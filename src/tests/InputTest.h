@@ -2,7 +2,8 @@
 
 #include <gtest/gtest.h>
 #include "../Input.h"
-#include "../State.h"
+
+class Memory;
 
 class InputTest : public ::testing::Test
 {
@@ -13,5 +14,5 @@ protected:
     void SetUp() override;
     void TearDown() override;
 
-    State state;
+    Memory *memory;
 };

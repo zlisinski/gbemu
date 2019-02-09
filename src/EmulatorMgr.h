@@ -5,8 +5,12 @@
 #include "Buttons.h"
 
 class Cpu;
+class Display;
+class Input;
+class Interrupt;
 class Memory;
-class State;
+class Serial;
+class Timer;
 
 class EmulatorMgr
 {
@@ -35,5 +39,11 @@ private:
     void (*drawFrameCallback)(uint32_t *);
 
     Buttons buttons;
-    State *state;
+    Cpu *cpu;
+    Display *display;
+    Input *input;
+    Interrupt *interrupts;
+    Memory *memory;
+    Serial *serial;
+    Timer *timer;
 };

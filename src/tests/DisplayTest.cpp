@@ -16,7 +16,7 @@ DisplayTest::~DisplayTest()
 
 void DisplayTest::SetUp()
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    /*if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         printf("SDL_Init Error: %s\n", SDL_GetError());
         exit(1);
@@ -24,16 +24,16 @@ void DisplayTest::SetUp()
 
     state = new State(DrawFrame);
 
-    state->memory->ClearMemory();
+    state->memory->ClearMemory();*/
 }
 
 void DisplayTest::TearDown()
 {
-    delete state;
-    SDL_Quit();
+    /*delete state;
+    SDL_Quit();*/
 }
 
-TEST_F(DisplayTest, TEST_Display_logo)
+/*TEST_F(DisplayTest, TEST_Display_logo)
 {
     uint8_t *memory = state->memory->GetBytePtr(0);
 
@@ -81,4 +81,4 @@ TEST_F(DisplayTest, TEST_Display_logo)
         state->display->UpdateTimer(4);
 
     SDL_Delay(10000);
-}
+}*/

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <SDL2/SDL.h>
-#include "CpuTest.h"
 #include "main.h"
+#include "../Display.h"
 
 bool debugOutput = false;
 
