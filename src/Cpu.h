@@ -109,6 +109,12 @@ public:
         reg.flags.z = reg.flags.n = reg.flags.h = reg.flags.c = 0;
     }
 
+    inline void PrintState()
+    {
+        DBG("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X\n",// int:%d\n",
+               reg.a, reg.b, reg.c, reg.d, reg.e, reg.h, reg.l, reg.pc, reg.sp, reg.flags.z, reg.flags.n, reg.flags.h, reg.flags.c/*, interrupts->Enabled()*/);
+    }
+
     Registers reg;
 
 private:
@@ -119,6 +125,7 @@ private:
 
     State *state;
     bool enableInterruptsDelay;
+    bool halted;
     bool haltBug;
 
     uint8_t *regMap8Bit[8];

@@ -15,6 +15,7 @@ Cpu::Cpu(State *state) :
     reg(),
     state(state),
     enableInterruptsDelay(false),
+    halted(false),
     haltBug(false)
 {
     regMap8Bit[0] = &reg.b;
@@ -247,9 +248,9 @@ void Cpu::ProcessOpCode()
     if (state->interrupts->CheckInterrupts(intType))
     {
         // Requested interrupt exits halt mode, even if it's not processed.
-        if (state->halted)
+        if (halted)
         {
-            state->halted = false;
+            halted = false;
             state->timer->AddCycle();
         }
 
@@ -260,7 +261,7 @@ void Cpu::ProcessOpCode()
         }
     }
 
-    if (state->halted)
+    if (halted)
     {
         DBG("Halted\n");
         state->timer->AddCycle();
@@ -1471,7 +1472,7 @@ void Cpu::ProcessOpCode()
                 if (!state->interrupts->Enabled() && state->interrupts->CheckInterrupts(intType))
                     haltBug = true;
                 else
-                    state->halted = true;
+                    halted = true;
             }
             break;
 

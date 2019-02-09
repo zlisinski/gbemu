@@ -1,8 +1,7 @@
 #include "State.h"
 
 
-State::State(void (*drawFrameCallback)(uint32_t *)) :
-    halted(false)
+State::State(void (*drawFrameCallback)(uint32_t *))
 {
     memory = new Memory();
     interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
