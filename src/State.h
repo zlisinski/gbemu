@@ -67,7 +67,7 @@ public:
     Serial* serial;
     bool halted;
 
-    State();
+    State(void (*drawFrameCallback)(uint32_t *));
     ~State();
 
     void SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory);

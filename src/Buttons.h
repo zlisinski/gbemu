@@ -7,6 +7,7 @@ class Buttons
 public:
     enum Button
     {
+        eButtonNone = 0x00,
         eButtonUp = 0x01,
         eButtonRight = 0x02,
         eButtonDown = 0x04,

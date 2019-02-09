@@ -1,7 +1,7 @@
 #include "State.h"
 
 
-State::State() :
+State::State(void (*drawFrameCallback)(uint32_t *)) :
     f(0),
     a(0),
     bc(0),
@@ -15,7 +15,7 @@ State::State() :
     interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
     timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                       memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
-    display = new Display(memory, interrupts);
+    display = new Display(memory, interrupts, drawFrameCallback);
     input = new Input(memory->GetBytePtr(eRegP1), interrupts);
     serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
 

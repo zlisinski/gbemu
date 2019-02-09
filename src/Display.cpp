@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 #include <sstream>
 #include <unistd.h>
 
@@ -60,7 +58,7 @@ enum SpriteAttrBits
     eSpriteAttrBgPriority = 0x80
 };
 
-Display::Display(Memory* memory, Interrupt* interrupts) :
+Display::Display(Memory* memory, Interrupt* interrupts, void (*drawFrameCallback)(uint32_t *)) :
     memory(memory),
     interrupts(interrupts),
     regLCDC(memory->GetBytePtr(eRegLCDC)),
@@ -76,37 +74,10 @@ Display::Display(Memory* memory, Interrupt* interrupts) :
     regWY(memory->GetBytePtr(eRegWY)),
     regWX(memory->GetBytePtr(eRegWX)),
     displayMode(eMode0HBlank),
-    sdlWindow(NULL),
-    sdlRenderer(NULL),
-    sdlTexture(NULL),
-    sdlFpsTexture(NULL),
-    sdlFont(NULL),
     counter(0),
-    frameTicks(0),
-    frameCount(0),
-    lastFrameTicks(SDL_GetTicks())
+    drawFrameCallback(drawFrameCallback)
 {
-    DBG("SDL Display\n");
-    sdlWindow = SDL_CreateWindow("gbemu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_X*SCREEN_SCALE, SCREEN_Y*SCREEN_SCALE, SDL_WINDOW_SHOWN);
-    if (!sdlWindow)
-    {
-        printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
-        SDL_Quit();
-        exit(1);
-    }
 
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_ACCELERATED);
-    SDL_RenderSetLogicalSize(sdlRenderer, SCREEN_X, SCREEN_Y);
-
-    sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_X, SCREEN_Y);
-
-    sdlFont = TTF_OpenFont("./font/FreeSans.ttf", 12);
-    if (sdlFont == NULL)
-    {
-        printf("TTF_OpenFont Error: %s\n", TTF_GetError());
-        SDL_Quit();
-        exit(1);
-    }
 }
 
 
@@ -114,19 +85,6 @@ Display::~Display()
 {
     if (timerSubject)
         timerSubject->DetachObserver(this);
-
-    TTF_CloseFont(sdlFont);
-    SDL_DestroyTexture(sdlTexture);
-    SDL_DestroyTexture(sdlFpsTexture);
-    SDL_DestroyRenderer(sdlRenderer);
-    SDL_DestroyWindow(sdlWindow);
-    DBG("SDL_Destroy\n");
-}
-
-
-void Display::SetWindowTitle(const char *title)
-{
-    SDL_SetWindowTitle(sdlWindow, title);
 }
 
 
@@ -435,67 +393,7 @@ void Display::DrawSprites(uint8_t scanline)
 
 void Display::DrawScreen()
 {
-    SDL_UpdateTexture(sdlTexture, NULL, frameBuffer, SCREEN_X * 4);
-    SDL_RenderClear(sdlRenderer);
-    SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL);
-
-    if (Globals::getInstance().showFps)
-        DrawFPS();
-
-    SDL_RenderPresent(sdlRenderer);
-
-    uint32_t ticks = SDL_GetTicks();
-
-    // Cap frame rate.
-    const float frameMillis = 1.0 / 60 * 1000;
-    if (Globals::getInstance().capFps && (ticks - lastFrameTicks) < frameMillis)
-    {
-        usleep((frameMillis - (ticks - lastFrameTicks)) * 1000);
-    }
-
-    lastFrameTicks = ticks;
-}
-
-
-void Display::DrawFPS()
-{
-    uint32_t curTicks = SDL_GetTicks();
-
-    // Only update the texture once a second, or if this is the first time.
-    if ((curTicks - frameTicks) > 1000 || sdlFpsTexture == NULL)
-    {
-        int fps = frameCount / ((curTicks - frameTicks) / 1000.0);
-
-        std::stringstream ss;
-        ss << fps << " FPS";
-
-        // Render text onto surface.
-        SDL_Color c = {0, 255, 0};
-        SDL_Color c2 = {0, 0, 0};
-        SDL_Surface *s = TTF_RenderText_Shaded(sdlFont, ss.str().c_str(), c, c2);
-
-        // (re)create the texture from the surface.
-        if (sdlFpsTexture)
-            SDL_DestroyTexture(sdlFpsTexture);
-        sdlFpsTexture = SDL_CreateTextureFromSurface(sdlRenderer, s);
-        SDL_FreeSurface(s);
-        s = NULL;
-
-        // Update ticks and count.
-        frameTicks = SDL_GetTicks();
-        frameCount = 0;
-    }
-    else
-    {
-        frameCount++;
-    }
-
-    // Calculate display size based on texture size, factoring in screen scaling.
-    int w, h;
-    SDL_QueryTexture(sdlFpsTexture, NULL, NULL, &w, &h);
-    SDL_Rect rect = {1, 1, w/SCREEN_SCALE, h/SCREEN_SCALE};
-
-    SDL_RenderCopy(sdlRenderer, sdlFpsTexture, NULL, &rect);
+    drawFrameCallback(frameBuffer);
 }
 
 

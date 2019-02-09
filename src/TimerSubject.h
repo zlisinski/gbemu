@@ -25,6 +25,7 @@ public:
     {
         // Don't worry about this for now, since the only time this is called is when
         // the application exits anyway.
+        (void)observer; // Stop warnings about unused variables.
     }
 
     virtual void NotifyObservers(uint value)

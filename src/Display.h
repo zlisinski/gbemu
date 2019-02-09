@@ -5,12 +5,6 @@
 #include "TimerObserver.h"
 #include "TimerSubject.h"
 
-struct SDL_Window;
-struct SDL_Surface;
-struct SDL_Renderer;
-struct SDL_Texture;
-struct _TTF_Font;
-typedef struct _TTF_Font TTF_Font;
 class Memory;
 
 const uint SCREEN_X = 160;
@@ -19,10 +13,8 @@ const uint SCREEN_Y = 144;
 class Display : public TimerObserver
 {
 public:
-    Display(Memory* memory, Interrupt* interrupts);
+    Display(Memory* memory, Interrupt* interrupts, void (*drawFrameCallback)(uint32_t *));
     virtual ~Display();
-
-    void SetWindowTitle(const char *title);
 
     // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(TimerSubject* subject);
@@ -55,7 +47,6 @@ private:
     void DrawTileLine(uint8_t byte1, uint8_t byte2, uint8_t xPos, uint8_t yPos, uint8_t paletteReg, bool flipX, bool bgPriority, bool isBg);
 
     void DrawScreen();
-    void DrawFPS();
 
     static bool SpriteSort(const SpriteData &a, const SpriteData &b);
 
@@ -77,18 +68,10 @@ private:
 
     DisplayModes displayMode;
 
-    SDL_Window *sdlWindow;
-    SDL_Renderer *sdlRenderer;
-    SDL_Texture *sdlTexture;
-    SDL_Texture *sdlFpsTexture;
-    TTF_Font *sdlFont;
-
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
     uint8_t bgColorMap[SCREEN_X * SCREEN_Y];
 
     uint16_t counter;
 
-    uint32_t frameTicks;
-    uint32_t frameCount;
-    uint32_t lastFrameTicks;
+    void (*drawFrameCallback)(uint32_t *);
 };
