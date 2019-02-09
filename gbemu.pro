@@ -27,8 +27,8 @@ CONFIG += debug
 HEADERS += src/ui/MainWindow.h \
 	src/AbsByteProxy.h \
 	src/Buttons.h \
+	src/Cpu.h \
 	src/Display.h \
-	src/Emulator.h \
 	src/EmulatorMgr.h \
 	src/Exceptions.h \
 	src/gbemu.h \
@@ -51,8 +51,8 @@ HEADERS += src/ui/MainWindow.h \
 SOURCES += src/main.cpp \
 	src/ui/MainWindow.cpp \
 	src/Buttons.cpp \
+	src/Cpu.cpp \
 	src/Display.cpp \
-	src/Emulator.cpp \
 	src/EmulatorMgr.cpp \
 	src/Input.cpp \
 	src/Interrupt.cpp \

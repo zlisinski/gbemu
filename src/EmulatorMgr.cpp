@@ -1,5 +1,5 @@
 #include "gbemu.h"
-#include "Emulator.h"
+#include "Cpu.h"
 #include "EmulatorMgr.h"
 #include "Input.h"
 #include "State.h"
@@ -103,13 +103,13 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
         state->SetRomMemory(bootRomMemory, gameRomMemory);
     else*/
         state->SetRomMemory(*gameRomMemory);
-    Emulator emulator(state);
+    Cpu cpu(state);
 
     while (!quit)
     {
         if (!paused)
         {
-            emulator.ProcessOpCode();
+            cpu.ProcessOpCode();
             state->PrintState();
             //state.timer->PrintTimerData();
             DBG("\n");

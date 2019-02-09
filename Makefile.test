@@ -10,7 +10,7 @@ SRC_DIR = src
 TEST_DIR = $(SRC_DIR)/tests
 
 # Files needed to build main binary.
-CLASSES_SRC = $(SRC_DIR)/Emulator.cpp \
+CLASSES_SRC = $(SRC_DIR)/Cpu.cpp \
 	$(SRC_DIR)/State.cpp \
 	$(SRC_DIR)/Memory.cpp \
 	$(SRC_DIR)/Timer.cpp \
@@ -24,7 +24,7 @@ CLASSES_SRC = $(SRC_DIR)/Emulator.cpp \
 MAIN_SRC = $(SRC_DIR)/gbemu.cpp $(CLASSES_SRC)
 
 # Files needed to build unit tests.
-TEST_CLASSES_SRC = $(TEST_DIR)/EmulatorTest.cpp \
+TEST_CLASSES_SRC = $(TEST_DIR)/CpuTest.cpp \
 	$(TEST_DIR)/MemoryTest.cpp \
 	$(TEST_DIR)/DisplayTest.cpp \
 	$(TEST_DIR)/InputTest.cpp

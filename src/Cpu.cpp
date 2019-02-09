@@ -1,17 +1,17 @@
 #include <sstream>
 
 #include "gbemu.h"
-#include "Emulator.h"
+#include "Cpu.h"
 #include "RegisterByteProxy.h"
 #include "MemoryByteProxy.h"
 
-const char *Emulator::regNameMap8Bit[8] = {"B", "C", "D", "E", "H", "L", "(HL)", "A"};
-const char *Emulator::regNameMap16Bit[4] = {"BC", "DE", "HL", "SP"};
-const char *Emulator::regNameMap16BitStack[4] = {"BC", "DE", "HL", "AF"};
-const char *Emulator::flagNameMap[4] = {"NZ", "Z", "NC", "C"};
+const char *Cpu::regNameMap8Bit[8] = {"B", "C", "D", "E", "H", "L", "(HL)", "A"};
+const char *Cpu::regNameMap16Bit[4] = {"BC", "DE", "HL", "SP"};
+const char *Cpu::regNameMap16BitStack[4] = {"BC", "DE", "HL", "AF"};
+const char *Cpu::flagNameMap[4] = {"NZ", "Z", "NC", "C"};
 
 
-Emulator::Emulator(State *state) :
+Cpu::Cpu(State *state) :
     state(state),
     enableInterruptsDelay(false),
     haltBug(false)
@@ -37,7 +37,7 @@ Emulator::Emulator(State *state) :
 }
 
 
-void Emulator::NotYetImplemented()
+void Cpu::NotYetImplemented()
 {
     // state->pc is advanced in ReadPC8Bit, so subtract 1 to get the real address of the error.
     uint16_t addr = state->pc - 1;
@@ -48,7 +48,7 @@ void Emulator::NotYetImplemented()
 }
 
 
-ByteProxy Emulator::GetByteProxy(uint8_t bits)
+ByteProxy Cpu::GetByteProxy(uint8_t bits)
 {
     uint8_t *ptr = regMap8Bit[bits & 0x07];
 
@@ -59,7 +59,7 @@ ByteProxy Emulator::GetByteProxy(uint8_t bits)
 }
 
 
-inline uint8_t Emulator::ReadPC8Bit()
+inline uint8_t Cpu::ReadPC8Bit()
 {
     uint8_t byte = state->memory->ReadByte(state->pc);
     state->timer->AddCycle();
@@ -73,7 +73,7 @@ inline uint8_t Emulator::ReadPC8Bit()
 }
 
 
-inline uint16_t Emulator::ReadPC16Bit()
+inline uint16_t Cpu::ReadPC16Bit()
 {
     uint8_t low = state->memory->ReadByte(state->pc);
     state->pc++;
@@ -89,19 +89,19 @@ inline uint16_t Emulator::ReadPC16Bit()
 }
 
 
-inline uint8_t Emulator::HighByte(uint16_t word)
+inline uint8_t Cpu::HighByte(uint16_t word)
 {
     return word >> 8;
 }
 
 
-inline uint8_t Emulator::LowByte(uint16_t word)
+inline uint8_t Cpu::LowByte(uint16_t word)
 {
     return word & 0xFF;
 }
 
 
-inline uint8_t Emulator::GetFlagValue(uint8_t bits)
+inline uint8_t Cpu::GetFlagValue(uint8_t bits)
 {
     uint8_t value;
 
@@ -125,7 +125,7 @@ inline uint8_t Emulator::GetFlagValue(uint8_t bits)
 }
 
 
-inline uint8_t Emulator::Add8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*/)
+inline uint8_t Cpu::Add8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*/)
 {
     uint8_t carry = carryFlag ? 1 : 0;
     uint16_t result = x + y + carry;
@@ -141,7 +141,7 @@ inline uint8_t Emulator::Add8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*
 }
 
 
-inline uint16_t Emulator::Add16Bit(uint16_t x, uint16_t y)
+inline uint16_t Cpu::Add16Bit(uint16_t x, uint16_t y)
 {
     uint32_t result = x + y;
 
@@ -156,7 +156,7 @@ inline uint16_t Emulator::Add16Bit(uint16_t x, uint16_t y)
 }
 
 
-inline uint16_t Emulator::Add16BitSigned8Bit(uint16_t x, int8_t y)
+inline uint16_t Cpu::Add16BitSigned8Bit(uint16_t x, int8_t y)
 {
     uint32_t result = x + y;
 
@@ -173,7 +173,7 @@ inline uint16_t Emulator::Add16BitSigned8Bit(uint16_t x, int8_t y)
 }
 
 
-inline uint8_t Emulator::Sub8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*/)
+inline uint8_t Cpu::Sub8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*/)
 {
     uint8_t carry = carryFlag ? 1 : 0;
     int16_t result = x - y - carry;
@@ -190,7 +190,7 @@ inline uint8_t Emulator::Sub8Bit(uint8_t x, uint8_t y, bool carryFlag/* = false*
 }
 
 
-void Emulator::Push(uint16_t src)
+void Cpu::Push(uint16_t src)
 {
     state->sp--;
     state->memory->WriteByte(state->sp, (uint8_t)(src >> 8));
@@ -202,7 +202,7 @@ void Emulator::Push(uint16_t src)
 }
 
 
-void Emulator::Pop(uint16_t *dest)
+void Cpu::Pop(uint16_t *dest)
 {
     uint8_t low = state->memory->ReadByte(state->sp);
     state->sp++;
@@ -216,7 +216,7 @@ void Emulator::Pop(uint16_t *dest)
 }
 
 
-void Emulator::ProcessInterrupt(eInterruptTypes intType)
+void Cpu::ProcessInterrupt(eInterruptTypes intType)
 {
     // Add delay.
     state->timer->AddCycle();
@@ -239,7 +239,7 @@ void Emulator::ProcessInterrupt(eInterruptTypes intType)
 }
 
 
-void Emulator::ProcessOpCode()
+void Cpu::ProcessOpCode()
 {
     // Check for any waiting interrupts and process.
     eInterruptTypes intType;

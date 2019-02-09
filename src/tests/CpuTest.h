@@ -2,13 +2,13 @@
 
 #include <gtest/gtest.h>
 #include "../State.h"
-#include "../Emulator.h"
+#include "../Cpu.h"
 
-class EmulatorTest : public ::testing::Test
+class CpuTest : public ::testing::Test
 {
 protected:
-    EmulatorTest();
-    ~EmulatorTest() override;
+    CpuTest();
+    ~CpuTest() override;
 
     void SetUp() override;
     void TearDown() override;
@@ -16,6 +16,6 @@ protected:
     void ResetState();
 
     State state;
-    Emulator emulator;
+    Cpu cpu;
     uint8_t *memory;
 };

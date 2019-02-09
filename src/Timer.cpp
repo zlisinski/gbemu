@@ -1,7 +1,6 @@
 #include <assert.h>
 
 #include "Timer.h"
-#include "Emulator.h"
 
 
 // The lower two bits of the TAC register control how many clock cycles occur before TIMA is updated.

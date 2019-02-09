@@ -1,7 +1,7 @@
 #include "main.h"
-#include "EmulatorTest.h"
+#include "CpuTest.h"
 #include "../State.h"
-#include "../Emulator.h"
+#include "../Cpu.h"
 #include "../Memory.h"
 
 const uint8_t A_VALUE = 0x12;
@@ -19,29 +19,29 @@ const uint16_t HL_VALUE = 0xBCDE;
 const uint16_t SP_VALUE = 0xFFFE;
 
 
-EmulatorTest::EmulatorTest() :
+CpuTest::CpuTest() :
     state(DrawFrame),
-    emulator(&state)
+    cpu(&state)
 {
 
 }
 
-EmulatorTest::~EmulatorTest()
+CpuTest::~CpuTest()
 {
 
 }
 
-void EmulatorTest::SetUp()
+void CpuTest::SetUp()
 {
     ResetState();
 }
 
-void EmulatorTest::TearDown()
+void CpuTest::TearDown()
 {
 
 }
 
-void EmulatorTest::ResetState()
+void CpuTest::ResetState()
 {
     state.af = AF_VALUE;
     state.bc = BC_VALUE;
@@ -56,16 +56,16 @@ void EmulatorTest::ResetState()
 
     state.timer->WriteDIV();
 
-    emulator = Emulator(&state);
+    cpu = Cpu(&state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, TEST_Add8Bit)
+TEST_F(CpuTest, TEST_Add8Bit)
 {
     uint8_t result;
 
-    result = emulator.Add8Bit(0x00, 0x00);
+    result = cpu.Add8Bit(0x00, 0x00);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 0);
@@ -73,7 +73,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0x00, 0x01);
+    result = cpu.Add8Bit(0x00, 0x01);
     ASSERT_EQ(result, 1);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -81,7 +81,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0x01, 0x01);
+    result = cpu.Add8Bit(0x01, 0x01);
     ASSERT_EQ(result, 2);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -89,7 +89,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0x01, 0x01, 1);
+    result = cpu.Add8Bit(0x01, 0x01, 1);
     ASSERT_EQ(result, 3);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -97,7 +97,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0x0F, 0x01);
+    result = cpu.Add8Bit(0x0F, 0x01);
     ASSERT_EQ(result, 0x10);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -105,7 +105,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0x0E, 0x01, 1);
+    result = cpu.Add8Bit(0x0E, 0x01, 1);
     ASSERT_EQ(result, 0x10);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -113,7 +113,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0x0F, 0x0F);
+    result = cpu.Add8Bit(0x0F, 0x0F);
     ASSERT_EQ(result, 0x1E);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -121,7 +121,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0xF1, 0xFE);
+    result = cpu.Add8Bit(0xF1, 0xFE);
     ASSERT_EQ(result, 0xEF);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -129,7 +129,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0xFF, 0xFF);
+    result = cpu.Add8Bit(0xFF, 0xFF);
     ASSERT_EQ(result, 0xFE);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -137,7 +137,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0xA5, 0x5A);
+    result = cpu.Add8Bit(0xA5, 0x5A);
     ASSERT_EQ(result, 0xFF);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -145,7 +145,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0xA5, 0x5A, 1);
+    result = cpu.Add8Bit(0xA5, 0x5A, 1);
     ASSERT_EQ(result, 0x00);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 1);
@@ -153,7 +153,7 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add8Bit(0xFF, 0x01);
+    result = cpu.Add8Bit(0xFF, 0x01);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 1);
@@ -163,11 +163,11 @@ TEST_F(EmulatorTest, TEST_Add8Bit)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, TEST_Add16Bit)
+TEST_F(CpuTest, TEST_Add16Bit)
 {
     uint16_t result;
 
-    result = emulator.Add16Bit(0x00, 0x00);
+    result = cpu.Add16Bit(0x00, 0x00);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 0);
@@ -175,7 +175,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0x00, 0x01);
+    result = cpu.Add16Bit(0x00, 0x01);
     ASSERT_EQ(result, 1);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -183,7 +183,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0x01, 0x01);
+    result = cpu.Add16Bit(0x01, 0x01);
     ASSERT_EQ(result, 2);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -191,7 +191,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0x0F00, 0x0100);
+    result = cpu.Add16Bit(0x0F00, 0x0100);
     ASSERT_EQ(result, 0x1000);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -199,7 +199,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0x0F00, 0x0F00);
+    result = cpu.Add16Bit(0x0F00, 0x0F00);
     ASSERT_EQ(result, 0x1E00);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -207,7 +207,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0xF100, 0xFE00);
+    result = cpu.Add16Bit(0xF100, 0xFE00);
     ASSERT_EQ(result, 0xEF00);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -215,7 +215,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0xFFFF, 0xFFFF);
+    result = cpu.Add16Bit(0xFFFF, 0xFFFF);
     ASSERT_EQ(result, 0xFFFE);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -223,7 +223,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0xA5A5, 0x5A5A);
+    result = cpu.Add16Bit(0xA5A5, 0x5A5A);
     ASSERT_EQ(result, 0xFFFF);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -231,7 +231,7 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16Bit(0xFFFF, 0x0001);
+    result = cpu.Add16Bit(0xFFFF, 0x0001);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 1);
@@ -241,12 +241,12 @@ TEST_F(EmulatorTest, TEST_Add16Bit)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, TEST_Add16BitSigned)
+TEST_F(CpuTest, TEST_Add16BitSigned)
 {
     uint16_t result;
 
     ResetState();
-    result = emulator.Add16BitSigned8Bit(0x00, -1);
+    result = cpu.Add16BitSigned8Bit(0x00, -1);
     ASSERT_EQ(result, 0xFFFF);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -254,7 +254,7 @@ TEST_F(EmulatorTest, TEST_Add16BitSigned)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16BitSigned8Bit(0x00, 0x00);
+    result = cpu.Add16BitSigned8Bit(0x00, 0x00);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 0);
@@ -262,7 +262,7 @@ TEST_F(EmulatorTest, TEST_Add16BitSigned)
     ASSERT_EQ(state.flags.n, 0);
 
     ResetState();
-    result = emulator.Add16BitSigned8Bit(0x0001, 0x0F);
+    result = cpu.Add16BitSigned8Bit(0x0001, 0x0F);
     ASSERT_EQ(result, 0x0010);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -272,11 +272,11 @@ TEST_F(EmulatorTest, TEST_Add16BitSigned)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, TEST_Sub8Bit)
+TEST_F(CpuTest, TEST_Sub8Bit)
 {
     uint16_t result;
 
-    result = emulator.Sub8Bit(0x00, 0x00);
+    result = cpu.Sub8Bit(0x00, 0x00);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 0);
@@ -284,7 +284,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
     ASSERT_EQ(state.flags.n, 1);
 
     ResetState();
-    result = emulator.Sub8Bit(0x01, 0x00);
+    result = cpu.Sub8Bit(0x01, 0x00);
     ASSERT_EQ(result, 1);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -292,7 +292,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
     ASSERT_EQ(state.flags.n, 1);
 
     ResetState();
-    result = emulator.Sub8Bit(0x01, 0x00, 1);
+    result = cpu.Sub8Bit(0x01, 0x00, 1);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(state.flags.z, 1);
     ASSERT_EQ(state.flags.h, 0);
@@ -300,7 +300,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
     ASSERT_EQ(state.flags.n, 1);
 
     ResetState();
-    result = emulator.Sub8Bit(0x11, 0x02);
+    result = cpu.Sub8Bit(0x11, 0x02);
     ASSERT_EQ(result, 0x0F);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -308,7 +308,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
     ASSERT_EQ(state.flags.n, 1);
 
     ResetState();
-    result = emulator.Sub8Bit(0x11, 0x01);
+    result = cpu.Sub8Bit(0x11, 0x01);
     ASSERT_EQ(result, 0x10);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 0);
@@ -316,7 +316,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
     ASSERT_EQ(state.flags.n, 1);
 
     ResetState();
-    result = emulator.Sub8Bit(0x11, 0x01, 1);
+    result = cpu.Sub8Bit(0x11, 0x01, 1);
     ASSERT_EQ(result, 0x0F);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -324,7 +324,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
     ASSERT_EQ(state.flags.n, 1);
 
     ResetState();
-    result = emulator.Sub8Bit(0xA5, 0x5A);
+    result = cpu.Sub8Bit(0xA5, 0x5A);
     ASSERT_EQ(result, 0x4B);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -332,7 +332,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
     ASSERT_EQ(state.flags.n, 1);
 
     ResetState();
-    result = emulator.Sub8Bit(0x01, 0xFF);
+    result = cpu.Sub8Bit(0x01, 0xFF);
     ASSERT_EQ(result, 0x02);
     ASSERT_EQ(state.flags.z, 0);
     ASSERT_EQ(state.flags.h, 1);
@@ -342,7 +342,7 @@ TEST_F(EmulatorTest, TEST_Sub8Bit)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
+TEST_F(CpuTest, Test_LD_REG_REG_8Bit)
 {
     uint16_t cycles = 0;
 
@@ -350,7 +350,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x40;
     state.b = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 0);
@@ -365,7 +365,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x41;
     state.c = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 0);
@@ -380,7 +380,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x42;
     state.d = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 0);
@@ -396,7 +396,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x43;
     state.e = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 0);
@@ -412,7 +412,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x44;
     state.h = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 0);
@@ -428,7 +428,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x45;
     state.l = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 0);
@@ -444,7 +444,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x46;
     memory[HL_VALUE] = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 0);
@@ -459,7 +459,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     ResetState();
     memory[0] = 0x47;
     state.a = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0);
     ASSERT_EQ(state.f, F_VALUE);
@@ -478,7 +478,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
     memory[0] = 0x70;
     memory[HL_VALUE] = 1;
     state.b = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 1);
     ASSERT_EQ(state.af, AF_VALUE);
@@ -493,7 +493,7 @@ TEST_F(EmulatorTest, Test_LD_REG_REG_8Bit)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
+TEST_F(CpuTest, Test_LD_REG_NN_8Bit)
 {
     uint cycles = 0;
 
@@ -501,7 +501,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x06;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, 1);
@@ -516,7 +516,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x0E;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.b, B_VALUE);
@@ -531,7 +531,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x16;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -546,7 +546,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x1E;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -561,7 +561,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x26;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -576,7 +576,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x2E;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -591,7 +591,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x36;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 1);
     ASSERT_EQ(state.af, AF_VALUE);
@@ -606,7 +606,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
     ResetState();
     memory[0] = 0x3E;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -620,7 +620,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_8Bit)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_A_BC)
+TEST_F(CpuTest, Test_LD_A_BC)
 {
     uint cycles = 0;
 
@@ -628,7 +628,7 @@ TEST_F(EmulatorTest, Test_LD_A_BC)
     ResetState();
     memory[0] = 0x0A;
     memory[BC_VALUE] = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -642,7 +642,7 @@ TEST_F(EmulatorTest, Test_LD_A_BC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_A_DE)
+TEST_F(CpuTest, Test_LD_A_DE)
 {
     uint cycles = 0;
 
@@ -650,7 +650,7 @@ TEST_F(EmulatorTest, Test_LD_A_DE)
     ResetState();
     memory[0] = 0x1A;
     memory[DE_VALUE] = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -664,7 +664,7 @@ TEST_F(EmulatorTest, Test_LD_A_DE)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_C)
+TEST_F(CpuTest, Test_LD_A_0xFF00_PLUS_C)
 {
     uint cycles = 0;
 
@@ -672,7 +672,7 @@ TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_C)
     ResetState();
     memory[0] = 0xF2;
     memory[0xFF00 + C_VALUE] = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -686,7 +686,7 @@ TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_C)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_C_A)
+TEST_F(CpuTest, Test_LD_0xFF00_PLUS_C_A)
 {
     uint cycles = 0;
 
@@ -694,7 +694,7 @@ TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_C_A)
     ResetState();
     memory[0] = 0xE2;
     state.a = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[0xFF00 + C_VALUE], 1);
     ASSERT_EQ(state.a, 1);
@@ -709,7 +709,7 @@ TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_C_A)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_N)
+TEST_F(CpuTest, Test_LD_A_0xFF00_PLUS_N)
 {
     uint cycles = 0;
 
@@ -718,7 +718,7 @@ TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_N)
     memory[0] = 0xF0;
     memory[1] = 0xFE;
     memory[0xFFFE] = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -732,7 +732,7 @@ TEST_F(EmulatorTest, Test_LD_A_0xFF00_PLUS_N)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_N_A)
+TEST_F(CpuTest, Test_LD_0xFF00_PLUS_N_A)
 {
     uint cycles = 0;
 
@@ -741,7 +741,7 @@ TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_N_A)
     memory[0] = 0xE0;
     memory[1] = 0x03;
     state.a = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[0xFF03], 1);
     ASSERT_EQ(state.a, 1);
@@ -756,7 +756,7 @@ TEST_F(EmulatorTest, Test_LD_0xFF00_PLUS_N_A)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_A_NN)
+TEST_F(CpuTest, Test_LD_A_NN)
 {
     uint cycles = 0;
 
@@ -766,7 +766,7 @@ TEST_F(EmulatorTest, Test_LD_A_NN)
     memory[1] = 0x02;
     memory[2] = 0x01;
     memory[0x0102] = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -780,7 +780,7 @@ TEST_F(EmulatorTest, Test_LD_A_NN)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_NN_A)
+TEST_F(CpuTest, Test_LD_NN_A)
 {
     uint cycles = 0;
 
@@ -790,7 +790,7 @@ TEST_F(EmulatorTest, Test_LD_NN_A)
     memory[1] = 0x80;
     memory[2] = 0xFF;
     state.a = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[0xFF80], 1);
     ASSERT_EQ(state.a, 1);
@@ -805,7 +805,7 @@ TEST_F(EmulatorTest, Test_LD_NN_A)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_A_HL_PLUS)
+TEST_F(CpuTest, Test_LD_A_HL_PLUS)
 {
     uint cycles = 0;
 
@@ -813,7 +813,7 @@ TEST_F(EmulatorTest, Test_LD_A_HL_PLUS)
     ResetState();
     memory[0] = 0x2A;
     memory[HL_VALUE] = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -827,7 +827,7 @@ TEST_F(EmulatorTest, Test_LD_A_HL_PLUS)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_A_HL_MINUS)
+TEST_F(CpuTest, Test_LD_A_HL_MINUS)
 {
     uint cycles = 0;
 
@@ -835,7 +835,7 @@ TEST_F(EmulatorTest, Test_LD_A_HL_MINUS)
     ResetState();
     memory[0] = 0x3A;
     memory[HL_VALUE] = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
@@ -849,7 +849,7 @@ TEST_F(EmulatorTest, Test_LD_A_HL_MINUS)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_BC_A)
+TEST_F(CpuTest, Test_LD_BC_A)
 {
     uint cycles = 0;
 
@@ -858,7 +858,7 @@ TEST_F(EmulatorTest, Test_LD_BC_A)
     state.bc = 0xFF80;
     memory[0] = 0x02;
     state.a = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[0xFF80], 1);
     ASSERT_EQ(state.a, 1);
@@ -873,7 +873,7 @@ TEST_F(EmulatorTest, Test_LD_BC_A)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_DE_A)
+TEST_F(CpuTest, Test_LD_DE_A)
 {
     uint cycles = 0;
 
@@ -882,7 +882,7 @@ TEST_F(EmulatorTest, Test_LD_DE_A)
     state.de = 0xFF80;
     memory[0] = 0x12;
     state.a = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[0xFF80], 1);
     ASSERT_EQ(state.a, 1);
@@ -897,7 +897,7 @@ TEST_F(EmulatorTest, Test_LD_DE_A)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_HLI_A)
+TEST_F(CpuTest, Test_LD_HLI_A)
 {
     uint cycles = 0;
 
@@ -905,7 +905,7 @@ TEST_F(EmulatorTest, Test_LD_HLI_A)
     ResetState();
     memory[0] = 0x22;
     state.a = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 1);
     ASSERT_EQ(state.a, 1);
@@ -920,7 +920,7 @@ TEST_F(EmulatorTest, Test_LD_HLI_A)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_HLD_A)
+TEST_F(CpuTest, Test_LD_HLD_A)
 {
     uint cycles = 0;
 
@@ -928,7 +928,7 @@ TEST_F(EmulatorTest, Test_LD_HLD_A)
     ResetState();
     memory[0] = 0x32;
     state.a = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 1);
     ASSERT_EQ(state.a, 1);
@@ -943,7 +943,7 @@ TEST_F(EmulatorTest, Test_LD_HLD_A)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
+TEST_F(CpuTest, Test_LD_REG_NN_16Bit)
 {
     uint cycles = 0;
 
@@ -952,7 +952,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
     memory[0] = 0x01;
     memory[1] = 0x01;
     memory[2] = 0x02;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, 0x0201);
@@ -967,7 +967,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
     memory[0] = 0x11;
     memory[1] = 0x01;
     memory[2] = 0x02;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -982,7 +982,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
     memory[0] = 0x21;
     memory[1] = 0x01;
     memory[2] = 0x02;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -997,7 +997,7 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
     memory[0] = 0x31;
     memory[1] = 0x01;
     memory[2] = 0x02;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.af, AF_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1010,14 +1010,14 @@ TEST_F(EmulatorTest, Test_LD_REG_NN_16Bit)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_SP_HL)
+TEST_F(CpuTest, Test_LD_SP_HL)
 {
     uint cycles = 0;
 
     // LD SP, HL
     ResetState();
     memory[0] = 0xF9;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.f, F_VALUE);
@@ -1031,7 +1031,7 @@ TEST_F(EmulatorTest, Test_LD_SP_HL)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
+TEST_F(CpuTest, Test_LD_HL_SP_PLUS_NN)
 {
     uint cycles = 0;
 
@@ -1039,7 +1039,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
     state.sp = 0;
     memory[0] = 0xF8;
     memory[1] = 0x0F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.hl, 0x000F);
     ASSERT_EQ(state.a, A_VALUE);
@@ -1058,7 +1058,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
     state.sp = 0x000F;
     memory[0] = 0xF8;
     memory[1] = 0x0F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.hl, 0x001E);
     ASSERT_EQ(state.a, A_VALUE);
@@ -1077,7 +1077,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
     state.sp = 0x0FFF;
     memory[0] = 0xF8;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.hl, 0x1000);
     ASSERT_EQ(state.a, A_VALUE);
@@ -1096,7 +1096,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
     state.sp = 0xFFFF;
     memory[0] = 0xF8;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.hl, 0x0000);
     ASSERT_EQ(state.a, A_VALUE);
@@ -1113,7 +1113,7 @@ TEST_F(EmulatorTest, Test_LD_HL_SP_PLUS_NN)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_LD_NN_SP)
+TEST_F(CpuTest, Test_LD_NN_SP)
 {
     uint cycles = 0;
 
@@ -1121,7 +1121,7 @@ TEST_F(EmulatorTest, Test_LD_NN_SP)
     memory[1] = 0x00;
     memory[2] = 0xC1;
     state.sp = 0xFFF8;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[0xC100], 0xF8);
     ASSERT_EQ(memory[0xC101], 0xFF);
@@ -1140,7 +1140,7 @@ TEST_F(EmulatorTest, Test_LD_NN_SP)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_PUSH)
+TEST_F(CpuTest, Test_PUSH)
 {
     uint cycles = 0;
     state.a = 0x12;
@@ -1150,7 +1150,7 @@ TEST_F(EmulatorTest, Test_PUSH)
     state.sp = SP_VALUE;
 
     memory[0] = 0xC5;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFFC);
     ASSERT_EQ(memory[0xFFFD], state.b);
@@ -1168,7 +1168,7 @@ TEST_F(EmulatorTest, Test_PUSH)
 
     state.pc = 0;
     memory[0] = 0xD5;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFFA);
     ASSERT_EQ(memory[0xFFFB], state.d);
@@ -1186,7 +1186,7 @@ TEST_F(EmulatorTest, Test_PUSH)
 
     state.pc = 0;
     memory[0] = 0xE5;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFF8);
     ASSERT_EQ(memory[0xFFF9], state.h);
@@ -1204,7 +1204,7 @@ TEST_F(EmulatorTest, Test_PUSH)
 
     state.pc = 0;
     memory[0] = 0xF5;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFF6);
     ASSERT_EQ(memory[0xFFF7], state.a);
@@ -1223,7 +1223,7 @@ TEST_F(EmulatorTest, Test_PUSH)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_POP)
+TEST_F(CpuTest, Test_POP)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -1237,13 +1237,13 @@ TEST_F(EmulatorTest, Test_POP)
     memory[1] = 0xE5;
     memory[2] = 0xD5;
     memory[3] = 0xC5;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFF6);
     state.af = 0;
@@ -1253,7 +1253,7 @@ TEST_F(EmulatorTest, Test_POP)
     
     state.pc = 0;
     memory[0] = 0xC1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFF8);
     ASSERT_EQ(state.af, 0);
@@ -1269,7 +1269,7 @@ TEST_F(EmulatorTest, Test_POP)
 
     state.pc = 0;
     memory[0] = 0xD1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFFA);
     ASSERT_EQ(state.af, 0);
@@ -1285,7 +1285,7 @@ TEST_F(EmulatorTest, Test_POP)
 
     state.pc = 0;
     memory[0] = 0xE1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, 0xFFFC);
     ASSERT_EQ(state.af, 0);
@@ -1301,7 +1301,7 @@ TEST_F(EmulatorTest, Test_POP)
 
     state.pc = 0;
     memory[0] = 0xF1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.sp, SP_VALUE);
     ASSERT_EQ(state.af, 0x12A0);
@@ -1318,7 +1318,7 @@ TEST_F(EmulatorTest, Test_POP)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_ADD)
+TEST_F(CpuTest, Test_ADD)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -1336,7 +1336,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, 0x0156);
@@ -1359,7 +1359,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x81;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, 0x3401);
@@ -1382,7 +1382,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x82;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1405,7 +1405,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x83;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1428,7 +1428,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x84;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1451,7 +1451,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x85;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1475,7 +1475,7 @@ TEST_F(EmulatorTest, Test_ADD)
     memory[HL_VALUE] = 1;
     state.pc = 0;
     memory[0] = 0x86;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1498,7 +1498,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x87;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1522,7 +1522,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.pc = 0;
     memory[0] = 0xC6;
     memory[1] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1545,7 +1545,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x10);
     ASSERT_EQ(state.bc, 0x0156);
@@ -1568,7 +1568,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x01);
     ASSERT_EQ(state.bc, 0x1156);
@@ -1591,7 +1591,7 @@ TEST_F(EmulatorTest, Test_ADD)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x00);
     ASSERT_EQ(state.bc, 0x0156);
@@ -1608,7 +1608,7 @@ TEST_F(EmulatorTest, Test_ADD)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_ADC)
+TEST_F(CpuTest, Test_ADC)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -1627,7 +1627,7 @@ TEST_F(EmulatorTest, Test_ADC)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x88;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 2);
     ASSERT_EQ(state.bc, 0x0156);
@@ -1651,7 +1651,7 @@ TEST_F(EmulatorTest, Test_ADC)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x88;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 3);
     ASSERT_EQ(state.bc, 0x0156);
@@ -1668,7 +1668,7 @@ TEST_F(EmulatorTest, Test_ADC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SUB)
+TEST_F(CpuTest, Test_SUB)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -1686,7 +1686,7 @@ TEST_F(EmulatorTest, Test_SUB)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x90;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0);
     ASSERT_EQ(state.bc, 0x0156);
@@ -1708,7 +1708,7 @@ TEST_F(EmulatorTest, Test_SUB)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x93;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1731,7 +1731,7 @@ TEST_F(EmulatorTest, Test_SUB)
     state.pc = 0;
     memory[0] = 0x96;
     memory[HL_VALUE] = 0x0E;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0xF1);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1754,7 +1754,7 @@ TEST_F(EmulatorTest, Test_SUB)
     state.pc = 0;
     memory[0] = 0xD6;
     memory[1] = 0x0F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x2F);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1777,7 +1777,7 @@ TEST_F(EmulatorTest, Test_SUB)
     state.pc = 0;
     memory[0] = 0x96;
     memory[HL_VALUE] = 0x40;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0xFE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1794,7 +1794,7 @@ TEST_F(EmulatorTest, Test_SUB)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SBC)
+TEST_F(CpuTest, Test_SBC)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -1812,7 +1812,7 @@ TEST_F(EmulatorTest, Test_SBC)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x9C;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x10);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1836,7 +1836,7 @@ TEST_F(EmulatorTest, Test_SBC)
     state.pc = 0;
     memory[0] = 0xDE;
     memory[1] = 0x3A;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x00);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1860,7 +1860,7 @@ TEST_F(EmulatorTest, Test_SBC)
     state.pc = 0;
     memory[0] = 0x9E;
     memory[HL_VALUE] = 0x4F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0xEB);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1877,7 +1877,7 @@ TEST_F(EmulatorTest, Test_SBC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_AND)
+TEST_F(CpuTest, Test_AND)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -1894,7 +1894,7 @@ TEST_F(EmulatorTest, Test_AND)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0xA5;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x1A);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1917,7 +1917,7 @@ TEST_F(EmulatorTest, Test_AND)
     state.pc = 0;
     memory[0] = 0xE6;
     memory[1] = 0x38;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x18);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1940,7 +1940,7 @@ TEST_F(EmulatorTest, Test_AND)
     state.pc = 0;
     memory[0] = 0xA6;
     memory[HL_VALUE] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x00);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1957,7 +1957,7 @@ TEST_F(EmulatorTest, Test_AND)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_OR)
+TEST_F(CpuTest, Test_OR)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -1973,7 +1973,7 @@ TEST_F(EmulatorTest, Test_OR)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0xB7;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x5A);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -1996,7 +1996,7 @@ TEST_F(EmulatorTest, Test_OR)
     state.pc = 0;
     memory[0] = 0xF6;
     memory[1] = 0x03;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x5B);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2019,7 +2019,7 @@ TEST_F(EmulatorTest, Test_OR)
     state.pc = 0;
     memory[0] = 0xB6;
     memory[HL_VALUE] = 0x0F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x5F);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2036,7 +2036,7 @@ TEST_F(EmulatorTest, Test_OR)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_XOR)
+TEST_F(CpuTest, Test_XOR)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -2053,7 +2053,7 @@ TEST_F(EmulatorTest, Test_XOR)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0xAF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x00);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2076,7 +2076,7 @@ TEST_F(EmulatorTest, Test_XOR)
     state.pc = 0;
     memory[0] = 0xEE;
     memory[1] = 0x0F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0xF0);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2099,7 +2099,7 @@ TEST_F(EmulatorTest, Test_XOR)
     state.pc = 0;
     memory[0] = 0xAE;
     memory[HL_VALUE] = 0x8A;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x75);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2116,7 +2116,7 @@ TEST_F(EmulatorTest, Test_XOR)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CP)
+TEST_F(CpuTest, Test_CP)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -2133,7 +2133,7 @@ TEST_F(EmulatorTest, Test_CP)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0xB8;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x3C);
     ASSERT_EQ(state.bc, 0x2F56);
@@ -2156,7 +2156,7 @@ TEST_F(EmulatorTest, Test_CP)
     state.pc = 0;
     memory[0] = 0xFE;
     memory[1] = 0x3C;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x3C);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2179,7 +2179,7 @@ TEST_F(EmulatorTest, Test_CP)
     state.pc = 0;
     memory[0] = 0xBE;
     memory[HL_VALUE] = 0x40;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x3C);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2196,7 +2196,7 @@ TEST_F(EmulatorTest, Test_CP)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_INC)
+TEST_F(CpuTest, Test_INC)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -2213,7 +2213,7 @@ TEST_F(EmulatorTest, Test_INC)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x3C;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x00);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2236,7 +2236,7 @@ TEST_F(EmulatorTest, Test_INC)
     state.pc = 0;
     memory[0] = 0x34;
     memory[HL_VALUE] = 0x50;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[state.hl], 0x51);
     ASSERT_EQ(state.a, 0x3C);
@@ -2254,7 +2254,7 @@ TEST_F(EmulatorTest, Test_INC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_DEC)
+TEST_F(CpuTest, Test_DEC)
 {
     uint cycles = 0;
     state.af = 0x12A1;
@@ -2271,7 +2271,7 @@ TEST_F(EmulatorTest, Test_DEC)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x2D;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0xFF);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2294,7 +2294,7 @@ TEST_F(EmulatorTest, Test_DEC)
     state.pc = 0;
     memory[0] = 0x35;
     memory[HL_VALUE] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[state.hl], 0xFF);
     ASSERT_EQ(state.a, 0x3C);
@@ -2312,7 +2312,7 @@ TEST_F(EmulatorTest, Test_DEC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_ADD_HL_REG)
+TEST_F(CpuTest, Test_ADD_HL_REG)
 {
     uint cycles = 0;
     state.af = 0x1200;
@@ -2329,7 +2329,7 @@ TEST_F(EmulatorTest, Test_ADD_HL_REG)
     state.sp = SP_VALUE;
     state.pc = 0;
     memory[0] = 0x09;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0xFF);
     ASSERT_EQ(state.bc, 0x0605);
@@ -2353,7 +2353,7 @@ TEST_F(EmulatorTest, Test_ADD_HL_REG)
     state.pc = 0;
     memory[0] = 0x29;
     memory[HL_VALUE] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x3C);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2370,7 +2370,7 @@ TEST_F(EmulatorTest, Test_ADD_HL_REG)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_ADD_SP_N)
+TEST_F(CpuTest, Test_ADD_SP_N)
 {
     uint cycles = 0;
 
@@ -2379,7 +2379,7 @@ TEST_F(EmulatorTest, Test_ADD_SP_N)
     memory[0] = 0xE8;
     memory[1] = 2;
     state.sp = 0xFFF8;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2398,7 +2398,7 @@ TEST_F(EmulatorTest, Test_ADD_SP_N)
     memory[0] = 0xE8;
     memory[1] = 8;
     state.sp = 0xFFF8;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2415,13 +2415,13 @@ TEST_F(EmulatorTest, Test_ADD_SP_N)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_INC_16)
+TEST_F(CpuTest, Test_INC_16)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x03;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE + 1);
@@ -2438,7 +2438,7 @@ TEST_F(EmulatorTest, Test_INC_16)
     ResetState();
     memory[0] = 0x13;
     state.de = 0xFFFF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2456,13 +2456,13 @@ TEST_F(EmulatorTest, Test_INC_16)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_DEC_16)
+TEST_F(CpuTest, Test_DEC_16)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x2B;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2479,7 +2479,7 @@ TEST_F(EmulatorTest, Test_DEC_16)
     ResetState();
     memory[0] = 0x3B;
     state.sp = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2497,7 +2497,7 @@ TEST_F(EmulatorTest, Test_DEC_16)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RLCA)
+TEST_F(CpuTest, Test_RLCA)
 {
     uint cycles = 0;
 
@@ -2505,7 +2505,7 @@ TEST_F(EmulatorTest, Test_RLCA)
     memory[0] = 0x07;
     state.a = 0x85;
     state.f = 0xFF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x0B);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2522,7 +2522,7 @@ TEST_F(EmulatorTest, Test_RLCA)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RLA)
+TEST_F(CpuTest, Test_RLA)
 {
     uint cycles = 0;
 
@@ -2530,7 +2530,7 @@ TEST_F(EmulatorTest, Test_RLA)
     memory[0] = 0x17;
     state.a = 0x95;
     state.f = 0xFF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x2B);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2547,7 +2547,7 @@ TEST_F(EmulatorTest, Test_RLA)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RRCA)
+TEST_F(CpuTest, Test_RRCA)
 {
     uint cycles = 0;
 
@@ -2555,7 +2555,7 @@ TEST_F(EmulatorTest, Test_RRCA)
     memory[0] = 0x0F;
     state.a = 0x3B;
     state.f = 0xFF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x9D);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2572,7 +2572,7 @@ TEST_F(EmulatorTest, Test_RRCA)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RRA)
+TEST_F(CpuTest, Test_RRA)
 {
     uint cycles = 0;
 
@@ -2581,7 +2581,7 @@ TEST_F(EmulatorTest, Test_RRA)
     state.a = 0x81;
     state.f = 0xFF;
     state.flags.c = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x40);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2598,7 +2598,7 @@ TEST_F(EmulatorTest, Test_RRA)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RLC)
+TEST_F(CpuTest, Test_RLC)
 {
     uint cycles = 0;
 
@@ -2606,7 +2606,7 @@ TEST_F(EmulatorTest, Test_RLC)
     memory[0] = 0xCB;
     memory[1] = 0x00;
     state.b = 0x85;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.b, 0x0B);
@@ -2625,7 +2625,7 @@ TEST_F(EmulatorTest, Test_RLC)
     memory[0] = 0xCB;
     memory[1] = 0x06;
     memory[HL_VALUE] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2643,7 +2643,7 @@ TEST_F(EmulatorTest, Test_RLC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RRC)
+TEST_F(CpuTest, Test_RRC)
 {
     uint cycles = 0;
 
@@ -2651,7 +2651,7 @@ TEST_F(EmulatorTest, Test_RRC)
     memory[0] = 0xCB;
     memory[1] = 0x09;
     state.c = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.b, B_VALUE);
@@ -2670,7 +2670,7 @@ TEST_F(EmulatorTest, Test_RRC)
     memory[0] = 0xCB;
     memory[1] = 0x0E;
     memory[HL_VALUE] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2688,7 +2688,7 @@ TEST_F(EmulatorTest, Test_RRC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RL)
+TEST_F(CpuTest, Test_RL)
 {
     uint cycles = 0;
 
@@ -2696,7 +2696,7 @@ TEST_F(EmulatorTest, Test_RL)
     memory[0] = 0xCB;
     memory[1] = 0x15;
     state.l = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2715,7 +2715,7 @@ TEST_F(EmulatorTest, Test_RL)
     memory[0] = 0xCB;
     memory[1] = 0x16;
     memory[HL_VALUE] = 0x11;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0x22);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2733,7 +2733,7 @@ TEST_F(EmulatorTest, Test_RL)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RR)
+TEST_F(CpuTest, Test_RR)
 {
     uint cycles = 0;
 
@@ -2741,7 +2741,7 @@ TEST_F(EmulatorTest, Test_RR)
     memory[0] = 0xCB;
     memory[1] = 0x1F;
     state.a = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x00);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2759,7 +2759,7 @@ TEST_F(EmulatorTest, Test_RR)
     memory[0] = 0xCB;
     memory[1] = 0x1E;
     memory[HL_VALUE] = 0x8A;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0x45);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2777,7 +2777,7 @@ TEST_F(EmulatorTest, Test_RR)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SLA)
+TEST_F(CpuTest, Test_SLA)
 {
     uint cycles = 0;
 
@@ -2785,7 +2785,7 @@ TEST_F(EmulatorTest, Test_SLA)
     memory[0] = 0xCB;
     memory[1] = 0x22;
     state.d = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2804,7 +2804,7 @@ TEST_F(EmulatorTest, Test_SLA)
     memory[0] = 0xCB;
     memory[1] = 0x26;
     memory[HL_VALUE] = 0xFF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0xFE);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2822,7 +2822,7 @@ TEST_F(EmulatorTest, Test_SLA)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SRA)
+TEST_F(CpuTest, Test_SRA)
 {
     uint cycles = 0;
 
@@ -2830,7 +2830,7 @@ TEST_F(EmulatorTest, Test_SRA)
     memory[0] = 0xCB;
     memory[1] = 0x2A;
     state.d = 0x8A;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2849,7 +2849,7 @@ TEST_F(EmulatorTest, Test_SRA)
     memory[0] = 0xCB;
     memory[1] = 0x2E;
     memory[HL_VALUE] = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0x00);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2867,7 +2867,7 @@ TEST_F(EmulatorTest, Test_SRA)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SWAP)
+TEST_F(CpuTest, Test_SWAP)
 {
     uint cycles = 0;
 
@@ -2875,7 +2875,7 @@ TEST_F(EmulatorTest, Test_SWAP)
     memory[0] = 0xCB;
     memory[1] = 0x37;
     state.a = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2893,7 +2893,7 @@ TEST_F(EmulatorTest, Test_SWAP)
     memory[0] = 0xCB;
     memory[1] = 0x36;
     memory[HL_VALUE] = 0xF0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0x0F);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2911,7 +2911,7 @@ TEST_F(EmulatorTest, Test_SWAP)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SRL)
+TEST_F(CpuTest, Test_SRL)
 {
     uint cycles = 0;
 
@@ -2919,7 +2919,7 @@ TEST_F(EmulatorTest, Test_SRL)
     memory[0] = 0xCB;
     memory[1] = 0x3F;
     state.a = 0x01;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2937,7 +2937,7 @@ TEST_F(EmulatorTest, Test_SRL)
     memory[0] = 0xCB;
     memory[1] = 0x3E;
     memory[HL_VALUE] = 0xFF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0x7F);
     ASSERT_EQ(state.a, A_VALUE);
@@ -2955,7 +2955,7 @@ TEST_F(EmulatorTest, Test_SRL)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_BIT)
+TEST_F(CpuTest, Test_BIT)
 {
     uint cycles = 0;
 
@@ -2963,7 +2963,7 @@ TEST_F(EmulatorTest, Test_BIT)
     memory[0] = 0xCB;
     memory[1] = 0x7F;
     state.a = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x80);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -2981,7 +2981,7 @@ TEST_F(EmulatorTest, Test_BIT)
     memory[0] = 0xCB;
     memory[1] = 0x65;
     state.l = 0xEF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3000,7 +3000,7 @@ TEST_F(EmulatorTest, Test_BIT)
     memory[0] = 0xCB;
     memory[1] = 0x46;
     memory[HL_VALUE] = 0xFE;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0xFE);
     ASSERT_EQ(state.a, A_VALUE);
@@ -3019,7 +3019,7 @@ TEST_F(EmulatorTest, Test_BIT)
     memory[0] = 0xCB;
     memory[1] = 0x4E;
     memory[HL_VALUE] = 0xFE;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0xFE);
     ASSERT_EQ(state.a, A_VALUE);
@@ -3037,7 +3037,7 @@ TEST_F(EmulatorTest, Test_BIT)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RES)
+TEST_F(CpuTest, Test_RES)
 {
     uint cycles = 0;
 
@@ -3045,7 +3045,7 @@ TEST_F(EmulatorTest, Test_RES)
     memory[0] = 0xCB;
     memory[1] = 0xBF;
     state.a = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x00);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3063,7 +3063,7 @@ TEST_F(EmulatorTest, Test_RES)
     memory[0] = 0xCB;
     memory[1] = 0x8D;
     state.l = 0x3B;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3082,7 +3082,7 @@ TEST_F(EmulatorTest, Test_RES)
     memory[0] = 0xCB;
     memory[1] = 0x9E;
     memory[HL_VALUE] = 0xFF;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0xF7);
     ASSERT_EQ(state.a, A_VALUE);
@@ -3100,7 +3100,7 @@ TEST_F(EmulatorTest, Test_RES)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SET)
+TEST_F(CpuTest, Test_SET)
 {
     uint cycles = 0;
 
@@ -3108,7 +3108,7 @@ TEST_F(EmulatorTest, Test_SET)
     memory[0] = 0xCB;
     memory[1] = 0xDF;
     state.a = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0x88);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3126,7 +3126,7 @@ TEST_F(EmulatorTest, Test_SET)
     memory[0] = 0xCB;
     memory[1] = 0xFD;
     state.l = 0x3B;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3145,7 +3145,7 @@ TEST_F(EmulatorTest, Test_SET)
     memory[0] = 0xCB;
     memory[1] = 0xDE;
     memory[HL_VALUE] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(memory[HL_VALUE], 0x08);
     ASSERT_EQ(state.a, A_VALUE);
@@ -3163,7 +3163,7 @@ TEST_F(EmulatorTest, Test_SET)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JP)
+TEST_F(CpuTest, Test_JP)
 {
     uint cycles = 0;
 
@@ -3171,7 +3171,7 @@ TEST_F(EmulatorTest, Test_JP)
     memory[0] = 0xC3;
     memory[1] = 0x01;
     memory[2] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3188,7 +3188,7 @@ TEST_F(EmulatorTest, Test_JP)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JP_NZ)
+TEST_F(CpuTest, Test_JP_NZ)
 {
     uint cycles = 0;
 
@@ -3196,7 +3196,7 @@ TEST_F(EmulatorTest, Test_JP_NZ)
     memory[0] = 0xC2;
     memory[1] = 0x01;
     memory[2] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3215,7 +3215,7 @@ TEST_F(EmulatorTest, Test_JP_NZ)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3232,7 +3232,7 @@ TEST_F(EmulatorTest, Test_JP_NZ)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JP_Z)
+TEST_F(CpuTest, Test_JP_Z)
 {
     uint cycles = 0;
 
@@ -3241,7 +3241,7 @@ TEST_F(EmulatorTest, Test_JP_Z)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3260,7 +3260,7 @@ TEST_F(EmulatorTest, Test_JP_Z)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.z = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3277,7 +3277,7 @@ TEST_F(EmulatorTest, Test_JP_Z)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JP_NC)
+TEST_F(CpuTest, Test_JP_NC)
 {
     uint cycles = 0;
 
@@ -3285,7 +3285,7 @@ TEST_F(EmulatorTest, Test_JP_NC)
     memory[0] = 0xD2;
     memory[1] = 0x01;
     memory[2] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3304,7 +3304,7 @@ TEST_F(EmulatorTest, Test_JP_NC)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3321,7 +3321,7 @@ TEST_F(EmulatorTest, Test_JP_NC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JP_C)
+TEST_F(CpuTest, Test_JP_C)
 {
     uint cycles = 0;
 
@@ -3330,7 +3330,7 @@ TEST_F(EmulatorTest, Test_JP_C)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3349,7 +3349,7 @@ TEST_F(EmulatorTest, Test_JP_C)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.c = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3366,14 +3366,14 @@ TEST_F(EmulatorTest, Test_JP_C)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JR)
+TEST_F(CpuTest, Test_JR)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x18;
     memory[1] = 0x05;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3391,7 +3391,7 @@ TEST_F(EmulatorTest, Test_JR)
     memory[0xF0] = 0x18;
     memory[0xF1] = 0xFB;
     state.pc = 0xF0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3408,14 +3408,14 @@ TEST_F(EmulatorTest, Test_JR)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JR_NZ)
+TEST_F(CpuTest, Test_JR_NZ)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x20;
     memory[1] = 0x0F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3433,7 +3433,7 @@ TEST_F(EmulatorTest, Test_JR_NZ)
     memory[0] = 0x20;
     memory[1] = 0x0F;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3450,7 +3450,7 @@ TEST_F(EmulatorTest, Test_JR_NZ)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JR_Z)
+TEST_F(CpuTest, Test_JR_Z)
 {
     uint cycles = 0;
 
@@ -3458,7 +3458,7 @@ TEST_F(EmulatorTest, Test_JR_Z)
     memory[0] = 0x28;
     memory[1] = 0x0F;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3476,7 +3476,7 @@ TEST_F(EmulatorTest, Test_JR_Z)
     memory[0] = 0x28;
     memory[1] = 0x0F;
     state.flags.z = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3493,14 +3493,14 @@ TEST_F(EmulatorTest, Test_JR_Z)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JR_NC)
+TEST_F(CpuTest, Test_JR_NC)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x30;
     memory[1] = 0x0F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3518,7 +3518,7 @@ TEST_F(EmulatorTest, Test_JR_NC)
     memory[0] = 0x30;
     memory[1] = 0x0F;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3535,7 +3535,7 @@ TEST_F(EmulatorTest, Test_JR_NC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JR_C)
+TEST_F(CpuTest, Test_JR_C)
 {
     uint cycles = 0;
 
@@ -3543,7 +3543,7 @@ TEST_F(EmulatorTest, Test_JR_C)
     memory[0] = 0x38;
     memory[1] = 0x0F;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3561,7 +3561,7 @@ TEST_F(EmulatorTest, Test_JR_C)
     memory[0] = 0x38;
     memory[1] = 0x0F;
     state.flags.c = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3578,14 +3578,14 @@ TEST_F(EmulatorTest, Test_JR_C)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_JP_HL)
+TEST_F(CpuTest, Test_JP_HL)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0xE9;
     state.hl = 0x8001;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3602,7 +3602,7 @@ TEST_F(EmulatorTest, Test_JP_HL)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CALL)
+TEST_F(CpuTest, Test_CALL)
 {
     uint cycles = 0;
 
@@ -3610,7 +3610,7 @@ TEST_F(EmulatorTest, Test_CALL)
     memory[0] = 0xCD;
     memory[1] = 0x01;
     memory[2] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3629,7 +3629,7 @@ TEST_F(EmulatorTest, Test_CALL)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CALL_NZ)
+TEST_F(CpuTest, Test_CALL_NZ)
 {
     uint cycles = 0;
 
@@ -3637,7 +3637,7 @@ TEST_F(EmulatorTest, Test_CALL_NZ)
     memory[0] = 0xC4;
     memory[1] = 0x01;
     memory[2] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3658,7 +3658,7 @@ TEST_F(EmulatorTest, Test_CALL_NZ)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3675,7 +3675,7 @@ TEST_F(EmulatorTest, Test_CALL_NZ)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CALL_Z)
+TEST_F(CpuTest, Test_CALL_Z)
 {
     uint cycles = 0;
 
@@ -3684,7 +3684,7 @@ TEST_F(EmulatorTest, Test_CALL_Z)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3705,7 +3705,7 @@ TEST_F(EmulatorTest, Test_CALL_Z)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.z = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3722,7 +3722,7 @@ TEST_F(EmulatorTest, Test_CALL_Z)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CALL_NC)
+TEST_F(CpuTest, Test_CALL_NC)
 {
     uint cycles = 0;
 
@@ -3730,7 +3730,7 @@ TEST_F(EmulatorTest, Test_CALL_NC)
     memory[0] = 0xD4;
     memory[1] = 0x01;
     memory[2] = 0x80;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3751,7 +3751,7 @@ TEST_F(EmulatorTest, Test_CALL_NC)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3768,7 +3768,7 @@ TEST_F(EmulatorTest, Test_CALL_NC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CALL_C)
+TEST_F(CpuTest, Test_CALL_C)
 {
     uint cycles = 0;
 
@@ -3777,7 +3777,7 @@ TEST_F(EmulatorTest, Test_CALL_C)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3798,7 +3798,7 @@ TEST_F(EmulatorTest, Test_CALL_C)
     memory[1] = 0x01;
     memory[2] = 0x80;
     state.flags.c = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3815,7 +3815,7 @@ TEST_F(EmulatorTest, Test_CALL_C)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RET)
+TEST_F(CpuTest, Test_RET)
 {
     uint cycles = 0;
 
@@ -3824,7 +3824,7 @@ TEST_F(EmulatorTest, Test_RET)
     memory[0xFFFD] = 0x80;
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3841,7 +3841,7 @@ TEST_F(EmulatorTest, Test_RET)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RETI)
+TEST_F(CpuTest, Test_RETI)
 {
     uint cycles = 0;
 
@@ -3850,7 +3850,7 @@ TEST_F(EmulatorTest, Test_RETI)
     memory[0xFFFD] = 0x80;
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.interrupts->Enabled(), true);
     ASSERT_EQ(state.a, A_VALUE);
@@ -3868,7 +3868,7 @@ TEST_F(EmulatorTest, Test_RETI)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RET_NZ)
+TEST_F(CpuTest, Test_RET_NZ)
 {
     uint cycles = 0;
 
@@ -3877,7 +3877,7 @@ TEST_F(EmulatorTest, Test_RET_NZ)
     memory[0xFFFD] = 0x80;
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3897,7 +3897,7 @@ TEST_F(EmulatorTest, Test_RET_NZ)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3914,7 +3914,7 @@ TEST_F(EmulatorTest, Test_RET_NZ)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RET_Z)
+TEST_F(CpuTest, Test_RET_Z)
 {
     uint cycles = 0;
 
@@ -3924,7 +3924,7 @@ TEST_F(EmulatorTest, Test_RET_Z)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     state.flags.z = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3944,7 +3944,7 @@ TEST_F(EmulatorTest, Test_RET_Z)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     state.flags.z = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3961,7 +3961,7 @@ TEST_F(EmulatorTest, Test_RET_Z)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RET_NC)
+TEST_F(CpuTest, Test_RET_NC)
 {
     uint cycles = 0;
 
@@ -3970,7 +3970,7 @@ TEST_F(EmulatorTest, Test_RET_NC)
     memory[0xFFFD] = 0x80;
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -3990,7 +3990,7 @@ TEST_F(EmulatorTest, Test_RET_NC)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4007,7 +4007,7 @@ TEST_F(EmulatorTest, Test_RET_NC)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RET_C)
+TEST_F(CpuTest, Test_RET_C)
 {
     uint cycles = 0;
 
@@ -4017,7 +4017,7 @@ TEST_F(EmulatorTest, Test_RET_C)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4037,7 +4037,7 @@ TEST_F(EmulatorTest, Test_RET_C)
     memory[0xFFFC] = 0x01;
     state.sp = 0xFFFC;
     state.flags.c = 0;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4054,14 +4054,14 @@ TEST_F(EmulatorTest, Test_RET_C)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_RST)
+TEST_F(CpuTest, Test_RST)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0x1234] = 0xC7;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4080,7 +4080,7 @@ TEST_F(EmulatorTest, Test_RST)
     ResetState();
     memory[0x1234] = 0xCF;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4099,7 +4099,7 @@ TEST_F(EmulatorTest, Test_RST)
     ResetState();
     memory[0x1234] = 0xD7;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4118,7 +4118,7 @@ TEST_F(EmulatorTest, Test_RST)
     ResetState();
     memory[0x1234] = 0xDF;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4137,7 +4137,7 @@ TEST_F(EmulatorTest, Test_RST)
     ResetState();
     memory[0x1234] = 0xE7;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4156,7 +4156,7 @@ TEST_F(EmulatorTest, Test_RST)
     ResetState();
     memory[0x1234] = 0xEF;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4175,7 +4175,7 @@ TEST_F(EmulatorTest, Test_RST)
     ResetState();
     memory[0x1234] = 0xF7;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4194,7 +4194,7 @@ TEST_F(EmulatorTest, Test_RST)
     ResetState();
     memory[0x1234] = 0xFF;
     state.pc = 0x1234;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4213,14 +4213,14 @@ TEST_F(EmulatorTest, Test_RST)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CPL)
+TEST_F(CpuTest, Test_CPL)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x2F;
     state.a = 0x35;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, 0xCA);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4237,13 +4237,13 @@ TEST_F(EmulatorTest, Test_CPL)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_NOP)
+TEST_F(CpuTest, Test_NOP)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4260,13 +4260,13 @@ TEST_F(EmulatorTest, Test_NOP)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_SCF)
+TEST_F(CpuTest, Test_SCF)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x37;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4283,7 +4283,7 @@ TEST_F(EmulatorTest, Test_SCF)
     ResetState();
     memory[0] = 0x37;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4300,13 +4300,13 @@ TEST_F(EmulatorTest, Test_SCF)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_CCF)
+TEST_F(CpuTest, Test_CCF)
 {
     uint cycles = 0;
 
     ResetState();
     memory[0] = 0x3F;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4323,7 +4323,7 @@ TEST_F(EmulatorTest, Test_CCF)
     ResetState();
     memory[0] = 0x3F;
     state.flags.c = 1;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.a, A_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -4340,7 +4340,7 @@ TEST_F(EmulatorTest, Test_CCF)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_DAA)
+TEST_F(CpuTest, Test_DAA)
 {
     uint cycles = 0;
 
@@ -4349,10 +4349,10 @@ TEST_F(EmulatorTest, Test_DAA)
     state.b = 0x38;
     memory[0] = 0x80; // ADD A, B
     memory[1] = 0x27; // DAA
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 4);
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 8);
     ASSERT_EQ(state.a, 0x83);
@@ -4372,10 +4372,10 @@ TEST_F(EmulatorTest, Test_DAA)
     state.b = 0x38;
     memory[0] = 0x90; // SUB A, B
     memory[1] = 0x27; // DAA
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 4);
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 8);
     ASSERT_EQ(state.a, 0x45);
@@ -4394,14 +4394,14 @@ TEST_F(EmulatorTest, Test_DAA)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_DI)
+TEST_F(CpuTest, Test_DI)
 {
     uint cycles = 0;
 
     ResetState();
     state.interrupts->SetEnabled(true);
     memory[0] = 0xF3;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.interrupts->Enabled(), false);
     ASSERT_EQ(state.a, A_VALUE);
@@ -4419,7 +4419,7 @@ TEST_F(EmulatorTest, Test_DI)
     ResetState();
     state.interrupts->SetEnabled(false);
     memory[0] = 0xF3;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(state.interrupts->Enabled(), false);
     ASSERT_EQ(state.a, A_VALUE);
@@ -4438,7 +4438,7 @@ TEST_F(EmulatorTest, Test_DI)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_EI)
+TEST_F(CpuTest, Test_EI)
 {
     uint cycles = 0;
 
@@ -4446,11 +4446,11 @@ TEST_F(EmulatorTest, Test_EI)
     state.interrupts->SetEnabled(false);
     memory[0] = 0xFB;
     memory[1] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 4);
     ASSERT_EQ(state.interrupts->Enabled(), false); // EI has a delayed effect.
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 8);
     ASSERT_EQ(state.interrupts->Enabled(), true);
@@ -4469,11 +4469,11 @@ TEST_F(EmulatorTest, Test_EI)
     state.interrupts->SetEnabled(true);
     memory[0] = 0xFB;
     memory[1] = 0x00;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 4);
     ASSERT_EQ(state.interrupts->Enabled(), true); // EI has a delayed effect, but it was already enabled.
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter();
     ASSERT_EQ(cycles, 8);
     ASSERT_EQ(state.interrupts->Enabled(), true);
@@ -4491,7 +4491,7 @@ TEST_F(EmulatorTest, Test_EI)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-TEST_F(EmulatorTest, Test_Interrupts)
+TEST_F(CpuTest, Test_Interrupts)
 {
     uint cycles = 0;
 
@@ -4503,19 +4503,19 @@ TEST_F(EmulatorTest, Test_Interrupts)
     memory[1] = 0x00;
     memory[0x40] = 0x3C; // INC A
     memory[0x41] = 0xC9; // RET
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // Process interrupt
     ASSERT_EQ(state.pc, 0x0040);
     ASSERT_EQ(state.sp, SP_VALUE - 2);
     ASSERT_EQ(cycles, 20);
     
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // Process INC A
     ASSERT_EQ(state.pc, 0x0041);
     ASSERT_EQ(state.a, A_VALUE + 1);
     ASSERT_EQ(cycles, 24);
 
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // Process RET
     ASSERT_EQ(state.pc, 0x0000);
     ASSERT_EQ(state.sp, SP_VALUE);
@@ -4530,13 +4530,13 @@ TEST_F(EmulatorTest, Test_Interrupts)
     memory[1] = 0x00;
     memory[0x40] = 0x3C; // INC A
     memory[0x41] = 0xC9; // RET
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // IE disabled
     ASSERT_EQ(state.pc, 0x0001);
     ASSERT_EQ(state.sp, SP_VALUE);
     ASSERT_EQ(cycles, 4);
     
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // IE disabled
     ASSERT_EQ(state.pc, 0x0002);
     ASSERT_EQ(state.sp, SP_VALUE);
@@ -4547,7 +4547,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x02;
     memory[eRegIF] = 0x02;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // Process interrupt
     ASSERT_EQ(state.pc, 0x0048);
     ASSERT_EQ(state.sp, SP_VALUE - 2);
@@ -4557,7 +4557,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x04;
     memory[eRegIF] = 0x04;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // Process interrupt
     ASSERT_EQ(state.pc, 0x0050);
     ASSERT_EQ(state.sp, SP_VALUE - 2);
@@ -4567,7 +4567,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x08;
     memory[eRegIF] = 0x08;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // Process interrupt
     ASSERT_EQ(state.pc, 0x0058);
     ASSERT_EQ(state.sp, SP_VALUE - 2);
@@ -4577,7 +4577,7 @@ TEST_F(EmulatorTest, Test_Interrupts)
     state.interrupts->SetEnabled(true);
     memory[eRegIE] = 0x10;
     memory[eRegIF] = 0x10;
-    emulator.ProcessOpCode();
+    cpu.ProcessOpCode();
     cycles = state.timer->GetCounter(); // Process interrupt
     ASSERT_EQ(state.pc, 0x0060);
     ASSERT_EQ(state.sp, SP_VALUE - 2);

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <SDL2/SDL.h>
-#include "EmulatorTest.h"
+#include "CpuTest.h"
 #include "main.h"
 
 bool debugOutput = false;

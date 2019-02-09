@@ -10,10 +10,10 @@
 
 typedef std::unique_ptr<AbsByteProxy> ByteProxy;
 
-class Emulator
+class Cpu
 {
 public:
-    Emulator(State *state);
+    Cpu(State *state);
 
     uint8_t ReadPC8Bit();
     uint16_t ReadPC16Bit();
