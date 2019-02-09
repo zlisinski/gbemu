@@ -1,3 +1,4 @@
+#include "main.h"
 #include "EmulatorTest.h"
 #include "../State.h"
 #include "../Emulator.h"
@@ -19,7 +20,7 @@ const uint16_t SP_VALUE = 0xFFFE;
 
 
 EmulatorTest::EmulatorTest() :
-    state(),
+    state(DrawFrame),
     emulator(&state)
 {
 
@@ -786,12 +787,12 @@ TEST_F(EmulatorTest, Test_LD_NN_A)
     // LD (NN), A
     ResetState();
     memory[0] = 0xEA;
-    memory[1] = 0x02;
-    memory[2] = 0x01;
+    memory[1] = 0x80;
+    memory[2] = 0xFF;
     state.a = 1;
     emulator.ProcessOpCode();
     cycles = state.timer->GetCounter();
-    ASSERT_EQ(memory[0x0102], 1);
+    ASSERT_EQ(memory[0xFF80], 1);
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
@@ -854,14 +855,15 @@ TEST_F(EmulatorTest, Test_LD_BC_A)
 
     // LD (BC), A
     ResetState();
+    state.bc = 0xFF80;
     memory[0] = 0x02;
     state.a = 1;
     emulator.ProcessOpCode();
     cycles = state.timer->GetCounter();
-    ASSERT_EQ(memory[BC_VALUE], 1);
+    ASSERT_EQ(memory[0xFF80], 1);
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
-    ASSERT_EQ(state.bc, BC_VALUE);
+    ASSERT_EQ(state.bc, 0xFF80);
     ASSERT_EQ(state.de, DE_VALUE);
     ASSERT_EQ(state.hl, HL_VALUE);
     ASSERT_EQ(state.sp, SP_VALUE);
@@ -877,15 +879,16 @@ TEST_F(EmulatorTest, Test_LD_DE_A)
 
     // LD (DE), A
     ResetState();
+    state.de = 0xFF80;
     memory[0] = 0x12;
     state.a = 1;
     emulator.ProcessOpCode();
     cycles = state.timer->GetCounter();
-    ASSERT_EQ(memory[DE_VALUE], 1);
+    ASSERT_EQ(memory[0xFF80], 1);
     ASSERT_EQ(state.a, 1);
     ASSERT_EQ(state.f, F_VALUE);
     ASSERT_EQ(state.bc, BC_VALUE);
-    ASSERT_EQ(state.de, DE_VALUE);
+    ASSERT_EQ(state.de, 0xFF80);
     ASSERT_EQ(state.hl, HL_VALUE);
     ASSERT_EQ(state.sp, SP_VALUE);
     ASSERT_EQ(state.pc, 0x0001);

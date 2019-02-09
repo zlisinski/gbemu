@@ -1,7 +1,9 @@
+#include "main.h"
 #include "InputTest.h"
 
 
-InputTest::InputTest()
+InputTest::InputTest() :
+    state(DrawFrame)
 {
 
 }

@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <string.h>
 
+#include "main.h"
 #include "DisplayTest.h"
 
 DisplayTest::DisplayTest()
@@ -21,7 +22,7 @@ void DisplayTest::SetUp()
         exit(1);
     }
 
-    state = new State();
+    state = new State(DrawFrame);
 
     state->memory->ClearMemory();
 }
