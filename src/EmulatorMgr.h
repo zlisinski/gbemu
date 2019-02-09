@@ -4,6 +4,8 @@
 #include <vector>
 #include "Buttons.h"
 
+class Cpu;
+class Memory;
 class State;
 
 class EmulatorMgr
@@ -19,7 +21,9 @@ public:
     void ButtonReleased(Buttons::Button button);
 
 private:
-    void ThreadFunc(std::vector<uint8_t> *gameRomMemory); 
+    void ThreadFunc(std::vector<uint8_t> *gameRomMemory);
+
+    void SetBootState(Memory *memory, Cpu *cpu);
 
     bool paused;
     bool quit;
