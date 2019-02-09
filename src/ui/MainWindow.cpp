@@ -43,6 +43,12 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapTimer.start();
 
     connect(this, SIGNAL(frameReady(uint32_t *)), this, SLOT(slotDrawFrame(uint32_t *)));
+
+    if (qApp->arguments().size() >= 2)
+    {
+        QString filename = qApp->arguments().at(1);
+        emulator.LoadRom(filename.toLatin1().data());
+    }
 }
 
 
