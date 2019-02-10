@@ -2,6 +2,12 @@ This is my Gamboy emulator. This is a personal project, so for now I'm not looki
 
 This project is primarily written to work on Ubuntu 18.04, using g++ 7.3.0 and gnu make 4.1. ~~It also compiles on CentOS 7, using g++ 4.8.5 and gnu make 3.82. Compilation on CentOS is secondary, and not tested for each commit.~~ CentOS coming soon.
 
+[Setup on Kubuntu 18.04](#setup-on-kubuntu-1804)
+[Setup on Kubuntu 18.10](#setup-on-kubuntu-1810)
+[Build Emulator](#build-emulator)
+[Build Tests](#build-tests)
+
+
 ## Setup on Kubuntu 18.04
 
 Ubuntu 18.04 doesn't include the libqt5gamepad5 package, so you'll need to build your own custom Qt build. The gamepad library is included in Ubuntu 18.10. I build this on Kubuntu, so instructions assume there is already Qt installed. If you are using Ubuntu/Xubuntu/Mint/etc, instructions may differ slightly. These instructions only build enough Qt features to run the emulator, so features of Qt that are not used by the emulator are not built.
@@ -44,5 +50,7 @@ Since 18.10 has the libqt5gamepad5 package, you won't need to build your own Qt 
     make
 
 ## Build Tests
+
+For now, unit test are kind of hacked in, using a separate makefile.
 
 	make -f Makefile.test test
