@@ -20,6 +20,7 @@ public:
     ~EmulatorMgr();
 
     bool LoadRom(const char *filename);
+    void ResetEmulation();
     void PauseEmulation(bool pause);
     void QuitEmulation();
     void ButtonPressed(Buttons::Button button);

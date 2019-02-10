@@ -106,6 +106,7 @@ void MainWindow::SetupMenuBar()
     fileMenu->addAction(fileOpen);
     fileMenu->addAction(fileQuit);
 
+    QAction *emuReset = new QAction("&Reset", this);
     QAction *emuPause = new QAction("&Pause", this);
     emuPause->setShortcut(Qt::Key_Escape);
     emuPause->setCheckable(true);
@@ -114,11 +115,13 @@ void MainWindow::SetupMenuBar()
     emuCapFps->setCheckable(true);
     emuCapFps->setChecked(true);
     QMenu *emuMenu = menuBar()->addMenu("&Emulator");
+    emuMenu->addAction(emuReset);
     emuMenu->addAction(emuPause);
     emuMenu->addAction(emuCapFps);
 
     connect(fileOpen, SIGNAL(triggered()), this, SLOT(slotOpenRom()));
     connect(fileQuit, SIGNAL(triggered()), this, SLOT(slotQuit()));
+    connect(emuReset, SIGNAL(triggered()), this, SLOT(slotReset()));
     connect(emuPause, SIGNAL(triggered(bool)), this, SLOT(slotTogglePause(bool)));
     connect(emuCapFps, SIGNAL(triggered(bool)), this, SLOT(slotToggleCapFps(bool)));
 }
@@ -186,6 +189,12 @@ void MainWindow::slotOpenRom()
     statusBar()->showMessage(message + filename, 5000);
 
     emulator->LoadRom(filename.toLatin1().data());
+}
+
+
+void MainWindow::slotReset()
+{
+    emulator->ResetEmulation();
 }
 
 

@@ -59,10 +59,19 @@ bool EmulatorMgr::LoadRom(const char *filename)
         return false;
     }
 
+    romFilename = filename;
+
     quit = false;
     workThread = std::thread(&EmulatorMgr::ThreadFunc, this, romMemory);
 
     return true;
+}
+
+
+void EmulatorMgr::ResetEmulation()
+{
+    QuitEmulation();
+    LoadRom(romFilename.c_str());
 }
 
 
