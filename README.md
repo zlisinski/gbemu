@@ -2,10 +2,10 @@ This is my Gamboy emulator. This is a personal project, so for now I'm not looki
 
 This project is primarily written to work on Ubuntu 18.04, using g++ 7.3.0 and gnu make 4.1. ~~It also compiles on CentOS 7, using g++ 4.8.5 and gnu make 3.82. Compilation on CentOS is secondary, and not tested for each commit.~~ CentOS coming soon.
 
-[Setup on Kubuntu 18.04](#setup-on-kubuntu-1804)
-[Setup on Kubuntu 18.10](#setup-on-kubuntu-1810)
-[Build Emulator](#build-emulator)
-[Build Tests](#build-tests)
+* [Setup on Kubuntu 18.04](#setup-on-kubuntu-1804)
+* [Setup on Kubuntu 18.10](#setup-on-kubuntu-1810)
+* [Build Emulator](#build-emulator)
+* [Build Tests](#build-tests)
 
 
 ## Setup on Kubuntu 18.04
