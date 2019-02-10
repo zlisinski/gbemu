@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     fpsTimer.start();
     frameCapTimer.start();
 
-    connect(this, SIGNAL(SignalFrameReady(uint32_t *)), this, SLOT(slotDrawFrame(uint32_t *)));
+    connect(this, SIGNAL(SignalFrameReady()), this, SLOT(slotDrawFrame()));
 
     frameHandler = new QtFrameHandler(this);
     emulator = new EmulatorMgr(frameHandler);
@@ -156,9 +156,15 @@ void MainWindow::SetupGamepad()
 }
 
 
-void MainWindow::FrameReady(uint32_t *frameBuffer)
+void MainWindow::FrameReady(uint32_t *displayFrameBuffer)
 {
     // This function runs in the thread context of the Emulator worker thread.
+
+    // Copy data so Emulator thread doesn't change data while we're drawing the screen.
+    memcpy(frameBuffer, displayFrameBuffer, sizeof(frameBuffer));
+
+    // Signal the main thread to draw the screen.
+    emit SignalFrameReady();
 
     uint64_t elapsedTime = frameCapTimer.elapsed();
 
@@ -170,9 +176,6 @@ void MainWindow::FrameReady(uint32_t *frameBuffer)
     }
 
     frameCapTimer.restart();
-
-    // Signal the main thread to draw the screen.
-    emit SignalFrameReady(frameBuffer);
 }
 
 
@@ -207,7 +210,7 @@ void MainWindow::slotQuit()
 }
 
 
-void MainWindow::slotDrawFrame(uint32_t *frameBuffer)
+void MainWindow::slotDrawFrame()
 {
     uint64_t elapsedTime = fpsTimer.elapsed();
 

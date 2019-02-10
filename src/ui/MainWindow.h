@@ -6,6 +6,8 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
 
+#include "../Display.h"
+
 class EmulatorMgr;
 class QtFrameHandler;
 
@@ -18,7 +20,7 @@ public:
     ~MainWindow();
 
     // Callback for Emulator to signal a frame is ready to be drawn.
-    void FrameReady(uint32_t *frameBuffer);
+    void FrameReady(uint32_t *displayFrameBuffer);
 
     // Don't allow copy and assignment.
     MainWindow(const MainWindow&) = delete;
@@ -53,13 +55,15 @@ private:
     QGamepad *gamepad;
     QGamepadKeyNavigation *gamepadKeyNavigation;
 
+    uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
+
 private slots:
     void slotOpenRom();
     void slotTogglePause(bool checked);
     void slotToggleCapFps(bool checked);
     void slotQuit();
-    void slotDrawFrame(uint32_t *frameBuffer);
+    void slotDrawFrame();
 
 signals:
-    void SignalFrameReady(uint32_t *frameBuffer);
+    void SignalFrameReady();
 };
