@@ -1,2 +1,9 @@
 *.o
 *.a
+.qmake.stash
+.vscode
+build
+data
+docs
+gbemu
+serial.txt
