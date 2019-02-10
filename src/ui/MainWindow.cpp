@@ -2,10 +2,10 @@
 #include <stdint.h>
 #include <thread>
 #include "MainWindow.h"
+#include "QtFrameHandler.h"
+#include "../EmulatorMgr.h"
 #include "../Input.h"
 
-MainWindow *MainWindow::instance = NULL;
-QElapsedTimer MainWindow::frameCapTimer;
 
 const QHash<int, Buttons::Button> keymap {
     {Qt::Key_W, Buttons::Button::eButtonUp},
@@ -20,10 +20,16 @@ const QHash<int, Buttons::Button> keymap {
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
+    graphicsView(NULL),
+    labelFps(NULL),
+    labelPause(NULL),
     paused(false),
     capFps(true),
-    emulator(&MainWindow::drawFrame),
+    frameHandler(NULL),
+    emulator(NULL),
+    fpsTimer(),
     frameCount(0),
+    frameCapTimer(),
     gamepad(NULL),
     gamepadKeyNavigation(NULL)
 {
@@ -42,19 +48,23 @@ MainWindow::MainWindow(QWidget *parent) :
     fpsTimer.start();
     frameCapTimer.start();
 
-    connect(this, SIGNAL(frameReady(uint32_t *)), this, SLOT(slotDrawFrame(uint32_t *)));
+    connect(this, SIGNAL(SignalFrameReady(uint32_t *)), this, SLOT(slotDrawFrame(uint32_t *)));
+
+    frameHandler = new QtFrameHandler(this);
+    emulator = new EmulatorMgr(frameHandler);
 
     if (qApp->arguments().size() >= 2)
     {
         QString filename = qApp->arguments().at(1);
-        emulator.LoadRom(filename.toLatin1().data());
+        emulator->LoadRom(filename.toLatin1().data());
     }
 }
 
 
 MainWindow::~MainWindow()
 {
-
+    delete emulator;
+    delete frameHandler;
 }
 
 
@@ -63,7 +73,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     Buttons::Button button = keymap.value(event->key(), Buttons::Button::eButtonNone);
     if (button != Buttons::Button::eButtonNone)
     {
-        emulator.ButtonPressed(button);
+        emulator->ButtonPressed(button);
     }
     else
     {
@@ -77,7 +87,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     Buttons::Button button = keymap.value(event->key(), Buttons::Button::eButtonNone);
     if (button != Buttons::Button::eButtonNone)
     {
-        emulator.ButtonReleased(button);
+        emulator->ButtonReleased(button);
     }
     else
     {
@@ -146,22 +156,23 @@ void MainWindow::SetupGamepad()
 }
 
 
-void MainWindow::drawFrame(uint32_t *frameBuffer)
+void MainWindow::FrameReady(uint32_t *frameBuffer)
 {
     // This function runs in the thread context of the Emulator worker thread.
 
     uint64_t elapsedTime = frameCapTimer.elapsed();
 
     const float frameMillis = 1.0 / 60 * 1000;
-    if (GetInstance().capFps && elapsedTime < frameMillis)
+    if (capFps && elapsedTime < frameMillis)
     {
+        // Block the Emulator from running to limit frame rate.
         std::this_thread::sleep_for(std::chrono::milliseconds((int)(frameMillis - elapsedTime)));
     }
 
     frameCapTimer.restart();
 
     // Signal the main thread to draw the screen.
-    emit GetInstance().frameReady(frameBuffer);
+    emit SignalFrameReady(frameBuffer);
 }
 
 
@@ -171,7 +182,7 @@ void MainWindow::slotOpenRom()
     QString message = "filename = ";
     statusBar()->showMessage(message + filename, 5000);
 
-    emulator.LoadRom(filename.toLatin1().data());
+    emulator->LoadRom(filename.toLatin1().data());
 }
 
 
@@ -179,7 +190,7 @@ void MainWindow::slotTogglePause(bool checked)
 {
     paused = checked;
     labelPause->setText(checked ? "Paused" : "");
-    emulator.PauseEmulation(paused);
+    emulator->PauseEmulation(paused);
 }
 
 
@@ -191,7 +202,7 @@ void MainWindow::slotToggleCapFps(bool checked)
 
 void MainWindow::slotQuit()
 {
-    emulator.QuitEmulation();
+    emulator->QuitEmulation();
     qApp->quit();
 }
 

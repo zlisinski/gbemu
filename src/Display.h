@@ -5,6 +5,7 @@
 #include "TimerObserver.h"
 #include "TimerSubject.h"
 
+class AbsFrameHandler;
 class Memory;
 
 const uint SCREEN_X = 160;
@@ -13,7 +14,7 @@ const uint SCREEN_Y = 144;
 class Display : public TimerObserver
 {
 public:
-    Display(Memory* memory, Interrupt* interrupts, void (*drawFrameCallback)(uint32_t *));
+    Display(Memory* memory, Interrupt* interrupts, AbsFrameHandler *frameHandler);
     virtual ~Display();
 
     // Inherited from TimerObserver.
@@ -73,5 +74,5 @@ private:
 
     uint16_t counter;
 
-    void (*drawFrameCallback)(uint32_t *);
+    AbsFrameHandler *frameHandler;
 };

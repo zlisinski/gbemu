@@ -2,6 +2,7 @@
 #include <sstream>
 #include <unistd.h>
 
+#include "AbsFrameHandler.h"
 #include "Display.h"
 #include "Globals.h"
 #include "Memory.h"
@@ -58,7 +59,7 @@ enum SpriteAttrBits
     eSpriteAttrBgPriority = 0x80
 };
 
-Display::Display(Memory* memory, Interrupt* interrupts, void (*drawFrameCallback)(uint32_t *)) :
+Display::Display(Memory* memory, Interrupt* interrupts, AbsFrameHandler *frameHandler) :
     memory(memory),
     interrupts(interrupts),
     regLCDC(memory->GetBytePtr(eRegLCDC)),
@@ -75,7 +76,7 @@ Display::Display(Memory* memory, Interrupt* interrupts, void (*drawFrameCallback
     regWX(memory->GetBytePtr(eRegWX)),
     displayMode(eMode0HBlank),
     counter(0),
-    drawFrameCallback(drawFrameCallback)
+    frameHandler(frameHandler)
 {
 
 }
@@ -393,7 +394,7 @@ void Display::DrawSprites(uint8_t scanline)
 
 void Display::DrawScreen()
 {
-    drawFrameCallback(frameBuffer);
+    frameHandler->DrawFrame(frameBuffer);
 }
 
 

@@ -24,8 +24,9 @@ QMAKE_CXXFLAGS += -Wpedantic
 CONFIG += debug
 
 # Input
-HEADERS += src/ui/MainWindow.h \
+HEADERS += \
 	src/AbsByteProxy.h \
+	src/AbsFrameHandler.h \
 	src/Buttons.h \
 	src/Cpu.h \
 	src/Display.h \
@@ -45,10 +46,11 @@ HEADERS += src/ui/MainWindow.h \
 	src/Timer.h \
 	src/TimerObserver.h \
 	src/TimerSubject.h \
-	src/Utils.h
+	src/Utils.h \
+	src/ui/MainWindow.h \
+	src/ui/QtFrameHandler.h
 
-SOURCES += src/main.cpp \
-	src/ui/MainWindow.cpp \
+SOURCES += \
 	src/Buttons.cpp \
 	src/Cpu.cpp \
 	src/Display.cpp \
@@ -57,8 +59,10 @@ SOURCES += src/main.cpp \
 	src/Interrupt.cpp \
 	src/MemoryBankController.cpp \
 	src/Memory.cpp \
+	src/main.cpp \
 	src/Serial.cpp \
 	src/Timer.cpp \
-	src/Utils.cpp
+	src/Utils.cpp \
+	src/ui/MainWindow.cpp
 
 

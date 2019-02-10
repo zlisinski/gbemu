@@ -1,4 +1,5 @@
 #include "gbemu.h"
+#include "AbsFrameHandler.h"
 #include "Cpu.h"
 #include "EmulatorMgr.h"
 #include "Display.h"
@@ -10,10 +11,10 @@
 
 bool debugOutput = false;
 
-EmulatorMgr::EmulatorMgr(void (*drawFrameCallback)(uint32_t *)) :
+EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler) :
     paused(false),
     quit(false),
-    drawFrameCallback(drawFrameCallback),
+    frameHandler(frameHandler),
     buttons(),
     cpu(NULL),
     display(NULL),
@@ -111,7 +112,7 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
     interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
     timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                       memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
-    display = new Display(memory, interrupts, drawFrameCallback);
+    display = new Display(memory, interrupts, frameHandler);
     input = new Input(memory->GetBytePtr(eRegP1), interrupts);
     serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
     cpu = new Cpu(interrupts, memory, timer);

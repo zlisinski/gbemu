@@ -4,6 +4,7 @@
 #include <vector>
 #include "Buttons.h"
 
+class AbsFrameHandler;
 class Cpu;
 class Display;
 class Input;
@@ -15,7 +16,7 @@ class Timer;
 class EmulatorMgr
 {
 public:
-    EmulatorMgr(void (*drawFrameCallback)(uint32_t *));
+    EmulatorMgr(AbsFrameHandler *frameHandler);
     ~EmulatorMgr();
 
     bool LoadRom(const char *filename);
@@ -36,7 +37,7 @@ private:
 
     std::thread workThread;
 
-    void (*drawFrameCallback)(uint32_t *);
+    AbsFrameHandler *frameHandler;
 
     Buttons buttons;
     Cpu *cpu;
