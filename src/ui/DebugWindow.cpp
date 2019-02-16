@@ -1,3 +1,4 @@
+#include <memory>
 #include <QtWidgets/QGraphicsPixmapItem>
 #include "DebugWindow.h"
 #include "ui_DebugWindow.h"

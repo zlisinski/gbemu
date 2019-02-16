@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <sstream>
+#include <string.h>
 
 #include "Memory.h"
 

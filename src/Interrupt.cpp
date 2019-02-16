@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "Interrupt.h"
 #include "Memory.h"
 

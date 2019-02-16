@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "Input.h"
 #include "Memory.h"
 

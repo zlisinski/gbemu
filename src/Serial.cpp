@@ -1,3 +1,4 @@
+#include <memory>
 #include "Serial.h"
 #include "Memory.h"
 
