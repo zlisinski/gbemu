@@ -47,6 +47,7 @@ HEADERS += \
 	src/TimerObserver.h \
 	src/TimerSubject.h \
 	src/Utils.h \
+	src/ui/DebugWindow.h \
 	src/ui/MainWindow.h \
 	src/ui/QtFrameHandler.h
 
@@ -63,6 +64,10 @@ SOURCES += \
 	src/Serial.cpp \
 	src/Timer.cpp \
 	src/Utils.cpp \
+	src/ui/DebugWindow.cpp \
 	src/ui/MainWindow.cpp
+
+FORMS += \
+	src/ui/DebugWindow.ui
 
 

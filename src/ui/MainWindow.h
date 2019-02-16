@@ -8,6 +8,7 @@
 
 #include "../Display.h"
 
+class DebugWindow;
 class EmulatorMgr;
 class QtFrameHandler;
 
@@ -56,6 +57,8 @@ private:
     QGamepadKeyNavigation *gamepadKeyNavigation;
 
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
+
+    DebugWindow *debugWindow;
 
 private slots:
     void slotOpenRom();

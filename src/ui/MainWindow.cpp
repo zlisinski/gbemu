@@ -1,6 +1,7 @@
 #include <QtWidgets/QtWidgets>
 #include <stdint.h>
 #include <thread>
+#include "DebugWindow.h"
 #include "MainWindow.h"
 #include "QtFrameHandler.h"
 #include "../EmulatorMgr.h"
@@ -31,7 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCount(0),
     frameCapTimer(),
     gamepad(NULL),
-    gamepadKeyNavigation(NULL)
+    gamepadKeyNavigation(NULL),
+    debugWindow(NULL)
 {
     SetupMenuBar();
     SetupStatusBar();
@@ -45,13 +47,16 @@ MainWindow::MainWindow(QWidget *parent) :
     graphicsView->setScene(scene);
     graphicsView->scale(5, 5);
 
+    debugWindow = new DebugWindow(this);
+    debugWindow->show();
+
     fpsTimer.start();
     frameCapTimer.start();
 
     connect(this, SIGNAL(SignalFrameReady()), this, SLOT(slotDrawFrame()));
 
     frameHandler = new QtFrameHandler(this);
-    emulator = new EmulatorMgr(frameHandler);
+    emulator = new EmulatorMgr(frameHandler, debugWindow);
 
     if (qApp->arguments().size() >= 2)
     {
@@ -239,4 +244,6 @@ void MainWindow::slotDrawFrame()
     graphicsView->scene()->clear();
     graphicsView->scene()->addPixmap(QPixmap::fromImage(img));
     graphicsView->update();
+
+    debugWindow->DrawFrame();
 }

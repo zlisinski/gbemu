@@ -6,6 +6,7 @@
 
 class AbsFrameHandler;
 class Cpu;
+class DebugInterface;
 class Display;
 class Input;
 class Interrupt;
@@ -16,7 +17,7 @@ class Timer;
 class EmulatorMgr
 {
 public:
-    EmulatorMgr(AbsFrameHandler *frameHandler);
+    EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInterface);
     ~EmulatorMgr();
 
     bool LoadRom(const char *filename);
@@ -39,6 +40,7 @@ private:
     std::thread workThread;
 
     AbsFrameHandler *frameHandler;
+    DebugInterface *debugInterface;
 
     Buttons buttons;
     Cpu *cpu;

@@ -1,8 +1,9 @@
 #include "gbemu.h"
 #include "AbsFrameHandler.h"
 #include "Cpu.h"
-#include "EmulatorMgr.h"
+#include "DebugInterface.h"
 #include "Display.h"
+#include "EmulatorMgr.h"
 #include "Input.h"
 #include "Memory.h"
 #include "Serial.h"
@@ -11,10 +12,11 @@
 
 bool debugOutput = false;
 
-EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler) :
+EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInterface) :
     paused(false),
     quit(false),
     frameHandler(frameHandler),
+    debugInterface(debugInterface),
     buttons(),
     cpu(NULL),
     display(NULL),
@@ -137,6 +139,8 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
     memory->AttachToTimerSubject(timer);
     serial->AttachToTimerSubject(timer);
 
+    debugInterface->SetMemory(memory->GetBytePtr(0));
+
     /*if (runbootRom)
         memory->SetRomMemory(bootRomMemory, *gameRomMemory);
     else*/
@@ -172,6 +176,8 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
     timer = NULL;
     delete memory;
     memory = NULL;
+
+    debugInterface->SetMemory(NULL);
 }
 
 
