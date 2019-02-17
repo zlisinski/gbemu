@@ -263,9 +263,7 @@ void Display::DrawWindowScanline(uint8_t scanline, uint8_t windowX, uint8_t wind
         return;
 
     // wx is offset by 7.
-    if (windowX < 7)
-        return;
-    windowX -= 7;
+    int wx = windowX - 7;
 
     const uint16_t tilesetDataOffset = (*regLCDC & eLCDCWindowTileset) ? BG_DATA_OFFSET[1] : BG_DATA_OFFSET[0];
     const uint8_t * const tilesetData = memory->GetBytePtr(tilesetDataOffset);
@@ -275,9 +273,9 @@ void Display::DrawWindowScanline(uint8_t scanline, uint8_t windowX, uint8_t wind
     const uint y = scanline - windowY;
     const uint8_t tileY = (y / TILE_PIXEL_SIZE);
 
-    for (uint i = windowX; i < SCREEN_X; i++)
+    for (uint i = std::max(0, wx); i < SCREEN_X; i++)
     {
-        const uint x = i - windowX;
+        const uint x = i - wx;
         const uint8_t tileX = x / TILE_PIXEL_SIZE;
 
         uint8_t tileId = tileMap[tileX + (tileY * REAL_TILES_PER_SCREEN)];
