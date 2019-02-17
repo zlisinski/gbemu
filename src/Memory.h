@@ -9,6 +9,8 @@
 #include "TimerObserver.h"
 #include "TimerSubject.h"
 
+class DebugInterface;
+
 enum SpecialRegisters
 {
     eRegP1    = 0xFF00, // Joypad
@@ -96,7 +98,7 @@ const uint8_t OAM_RAM_LEN = 0xA0;
 class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver
 {
 public:
-    Memory();
+    Memory(DebugInterface *debugInterface);
     virtual ~Memory();
 
     void SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory);
@@ -140,4 +142,6 @@ private:
     MbcTypes mbcType;
     uint8_t romBankCount;
     uint8_t ramBankCount;
+
+    DebugInterface *debugInterface;
 };

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string.h>
 
+#include "DebugInterface.h"
 #include "Memory.h"
 
 const uint16_t MbcTypeOffset = 0x0147;
@@ -49,12 +50,13 @@ const std::map<uint8_t, uint8_t> RamBankCountMap = {
 };
 
 
-Memory::Memory() :
+Memory::Memory(DebugInterface *debugInterface) :
     isDmaActive(false),
     dmaOffset(0),
     mbcType(eMbcNone),
     romBankCount(0),
-    ramBankCount(0)
+    ramBankCount(0),
+    debugInterface(debugInterface)
 {
     ClearMemory();
 }
@@ -262,6 +264,13 @@ void Memory::CheckRom()
     }
     mbcType = mbcIt->second;
     printf("MBC type = %02X\n", mbcType);
+
+    if (debugInterface)
+    {
+        debugInterface->SetMbcType(mbcType);
+        debugInterface->SetRomBanks(romBankCount);
+        debugInterface->SetRamBanks(ramBankCount);
+    }
 }
 
 
@@ -278,6 +287,8 @@ void Memory::MapRomBank(uint bank)
     }
 
     DBG("Copying ROM bank 0x%02X\n", bank);
+    if (debugInterface)
+        debugInterface->SetMappedRomBank(bank);
 
     memcpy(&memory[SWITCHABLE_ROM_BANK_OFFSET], &gameRomMemory[bank * ROM_BANK_SIZE], ROM_BANK_SIZE);
 }
@@ -285,7 +296,8 @@ void Memory::MapRomBank(uint bank)
 
 void Memory::MapRamBank(uint bank)
 {
-
+    if (debugInterface)
+        debugInterface->SetMappedRamBank(bank);
 }
 
 

@@ -7,11 +7,23 @@
 
 const uint8_t palette[4][3] = {{0xFF, 0xFF, 0xFF}, {0xB0, 0xB0, 0xB0}, {0x68, 0x68, 0x68}, {0x00, 0x00, 0x00}};
 const int SCALE = 3;
+const QMap<MbcTypes, QString> MBC_NAMES {
+    {eMbcNone, "None"},
+    {eMbc1, "MBC1"},
+    {eMbc2, "MBC2"},
+    {eMbc3, "MBC3"},
+    {eMbc5, "MBC5"},
+};
 
 DebugWindow::DebugWindow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::DebugWindow),
-    memory(NULL)
+    memory(NULL),
+    mbcType(eMbcNone),
+    romBanks(0),
+    ramBanks(0),
+    mappedRomBank(0),
+    mappedRamBank(0)
 {
     ui->setupUi(this);
 
@@ -28,15 +40,10 @@ DebugWindow::~DebugWindow()
 }
 
 
-void DebugWindow::SetMemory(uint8_t *memory)
-{
-    this->memory = memory;
-}
-
-
 void DebugWindow::DrawFrame()
 {
     UpdateTileView();
+    UpdateMemoryView();
 }
 
 
@@ -92,4 +99,77 @@ void DebugWindow::UpdateTileView()
     }
 
     ui->gvTiles->update();
+}
+
+
+void DebugWindow::UpdateMemoryView()
+{
+    if (memory == NULL)
+    {
+        ui->txtLCDC->setText("");
+        SetRadioButton(0, ui->rbBGEnable0, ui->rbBGEnable1);
+        SetRadioButton(0, ui->rbSpriteEnable0, ui->rbSpriteEnable1);
+        SetRadioButton(0, ui->rbSpriteSize0, ui->rbSpriteSize1);
+        SetRadioButton(0, ui->rbBGTilemap0, ui->rbBGTilemap1);
+        SetRadioButton(0, ui->rbWindowTileset0, ui->rbWindowTileset1);
+        SetRadioButton(0, ui->rbWindowEnable0, ui->rbWindowEnable1);
+        SetRadioButton(0, ui->rbWindowTilemap0, ui->rbWindowTilemap1);
+        SetRadioButton(0, ui->rbPower0, ui->rbPower1);
+
+        ui->txtSCX->setText("");
+        ui->txtSCY->setText("");
+        ui->txtWX->setText("");
+        ui->txtWY->setText("");
+
+        ui->txtMbcType->setText(MBC_NAMES[eMbcNone]);
+        ui->txtRomBanks->setText("");
+        ui->txtRamBanks->setText("");
+        ui->txtMappedRom->setText("");
+        ui->txtMappedRam->setText("");
+    }
+    else
+    {
+        uint8_t lcdc = memory[eRegLCDC];
+        ui->txtLCDC->setText(FormatByte(lcdc));
+        SetRadioButton(lcdc & 0x01, ui->rbBGEnable0, ui->rbBGEnable1);
+        SetRadioButton(lcdc & 0x02, ui->rbSpriteEnable0, ui->rbSpriteEnable1);
+        SetRadioButton(lcdc & 0x04, ui->rbSpriteSize0, ui->rbSpriteSize1);
+        SetRadioButton(lcdc & 0x08, ui->rbBGTilemap0, ui->rbBGTilemap1);
+        SetRadioButton(lcdc & 0x10, ui->rbWindowTileset0, ui->rbWindowTileset1);
+        SetRadioButton(lcdc & 0x20, ui->rbWindowEnable0, ui->rbWindowEnable1);
+        SetRadioButton(lcdc & 0x40, ui->rbWindowTilemap0, ui->rbWindowTilemap1);
+        SetRadioButton(lcdc & 0x80, ui->rbPower0, ui->rbPower1);
+
+        ui->txtSCX->setText(FormatByte(memory[eRegSCX]));
+        ui->txtSCY->setText(FormatByte(memory[eRegSCY]));
+        ui->txtWX->setText(FormatByte(memory[eRegWX]));
+        ui->txtWY->setText(FormatByte(memory[eRegWY]));
+
+        ui->txtMbcType->setText(MBC_NAMES[mbcType]);
+        ui->txtRomBanks->setText(QString::number(romBanks));
+        ui->txtRamBanks->setText(QString::number(ramBanks));
+        ui->txtMappedRom->setText(QString::number(mappedRomBank));
+        ui->txtMappedRam->setText(QString::number(mappedRamBank));
+    }
+}
+
+
+QString DebugWindow::FormatByte(uint8_t num)
+{
+    return QString("%1").arg(num, 2, 16, QChar('0')).toUpper();
+}
+
+
+QString DebugWindow::FormatWord(uint16_t num)
+{
+    return QString("%1").arg(num, 4, 16, QChar('0')).toUpper();
+}
+
+
+void DebugWindow::SetRadioButton(bool val, QRadioButton *radio0, QRadioButton *radio1)
+{
+    if (val)
+        radio1->setChecked(true);
+    else
+        radio0->setChecked(true);
 }

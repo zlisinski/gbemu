@@ -119,7 +119,7 @@ void EmulatorMgr::ButtonReleased(Buttons::Button button)
 
 void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
 {
-    memory = new Memory();
+    memory = new Memory(debugInterface);
     interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
     timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                       memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
@@ -139,7 +139,8 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
     memory->AttachToTimerSubject(timer);
     serial->AttachToTimerSubject(timer);
 
-    debugInterface->SetMemory(memory->GetBytePtr(0));
+    if (debugInterface)
+        debugInterface->SetMemory(memory->GetBytePtr(0));
 
     /*if (runbootRom)
         memory->SetRomMemory(bootRomMemory, *gameRomMemory);
