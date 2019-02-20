@@ -49,8 +49,6 @@ void DebugWindow::DrawFrame()
 
 void DebugWindow::UpdateTileView()
 {
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    ui->gvTiles->setScene(scene);
     ui->gvTiles->scene()->clear();
     ui->gvTiles->setBackgroundBrush(QBrush(Qt::white, Qt::SolidPattern));
 
@@ -97,8 +95,6 @@ void DebugWindow::UpdateTileView()
             pixmap->setPos(xpos, ypos);
         }
     }
-
-    ui->gvTiles->update();
 }
 
 

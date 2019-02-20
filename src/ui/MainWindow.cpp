@@ -243,7 +243,6 @@ void MainWindow::slotDrawFrame()
     QImage img((uchar *)(frameBuffer), 160, 144, QImage::Format_RGB32);
     graphicsView->scene()->clear();
     graphicsView->scene()->addPixmap(QPixmap::fromImage(img));
-    graphicsView->update();
 
     debugWindow->DrawFrame();
 }
