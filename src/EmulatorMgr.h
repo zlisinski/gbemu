@@ -23,7 +23,7 @@ public:
     bool LoadRom(const char *filename);
     void ResetEmulation();
     void PauseEmulation(bool pause);
-    void QuitEmulation();
+    void EndEmulation();
     void ButtonPressed(Buttons::Button button);
     void ButtonReleased(Buttons::Button button);
 

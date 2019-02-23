@@ -113,6 +113,7 @@ void MainWindow::SetupMenuBar()
 
     QAction *emuReset = new QAction("&Reset", this);
     QAction *emuPause = new QAction("&Pause", this);
+    QAction *emuEnd = new QAction("&End Emulation", this);
     emuPause->setShortcut(Qt::Key_Escape);
     emuPause->setCheckable(true);
     QAction *emuCapFps = new QAction("&Cap FPS", this);
@@ -122,12 +123,14 @@ void MainWindow::SetupMenuBar()
     QMenu *emuMenu = menuBar()->addMenu("&Emulator");
     emuMenu->addAction(emuReset);
     emuMenu->addAction(emuPause);
+    emuMenu->addAction(emuEnd);
     emuMenu->addAction(emuCapFps);
 
     connect(fileOpen, SIGNAL(triggered()), this, SLOT(slotOpenRom()));
     connect(fileQuit, SIGNAL(triggered()), this, SLOT(slotQuit()));
     connect(emuReset, SIGNAL(triggered()), this, SLOT(slotReset()));
     connect(emuPause, SIGNAL(triggered(bool)), this, SLOT(slotTogglePause(bool)));
+    connect(emuEnd, SIGNAL(triggered()), this, SLOT(slotEndEmulation()));
     connect(emuCapFps, SIGNAL(triggered(bool)), this, SLOT(slotToggleCapFps(bool)));
 }
 
@@ -211,6 +214,13 @@ void MainWindow::slotTogglePause(bool checked)
 }
 
 
+void MainWindow::slotEndEmulation()
+{
+    emulator->EndEmulation();
+    graphicsView->scene()->clear();
+}
+
+
 void MainWindow::slotToggleCapFps(bool checked)
 {
     capFps = checked;
@@ -219,7 +229,7 @@ void MainWindow::slotToggleCapFps(bool checked)
 
 void MainWindow::slotQuit()
 {
-    emulator->QuitEmulation();
+    emulator->EndEmulation();
     qApp->quit();
 }
 

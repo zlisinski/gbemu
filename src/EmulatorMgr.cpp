@@ -32,13 +32,13 @@ EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInt
 
 EmulatorMgr::~EmulatorMgr()
 {
-    QuitEmulation();
+    EndEmulation();
 }
 
 
 bool EmulatorMgr::LoadRom(const char *filename)
 {
-    QuitEmulation();
+    EndEmulation();
 
     FILE *file = fopen(filename, "r");
     if (file == NULL)
@@ -73,7 +73,7 @@ bool EmulatorMgr::LoadRom(const char *filename)
 
 void EmulatorMgr::ResetEmulation()
 {
-    QuitEmulation();
+    EndEmulation();
     LoadRom(romFilename.c_str());
 }
 
@@ -84,7 +84,7 @@ void EmulatorMgr::PauseEmulation(bool pause)
 }
 
 
-void EmulatorMgr::QuitEmulation()
+void EmulatorMgr::EndEmulation()
 {
     if (workThread.joinable())
     {

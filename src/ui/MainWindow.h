@@ -64,6 +64,7 @@ private slots:
     void slotOpenRom();
     void slotReset();
     void slotTogglePause(bool checked);
+    void slotEndEmulation();
     void slotToggleCapFps(bool checked);
     void slotQuit();
     void slotDrawFrame();
