@@ -12,6 +12,8 @@ class DebugWindow;
 class EmulatorMgr;
 class QtFrameHandler;
 
+const int MAX_RECENT_FILES = 10;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -37,6 +39,8 @@ private:
     void SetupMenuBar();
     void SetupStatusBar();
     void SetupGamepad();
+    void UpdateRecentFile(const QString &filename);
+    void UpdateRecentFilesActions();
 
     QGraphicsView *graphicsView;
     QLabel *labelFps;
@@ -62,8 +66,11 @@ private:
 
     DebugWindow *debugWindow;
 
+    QAction *recentFilesActions[MAX_RECENT_FILES];
+
 private slots:
     void slotOpenRom();
+    void slotOpenRecentRom();
     void slotReset();
     void slotTogglePause(bool checked);
     void slotEndEmulation();

@@ -106,32 +106,57 @@ void MainWindow::SetupMenuBar()
 {
     menuBar()->setNativeMenuBar(false);
 
-    QAction *fileOpen = new QAction("&Open ROM", this);
-    QAction *fileQuit = new QAction("&Quit", this);
+    // File Menu
     QMenu *fileMenu = menuBar()->addMenu("&File");
-    fileMenu->addAction(fileOpen);
-    fileMenu->addAction(fileQuit);
 
+    // File | Open...
+    QAction *fileOpen = new QAction("&Open ROM...", this);
+    fileMenu->addAction(fileOpen);
+    connect(fileOpen, SIGNAL(triggered()), this, SLOT(slotOpenRom()));
+
+    // File | Open Recent
+    QMenu *fileOpenRecentMenu = fileMenu->addMenu("Open &Recent");
+    for (int i = 0; i < MAX_RECENT_FILES; i++)
+    {
+        recentFilesActions[i] = new QAction(this);
+        recentFilesActions[i]->setVisible(false);
+        fileOpenRecentMenu->addAction(recentFilesActions[i]);
+        connect(recentFilesActions[i], SIGNAL(triggered()), this, SLOT(slotOpenRecentRom()));
+    }
+    UpdateRecentFilesActions();
+
+    // File | Quit
+    fileMenu->addSeparator();
+    QAction *fileQuit = new QAction("&Quit", this);
+    fileMenu->addAction(fileQuit);
+    connect(fileQuit, SIGNAL(triggered()), this, SLOT(slotQuit()));
+
+    // Emulator Menu
+    QMenu *emuMenu = menuBar()->addMenu("&Emulator");
+
+    // Emulator | Reset
     QAction *emuReset = new QAction("&Reset", this);
+    emuMenu->addAction(emuReset);
+    connect(emuReset, SIGNAL(triggered()), this, SLOT(slotReset()));
+
+    // Emulator | Pause
     QAction *emuPause = new QAction("&Pause", this);
-    QAction *emuEnd = new QAction("&End Emulation", this);
     emuPause->setShortcut(Qt::Key_Escape);
     emuPause->setCheckable(true);
+    emuMenu->addAction(emuPause);
+    connect(emuPause, SIGNAL(triggered(bool)), this, SLOT(slotTogglePause(bool)));
+
+    // Emulator | End
+    QAction *emuEnd = new QAction("&End Emulation", this);
+    emuMenu->addAction(emuEnd);
+    connect(emuEnd, SIGNAL(triggered()), this, SLOT(slotEndEmulation()));
+
+    // Emulator | Cap FPS
     QAction *emuCapFps = new QAction("&Cap FPS", this);
     emuCapFps->setShortcut(Qt::Key_F10);
     emuCapFps->setCheckable(true);
     emuCapFps->setChecked(true);
-    QMenu *emuMenu = menuBar()->addMenu("&Emulator");
-    emuMenu->addAction(emuReset);
-    emuMenu->addAction(emuPause);
-    emuMenu->addAction(emuEnd);
     emuMenu->addAction(emuCapFps);
-
-    connect(fileOpen, SIGNAL(triggered()), this, SLOT(slotOpenRom()));
-    connect(fileQuit, SIGNAL(triggered()), this, SLOT(slotQuit()));
-    connect(emuReset, SIGNAL(triggered()), this, SLOT(slotReset()));
-    connect(emuPause, SIGNAL(triggered(bool)), this, SLOT(slotTogglePause(bool)));
-    connect(emuEnd, SIGNAL(triggered()), this, SLOT(slotEndEmulation()));
     connect(emuCapFps, SIGNAL(triggered(bool)), this, SLOT(slotToggleCapFps(bool)));
 }
 
@@ -165,6 +190,40 @@ void MainWindow::SetupGamepad()
     gamepadKeyNavigation->setButtonStartKey(Qt::Key_J);
     gamepadKeyNavigation->setButtonXKey(Qt::Key_K);
     gamepadKeyNavigation->setButtonAKey(Qt::Key_L);
+}
+
+
+void MainWindow::UpdateRecentFile(const QString &filename)
+{
+    QSettings settings;
+    QStringList files = settings.value("RecentFileList").toStringList();
+
+    files.removeAll(filename);
+    files.prepend(filename);
+    while (files.size() > MAX_RECENT_FILES)
+        files.removeLast();
+
+    settings.setValue("RecentFileList", files);
+
+    UpdateRecentFilesActions();
+}
+
+
+void MainWindow::UpdateRecentFilesActions()
+{
+    QSettings settings;
+    QStringList files = settings.value("RecentFileList").toStringList();
+
+    int numRecentFiles = qMin(files.size(), MAX_RECENT_FILES);
+
+    for (int i = 0; i < numRecentFiles; i++) {
+        QString text = tr("&%1 %2").arg(i).arg(files[i]);
+        recentFilesActions[i]->setText(text);
+        recentFilesActions[i]->setData(files[i]);
+        recentFilesActions[i]->setVisible(true);
+    }
+    for (int i = numRecentFiles; i < MAX_RECENT_FILES; i++)
+        recentFilesActions[i]->setVisible(false);
 }
 
 
@@ -205,7 +264,24 @@ void MainWindow::slotOpenRom()
     QString message = "filename = ";
     statusBar()->showMessage(message + filename, 5000);
 
+    UpdateRecentFile(filename);
+
     emulator->LoadRom(filename.toLatin1().data());
+}
+
+
+void MainWindow::slotOpenRecentRom()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action)
+    {
+        QString filename = action->data().toString();
+        statusBar()->showMessage("Filename = " + filename, 5000);
+
+        UpdateRecentFile(filename);
+
+        emulator->LoadRom(filename.toLatin1().data());
+    }
 }
 
 
