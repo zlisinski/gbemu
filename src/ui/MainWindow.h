@@ -32,8 +32,9 @@ public:
     void operator=(const MainWindow&) = delete;
 
 protected:
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
+    virtual void keyPressEvent(QKeyEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent *event);
+    virtual void closeEvent(QCloseEvent *event);
 
 private:
     void SetupMenuBar();

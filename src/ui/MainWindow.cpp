@@ -64,6 +64,9 @@ MainWindow::MainWindow(QWidget *parent) :
         QString filename = qApp->arguments().at(1);
         emulator->LoadRom(filename.toLatin1().data());
     }
+
+    QSettings settings;
+    restoreGeometry(settings.value("MainWindowGeometry").toByteArray());
 }
 
 
@@ -99,6 +102,16 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     {
         QMainWindow::keyReleaseEvent(event);
     }
+}
+
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    debugWindow->close();
+
+    QSettings settings;
+    settings.setValue("MainWindowGeometry", saveGeometry());
+    QWidget::closeEvent(event);
 }
 
 

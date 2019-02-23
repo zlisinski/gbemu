@@ -1,4 +1,5 @@
 #include <memory>
+#include <QtCore/QSettings>
 #include <QtWidgets/QGraphicsPixmapItem>
 #include "DebugWindow.h"
 #include "ui_DebugWindow.h"
@@ -31,6 +32,9 @@ DebugWindow::DebugWindow(QWidget *parent) :
     QGraphicsScene *scene = new QGraphicsScene(this);
     ui->gvTiles->setScene(scene);
 
+    QSettings settings;
+    restoreGeometry(settings.value("DebugWindowGeometry").toByteArray());
+
     DrawFrame();
 }
 
@@ -45,6 +49,14 @@ void DebugWindow::DrawFrame()
 {
     UpdateTileView();
     UpdateMemoryView();
+}
+
+
+void DebugWindow::closeEvent(QCloseEvent *event)
+{
+    QSettings settings;
+    settings.setValue("DebugWindowGeometry", saveGeometry());
+    QWidget::closeEvent(event);
 }
 
 

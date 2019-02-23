@@ -28,6 +28,9 @@ public:
 
     void DrawFrame();
 
+protected:
+    virtual void closeEvent(QCloseEvent *event);
+
 private:
     void UpdateTileView();
     void UpdateMemoryView();
