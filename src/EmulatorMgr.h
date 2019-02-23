@@ -36,6 +36,7 @@ private:
     bool quit;
 
     std::string romFilename;
+    std::string ramFilename;
 
     std::thread workThread;
 

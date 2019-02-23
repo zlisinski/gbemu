@@ -1,8 +1,9 @@
 #include <algorithm>
-#include <map>
 #include <memory>
 #include <sstream>
 #include <string.h>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "DebugInterface.h"
 #include "Memory.h"
@@ -12,7 +13,7 @@ const uint16_t RomSizeOffset = 0x0148;
 const uint16_t RamSizeOffset = 0x0149;
 
 
-const std::map<uint8_t, MbcTypes> MbcTypesMap = {
+const std::unordered_map<uint8_t, MbcTypes> MbcTypesMap = {
     {0x00, eMbcNone}, // ROM only
     {0x01, eMbc1},    // MBC1
     {0x02, eMbc1},    // MBC1 + RAM
@@ -21,6 +22,7 @@ const std::map<uint8_t, MbcTypes> MbcTypesMap = {
     {0x06, eMbc2},    // MBC2 + BAT
     {0x08, eMbcNone}, // RAM
     {0x09, eMbcNone}, // RAM + BAT
+    {0x11, eMbc3},    // MBC3
     {0x12, eMbc3},    // MBC3 + RAM
     {0x13, eMbc3},    // MBC3 + RAM + BAT
     {0x19, eMbc5},    // MBC5
@@ -28,7 +30,15 @@ const std::map<uint8_t, MbcTypes> MbcTypesMap = {
     {0x1B, eMbc5}     // MBC5 + RAM + BAT
 };
 
-const std::map<uint8_t, uint8_t> RomBankCountMap = {
+const std::unordered_set<uint8_t> BatteryBackedRamSet = {
+    0x03, // MBC1
+    0x06, // MBC2
+    0x09, // No MBC
+    0x13, // MBC3
+    0x1B  // MBC5
+};
+
+const std::unordered_map<uint8_t, uint8_t> RomBankCountMap = {
     {0, 2},     // 256Kb, 32KB
     {1, 4},     // 512Kb, 64KB
     {2, 8},     // 1Mb,   128KB
@@ -41,7 +51,7 @@ const std::map<uint8_t, uint8_t> RomBankCountMap = {
     {0x54, 96}  // 12MB,  1.5MB
 };
 
-const std::map<uint8_t, uint8_t> RamBankCountMap = {
+const std::unordered_map<uint8_t, uint8_t> RamBankCountMap = {
     {0, 0},  // None
     {1, 1},  // 16Kb,  2KB
     {2, 1},  // 64Kb,  8KB
@@ -56,6 +66,7 @@ Memory::Memory(DebugInterface *debugInterface) :
     mbcType(eMbcNone),
     romBankCount(0),
     ramBankCount(0),
+    batteryBackedRam(false),
     debugInterface(debugInterface)
 {
     ClearMemory();
@@ -190,6 +201,58 @@ void Memory::ClearMemory()
 }
 
 
+void Memory::LoadRam(const std::string &filename)
+{
+    if (batteryBackedRam == false || ramBankCount == 0)
+        return;
+
+    FILE *file = fopen(filename.c_str(), "rb");
+    if (file == NULL)
+    {
+        printf("Error opening RAM file %s\n", filename.c_str());
+        return;
+    }
+
+    if (mbcType == eMbc2)
+    {
+        fread(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, 512, file);
+    }
+    else
+    {
+        // RAM bank switching is not yet implemented, so for now, just write the first bank.
+        fread(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, RAM_BANK_SIZE, file);
+    }
+
+    fclose(file);
+}
+
+
+void Memory::SaveRam(const std::string &filename)
+{
+    if (batteryBackedRam == false || ramBankCount == 0)
+        return;
+
+    FILE *file = fopen(filename.c_str(), "wb");
+    if (file == NULL)
+    {
+        printf("Error opening RAM file %s\n", filename.c_str());
+        return;
+    }
+
+    if (mbcType == eMbc2)
+    {
+        fwrite(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, 512, file);
+    }
+    else
+    {
+        // RAM bank switching is not yet implemented, so for now, just write the first bank.
+        fwrite(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, RAM_BANK_SIZE, file);
+    }
+
+    fclose(file);
+}
+
+
 void Memory::AttachToTimerSubject(TimerSubject* subject)
 {
     this->timerSubject = subject;
@@ -252,6 +315,8 @@ void Memory::CheckRom()
         throw NotYetImplementedException(ss.str());
     }
     ramBankCount = it->second;
+    if (ramBankCount > 1)
+        throw NotYetImplementedException("Multiple RAM banks not yet implemented");
     printf("RAM size = %02X\n", ramBankCount);
 
     // Check Memory Bank Controller.
@@ -265,11 +330,19 @@ void Memory::CheckRom()
     mbcType = mbcIt->second;
     printf("MBC type = %02X\n", mbcType);
 
+    // MBC2 has 512 * 4 bits of RAM, even though the RAM bank count is 0.
+    if (mbcType == eMbc2)
+        ramBankCount = 1;
+
+    // Get battery backed ram.
+    batteryBackedRam = BatteryBackedRamSet.count(memory[MbcTypeOffset]);
+
     if (debugInterface)
     {
         debugInterface->SetMbcType(mbcType);
         debugInterface->SetRomBanks(romBankCount);
         debugInterface->SetRamBanks(ramBankCount);
+        debugInterface->SetBatteryBackedRam(batteryBackedRam);
     }
 }
 
@@ -298,6 +371,8 @@ void Memory::MapRamBank(uint bank)
 {
     if (debugInterface)
         debugInterface->SetMappedRamBank(bank);
+
+    throw NotYetImplementedException("RAM bank switching not yet implemented");
 }
 
 

@@ -23,7 +23,8 @@ DebugWindow::DebugWindow(QWidget *parent) :
     romBanks(0),
     ramBanks(0),
     mappedRomBank(0),
-    mappedRamBank(0)
+    mappedRamBank(0),
+    batteryBackedRam(false)
 {
     ui->setupUi(this);
 
@@ -122,6 +123,7 @@ void DebugWindow::UpdateMemoryView()
         ui->txtRamBanks->setText("");
         ui->txtMappedRom->setText("");
         ui->txtMappedRam->setText("");
+        ui->chkBatteryBackedRam->setChecked(false);
     }
     else
     {
@@ -146,6 +148,7 @@ void DebugWindow::UpdateMemoryView()
         ui->txtRamBanks->setText(QString::number(ramBanks));
         ui->txtMappedRom->setText(QString::number(mappedRomBank));
         ui->txtMappedRam->setText(QString::number(mappedRamBank));
+        ui->chkBatteryBackedRam->setChecked(batteryBackedRam);
     }
 }
 

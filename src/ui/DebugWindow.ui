@@ -299,20 +299,13 @@
          <x>250</x>
          <y>0</y>
          <width>211</width>
-         <height>226</height>
+         <height>251</height>
         </rect>
        </property>
        <property name="title">
         <string>Memory Bank Controller</string>
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_14">
-          <property name="text">
-           <string>MBC Type</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="1">
          <widget class="QLineEdit" name="txtMbcType">
           <property name="readOnly">
@@ -341,10 +334,10 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="txtRamBanks">
-          <property name="readOnly">
-           <bool>true</bool>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_18">
+          <property name="text">
+           <string>Mapped RAM Bank</string>
           </property>
          </widget>
         </item>
@@ -355,6 +348,20 @@
           </property>
          </widget>
         </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="txtMappedRam">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>MBC Type</string>
+          </property>
+         </widget>
+        </item>
         <item row="3" column="1">
          <widget class="QLineEdit" name="txtMappedRom">
           <property name="readOnly">
@@ -362,17 +369,24 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
-         <widget class="QLabel" name="label_18">
-          <property name="text">
-           <string>Mapped RAM Bank</string>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="txtRamBanks">
+          <property name="readOnly">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
-         <widget class="QLineEdit" name="txtMappedRam">
-          <property name="readOnly">
-           <bool>true</bool>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_19">
+          <property name="text">
+           <string>Battery Backed RAM</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QCheckBox" name="chkBatteryBackedRam">
+          <property name="text">
+           <string/>
           </property>
          </widget>
         </item>
@@ -460,13 +474,13 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup"/>
-  <buttongroup name="buttonGroup_2"/>
-  <buttongroup name="buttonGroup_3"/>
+  <buttongroup name="buttonGroup_7"/>
   <buttongroup name="buttonGroup_4"/>
+  <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup"/>
+  <buttongroup name="buttonGroup_3"/>
+  <buttongroup name="buttonGroup_8"/>
   <buttongroup name="buttonGroup_5"/>
   <buttongroup name="buttonGroup_6"/>
-  <buttongroup name="buttonGroup_7"/>
-  <buttongroup name="buttonGroup_8"/>
  </buttongroups>
 </ui>

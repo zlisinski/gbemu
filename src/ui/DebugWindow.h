@@ -24,6 +24,7 @@ public:
     virtual void SetRamBanks(int count) {ramBanks = count;}
     virtual void SetMappedRomBank(int bank) {mappedRomBank = bank;}
     virtual void SetMappedRamBank(int bank) {mappedRamBank = bank;}
+    virtual void SetBatteryBackedRam(bool hasBattery) {batteryBackedRam = hasBattery;}
 
     void DrawFrame();
 
@@ -43,4 +44,5 @@ private:
     int ramBanks;
     int mappedRomBank;
     int mappedRamBank;
+    bool batteryBackedRam;
 };

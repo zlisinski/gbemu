@@ -112,6 +112,9 @@ public:
 
     void ClearMemory();
 
+    void LoadRam(const std::string &filename);
+    void SaveRam(const std::string &filename);
+
     // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
@@ -142,6 +145,7 @@ private:
     MbcTypes mbcType;
     uint8_t romBankCount;
     uint8_t ramBankCount;
+    bool batteryBackedRam;
 
     DebugInterface *debugInterface;
 };

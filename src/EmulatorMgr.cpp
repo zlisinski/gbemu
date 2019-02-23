@@ -62,6 +62,7 @@ bool EmulatorMgr::LoadRom(const char *filename)
     }
 
     romFilename = filename;
+    ramFilename = romFilename + ".ram";
 
     quit = false;
     workThread = std::thread(&EmulatorMgr::ThreadFunc, this, romMemory);
@@ -147,6 +148,7 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
     else*/
     {
         memory->SetRomMemory(*gameRomMemory);
+        memory->LoadRam(ramFilename);
         SetBootState(memory, cpu);
     }
 
@@ -160,6 +162,8 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
             DBG("\n");
         }
     }
+
+    memory->SaveRam(ramFilename);
 
     delete gameRomMemory;
 
