@@ -46,7 +46,7 @@ TEST_F(MemoryTest, TEST_SetRomMemory_memcpy)
     gameRomMemory[0x0148] = 0x00;
     gameRomMemory[0x0149] = 0x00;
 
-    Memory memory;
+    Memory memory(NULL);
     memory.SetRomMemory(bootRomMemory, gameRomMemory);
 
     ASSERT_EQ(memory[0], 0x11);
@@ -66,7 +66,7 @@ TEST_F(MemoryTest, TEST_SetRomMemory_memcpy2)
     gameRomMemory[0x0148] = 0x00;
     gameRomMemory[0x0149] = 0x00;
 
-    Memory memory;
+    Memory memory(NULL);
     memory.SetRomMemory(gameRomMemory);
 
     ASSERT_EQ(memory[0], 0x22);
@@ -88,7 +88,7 @@ TEST_F(MemoryTest, TEST_DisableBootRom)
     gameRomMemory[0x0148] = 0x00;
     gameRomMemory[0x0149] = 0x00;
 
-    Memory memory;
+    Memory memory(NULL);
     memory.SetRomMemory(bootRomMemory, gameRomMemory);
 
     ASSERT_EQ(memory[0xFF], 0x11);
@@ -103,7 +103,7 @@ TEST_F(MemoryTest, TEST_DisableBootRom)
 
 TEST_F(MemoryTest, TEST_DMA)
 {
-    Memory memory;
+    Memory memory(NULL);
     const uint8_t dmaStart = 0x02;
     uint8_t *src = memory.GetBytePtr(dmaStart << 8);
     uint8_t *dest = memory.GetBytePtr(OAM_RAM_START);
@@ -139,7 +139,7 @@ TEST_F(MemoryTest, TEST_DMA)
 
 TEST_F(MemoryTest, TEST_Start_new_DMA_in_middle_of_DMA)
 {
-    Memory memory;
+    Memory memory(NULL);
     uint8_t dmaStart = 0x02;
     uint8_t *src = memory.GetBytePtr(dmaStart << 8);
     uint8_t *dest = memory.GetBytePtr(OAM_RAM_START);

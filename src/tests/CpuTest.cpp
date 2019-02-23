@@ -22,7 +22,7 @@ const uint16_t SP_VALUE = 0xFFFE;
 
 CpuTest::CpuTest()
 {
-    memory_ = new Memory();
+    memory_ = new Memory(NULL);
     interrupts = new Interrupt(memory_->GetBytePtr(eRegIE), memory_->GetBytePtr(eRegIF));
     timer = new Timer(memory_->GetBytePtr(eRegTIMA), memory_->GetBytePtr(eRegTMA),
                       memory_->GetBytePtr(eRegTAC), memory_->GetBytePtr(eRegDIV), interrupts);
