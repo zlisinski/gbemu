@@ -75,8 +75,9 @@ Memory::Memory(DebugInterface *debugInterface) :
 
 Memory::~Memory()
 {
-    if (timerSubject)
-        timerSubject->DetachObserver(this);
+    // Timer is already deleted when this runs. It doesn't hurt to comment this out for now. Figure out something better later.
+    /*if (timerSubject)
+        timerSubject->DetachObserver(this);*/
 }
 
 
