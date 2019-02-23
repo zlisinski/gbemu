@@ -1355,8 +1355,7 @@ void Cpu::ProcessOpCode()
                 DBG("%02X %02X: JR %d\n", opcode, offset, offset);
                 if (offset == -2)
                 {
-                    DBG("Infinite loop detected\n");
-                    exit(1);
+                    throw InfiniteLoopException();
                 }
                 reg.pc += offset;
                 timer->AddCycle();
@@ -1374,8 +1373,7 @@ void Cpu::ProcessOpCode()
                 {
                     if (offset == -2)
                     {
-                        DBG("Infinite loop detected\n");
-                        exit(1);
+                        throw InfiniteLoopException();
                     }
                     reg.pc += offset;
                     timer->AddCycle();

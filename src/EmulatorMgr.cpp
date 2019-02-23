@@ -120,50 +120,57 @@ void EmulatorMgr::ButtonReleased(Buttons::Button button)
 
 void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
 {
-    memory = new Memory(debugInterface);
-    interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
-    timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
-                      memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
-    display = new Display(memory, interrupts, frameHandler);
-    input = new Input(memory->GetBytePtr(eRegP1), interrupts);
-    serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
-    cpu = new Cpu(interrupts, memory, timer);
-
-    // Setup Memory observers.
-    interrupts->AttachToMemorySubject(memory);
-    timer->AttachToMemorySubject(memory);
-    input->AttachToMemorySubject(memory);
-    serial->AttachToMemorySubject(memory);
-
-    // Setup Timer observers.
-    display->AttachToTimerSubject(timer);
-    memory->AttachToTimerSubject(timer);
-    serial->AttachToTimerSubject(timer);
-
-    if (debugInterface)
-        debugInterface->SetMemory(memory->GetBytePtr(0));
-
-    /*if (runbootRom)
-        memory->SetRomMemory(bootRomMemory, *gameRomMemory);
-    else*/
+    try
     {
-        memory->SetRomMemory(*gameRomMemory);
-        memory->LoadRam(ramFilename);
-        SetBootState(memory, cpu);
-    }
+        memory = new Memory(debugInterface);
+        interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
+        timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
+                          memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
+        display = new Display(memory, interrupts, frameHandler);
+        input = new Input(memory->GetBytePtr(eRegP1), interrupts);
+        serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
+        cpu = new Cpu(interrupts, memory, timer);
 
-    while (!quit)
-    {
-        if (!paused)
+        // Setup Memory observers.
+        interrupts->AttachToMemorySubject(memory);
+        timer->AttachToMemorySubject(memory);
+        input->AttachToMemorySubject(memory);
+        serial->AttachToMemorySubject(memory);
+
+        // Setup Timer observers.
+        display->AttachToTimerSubject(timer);
+        memory->AttachToTimerSubject(timer);
+        serial->AttachToTimerSubject(timer);
+
+        if (debugInterface)
+            debugInterface->SetMemory(memory->GetBytePtr(0));
+
+        /*if (runbootRom)
+            memory->SetRomMemory(bootRomMemory, *gameRomMemory);
+        else*/
         {
-            cpu->ProcessOpCode();
-            //cpu->PrintState();
-            //timer->PrintTimerData();
-            DBG("\n");
+            memory->SetRomMemory(*gameRomMemory);
+            memory->LoadRam(ramFilename);
+            SetBootState(memory, cpu);
         }
-    }
 
-    memory->SaveRam(ramFilename);
+        while (!quit)
+        {
+            if (!paused)
+            {
+                cpu->ProcessOpCode();
+                //cpu->PrintState();
+                //timer->PrintTimerData();
+                DBG("\n");
+            }
+        }
+
+        memory->SaveRam(ramFilename);
+    }
+    catch(const std::exception& e)
+    {
+        frameHandler->MessageBox(e.what());
+    }
 
     delete gameRomMemory;
 

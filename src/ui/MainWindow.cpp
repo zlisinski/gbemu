@@ -54,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapTimer.start();
 
     connect(this, SIGNAL(SignalFrameReady()), this, SLOT(slotDrawFrame()));
+    connect(this, SIGNAL(SignalShowMessageBox(const QString&)), this, SLOT(slotShowMessageBox(const QString &)));
 
     frameHandler = new QtFrameHandler(this);
     emulator = new EmulatorMgr(frameHandler, debugWindow);
@@ -190,6 +191,14 @@ void MainWindow::FrameReady(uint32_t *displayFrameBuffer)
 }
 
 
+void MainWindow::RequestMessageBox(const std::string &message)
+{
+    // This function runs in the thread context of the Emulator worker thread.
+    // Signal the main thread to show a message box.
+    emit SignalShowMessageBox(QString::fromStdString(message));
+}
+
+
 void MainWindow::slotOpenRom()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Open ROM File", "./data");
@@ -255,4 +264,12 @@ void MainWindow::slotDrawFrame()
     graphicsView->scene()->addPixmap(QPixmap::fromImage(img));
 
     debugWindow->DrawFrame();
+}
+
+
+void MainWindow::slotShowMessageBox(const QString &message)
+{
+    QMessageBox msg;
+    msg.setText(message);
+    msg.exec();
 }

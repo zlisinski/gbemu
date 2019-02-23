@@ -22,6 +22,8 @@ public:
 
     // Callback for Emulator to signal a frame is ready to be drawn.
     void FrameReady(uint32_t *displayFrameBuffer);
+    // Callback for Emulator to show message box.
+    void RequestMessageBox(const std::string &message);
 
     // Don't allow copy and assignment.
     MainWindow(const MainWindow&) = delete;
@@ -68,7 +70,9 @@ private slots:
     void slotToggleCapFps(bool checked);
     void slotQuit();
     void slotDrawFrame();
+    void slotShowMessageBox(const QString &message);
 
 signals:
     void SignalFrameReady();
+    void SignalShowMessageBox(const QString &message);
 };

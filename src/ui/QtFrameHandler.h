@@ -18,6 +18,11 @@ public:
         mainWindow->FrameReady(frameBuffer);
     }
 
+    virtual void MessageBox(const std::string &message)
+    {
+        mainWindow->RequestMessageBox(message);
+    }
+
 private:
     MainWindow *mainWindow;
 };
