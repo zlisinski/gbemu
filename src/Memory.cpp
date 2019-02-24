@@ -373,7 +373,14 @@ void Memory::MapRamBank(uint bank)
     if (debugInterface)
         debugInterface->SetMappedRamBank(bank);
 
-    throw NotYetImplementedException("RAM bank switching not yet implemented");
+    // RAM bank switching is not yet implemented, however some games try to switch banks even when there is only one bank.
+    // Only throw if trying to switch to a bank other than the first one.
+    if (bank != 0)
+    {
+        std::stringstream ss;
+        ss << "Trying to switch to RAM bank 0x" << std::hex << std::uppercase << (int)bank << "\nRAM bank switching not yet implemented";
+        throw NotYetImplementedException(ss.str());
+    }
 }
 
 
