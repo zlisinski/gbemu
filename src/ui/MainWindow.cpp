@@ -35,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent) :
     gamepadKeyNavigation(NULL),
     debugWindow(NULL)
 {
+    QSettings settings;
+    displayScale = settings.value("DisplayScale", 5).toInt();
+
     SetupMenuBar();
     SetupStatusBar();
     SetupGamepad();
@@ -45,7 +48,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QGraphicsScene *scene = new QGraphicsScene(this);
     graphicsView->setScene(scene);
-    graphicsView->scale(5, 5);
 
     debugWindow = new DebugWindow(this);
     debugWindow->show();
@@ -65,8 +67,8 @@ MainWindow::MainWindow(QWidget *parent) :
         emulator->LoadRom(filename.toLatin1().data());
     }
 
-    QSettings settings;
     restoreGeometry(settings.value("MainWindowGeometry").toByteArray());
+    SetDisplayScale(displayScale);
 }
 
 
@@ -144,6 +146,8 @@ void MainWindow::SetupMenuBar()
     fileMenu->addAction(fileQuit);
     connect(fileQuit, SIGNAL(triggered()), this, SLOT(slotQuit()));
 
+    ///////////////////////////////////////////////////////////////////////////
+
     // Emulator Menu
     QMenu *emuMenu = menuBar()->addMenu("&Emulator");
 
@@ -171,6 +175,27 @@ void MainWindow::SetupMenuBar()
     emuCapFps->setChecked(true);
     emuMenu->addAction(emuCapFps);
     connect(emuCapFps, SIGNAL(triggered(bool)), this, SLOT(slotToggleCapFps(bool)));
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Display Menu
+    QMenu *displayMenu = menuBar()->addMenu("&Display");
+
+    // Display | Size
+    QMenu *displaySizeMenu = displayMenu->addMenu("&Size");
+    QActionGroup *displaySizeGroup = new QActionGroup(this);
+    QAction *displaySizes[6];
+    for (int i = 1; i <= 6; i++)
+    {
+        displaySizes[i] = new QAction(QString("&%1x").arg(i), this);
+        displaySizes[i]->setCheckable(true);
+        displaySizes[i]->setData(i);
+        if (i == displayScale)
+            displaySizes[i]->setChecked(true);
+        displaySizeMenu->addAction(displaySizes[i]);
+        displaySizeGroup->addAction(displaySizes[i]);
+        connect(displaySizes[i], SIGNAL(triggered()), this, SLOT(slotSetDisplayScale()));
+    }
 }
 
 
@@ -237,6 +262,16 @@ void MainWindow::UpdateRecentFilesActions()
     }
     for (int i = numRecentFiles; i < MAX_RECENT_FILES; i++)
         recentFilesActions[i]->setVisible(false);
+}
+
+
+void MainWindow::SetDisplayScale(int scale)
+{
+    graphicsView->scene()->clear();
+    graphicsView->setSceneRect(0, 0, SCREEN_X*scale, SCREEN_Y*scale);
+    graphicsView->setFixedSize(SCREEN_X*scale, SCREEN_Y*scale);
+    adjustSize();
+    displayScale = scale;
 }
 
 
@@ -350,7 +385,8 @@ void MainWindow::slotDrawFrame()
 
     QImage img((uchar *)(frameBuffer), 160, 144, QImage::Format_RGB32);
     graphicsView->scene()->clear();
-    graphicsView->scene()->addPixmap(QPixmap::fromImage(img));
+    QGraphicsPixmapItem *pixmap = graphicsView->scene()->addPixmap(QPixmap::fromImage(img));
+    pixmap->setScale(displayScale);
 
     debugWindow->DrawFrame();
 }
@@ -361,4 +397,22 @@ void MainWindow::slotShowMessageBox(const QString &message)
     QMessageBox msg;
     msg.setText(message);
     msg.exec();
+}
+
+
+void MainWindow::slotSetDisplayScale()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action)
+    {
+        int scale = action->data().toInt();
+
+        SetDisplayScale(scale);
+
+        if (paused)
+            SignalFrameReady();
+
+        QSettings settings;
+        settings.setValue("DisplayScale", scale);
+    }
 }

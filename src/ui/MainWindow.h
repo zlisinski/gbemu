@@ -42,6 +42,7 @@ private:
     void SetupGamepad();
     void UpdateRecentFile(const QString &filename);
     void UpdateRecentFilesActions();
+    void SetDisplayScale(int scale);
 
     QGraphicsView *graphicsView;
     QLabel *labelFps;
@@ -64,6 +65,7 @@ private:
     QGamepadKeyNavigation *gamepadKeyNavigation;
 
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
+    int displayScale;
 
     DebugWindow *debugWindow;
 
@@ -79,6 +81,7 @@ private slots:
     void slotQuit();
     void slotDrawFrame();
     void slotShowMessageBox(const QString &message);
+    void slotSetDisplayScale();
 
 signals:
     void SignalFrameReady();

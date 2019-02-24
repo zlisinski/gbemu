@@ -10,7 +10,6 @@ int main(int argc, char *argv[])
     app.setApplicationName("gbemu");
 
     MainWindow window;
-    window.resize(800, 773);
     window.setWindowTitle("GBEmu");
     window.show();
 
