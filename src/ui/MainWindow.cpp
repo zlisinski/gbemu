@@ -33,7 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapTimer(),
     gamepad(NULL),
     gamepadKeyNavigation(NULL),
-    debugWindow(NULL)
+    debugWindow(NULL),
+    displayDebugWindowAction(NULL)
 {
     QSettings settings;
     displayScale = settings.value("DisplayScale", 5).toInt();
@@ -50,13 +51,11 @@ MainWindow::MainWindow(QWidget *parent) :
     graphicsView->setScene(scene);
 
     debugWindow = new DebugWindow(this);
-    debugWindow->show();
+    if (settings.value("DisplayDebugWindow", true).toBool())
+        debugWindow->show();
 
     fpsTimer.start();
     frameCapTimer.start();
-
-    connect(this, SIGNAL(SignalFrameReady()), this, SLOT(slotDrawFrame()));
-    connect(this, SIGNAL(SignalShowMessageBox(const QString&)), this, SLOT(slotShowMessageBox(const QString &)));
 
     frameHandler = new QtFrameHandler(this);
     emulator = new EmulatorMgr(frameHandler, debugWindow);
@@ -69,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     restoreGeometry(settings.value("MainWindowGeometry").toByteArray());
     SetDisplayScale(displayScale);
+
+    connect(this, SIGNAL(SignalFrameReady()), this, SLOT(SlotDrawFrame()));
+    connect(this, SIGNAL(SignalShowMessageBox(const QString&)), this, SLOT(SlotShowMessageBox(const QString &)));
 }
 
 
@@ -119,15 +121,17 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::SetupMenuBar()
 {
+    QSettings settings;
+
     menuBar()->setNativeMenuBar(false);
 
     // File Menu
     QMenu *fileMenu = menuBar()->addMenu("&File");
 
     // File | Open...
-    QAction *fileOpen = new QAction("&Open ROM...", this);
-    fileMenu->addAction(fileOpen);
-    connect(fileOpen, SIGNAL(triggered()), this, SLOT(slotOpenRom()));
+    QAction *fileOpenAction = new QAction("&Open ROM...", this);
+    fileMenu->addAction(fileOpenAction);
+    connect(fileOpenAction, SIGNAL(triggered()), this, SLOT(SlotOpenRom()));
 
     // File | Open Recent
     QMenu *fileOpenRecentMenu = fileMenu->addMenu("Open &Recent");
@@ -136,15 +140,15 @@ void MainWindow::SetupMenuBar()
         recentFilesActions[i] = new QAction(this);
         recentFilesActions[i]->setVisible(false);
         fileOpenRecentMenu->addAction(recentFilesActions[i]);
-        connect(recentFilesActions[i], SIGNAL(triggered()), this, SLOT(slotOpenRecentRom()));
+        connect(recentFilesActions[i], SIGNAL(triggered()), this, SLOT(SlotOpenRecentRom()));
     }
     UpdateRecentFilesActions();
 
     // File | Quit
     fileMenu->addSeparator();
-    QAction *fileQuit = new QAction("&Quit", this);
-    fileMenu->addAction(fileQuit);
-    connect(fileQuit, SIGNAL(triggered()), this, SLOT(slotQuit()));
+    QAction *fileQuitAction = new QAction("&Quit", this);
+    fileMenu->addAction(fileQuitAction);
+    connect(fileQuitAction, SIGNAL(triggered()), this, SLOT(SlotQuit()));
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -152,29 +156,29 @@ void MainWindow::SetupMenuBar()
     QMenu *emuMenu = menuBar()->addMenu("&Emulator");
 
     // Emulator | Reset
-    QAction *emuReset = new QAction("&Reset", this);
-    emuMenu->addAction(emuReset);
-    connect(emuReset, SIGNAL(triggered()), this, SLOT(slotReset()));
+    QAction *emuResetAction = new QAction("&Reset", this);
+    emuMenu->addAction(emuResetAction);
+    connect(emuResetAction, SIGNAL(triggered()), this, SLOT(SlotReset()));
 
     // Emulator | Pause
-    QAction *emuPause = new QAction("&Pause", this);
-    emuPause->setShortcut(Qt::Key_Escape);
-    emuPause->setCheckable(true);
-    emuMenu->addAction(emuPause);
-    connect(emuPause, SIGNAL(triggered(bool)), this, SLOT(slotTogglePause(bool)));
+    QAction *emuPauseAction = new QAction("&Pause", this);
+    emuPauseAction->setShortcut(Qt::Key_Escape);
+    emuPauseAction->setCheckable(true);
+    emuMenu->addAction(emuPauseAction);
+    connect(emuPauseAction, SIGNAL(triggered(bool)), this, SLOT(SlotTogglePause(bool)));
 
     // Emulator | End
-    QAction *emuEnd = new QAction("&End Emulation", this);
-    emuMenu->addAction(emuEnd);
-    connect(emuEnd, SIGNAL(triggered()), this, SLOT(slotEndEmulation()));
+    QAction *emuEndAction = new QAction("&End Emulation", this);
+    emuMenu->addAction(emuEndAction);
+    connect(emuEndAction, SIGNAL(triggered()), this, SLOT(SlotEndEmulation()));
 
     // Emulator | Cap FPS
-    QAction *emuCapFps = new QAction("&Cap FPS", this);
-    emuCapFps->setShortcut(Qt::Key_F10);
-    emuCapFps->setCheckable(true);
-    emuCapFps->setChecked(true);
-    emuMenu->addAction(emuCapFps);
-    connect(emuCapFps, SIGNAL(triggered(bool)), this, SLOT(slotToggleCapFps(bool)));
+    QAction *emuCapFpsAction = new QAction("&Cap FPS", this);
+    emuCapFpsAction->setShortcut(Qt::Key_F10);
+    emuCapFpsAction->setCheckable(true);
+    emuCapFpsAction->setChecked(true);
+    emuMenu->addAction(emuCapFpsAction);
+    connect(emuCapFpsAction, SIGNAL(triggered(bool)), this, SLOT(SlotToggleCapFps(bool)));
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -184,18 +188,24 @@ void MainWindow::SetupMenuBar()
     // Display | Size
     QMenu *displaySizeMenu = displayMenu->addMenu("&Size");
     QActionGroup *displaySizeGroup = new QActionGroup(this);
-    QAction *displaySizes[6];
+    QAction *displaySizeActions[6];
     for (int i = 1; i <= 6; i++)
     {
-        displaySizes[i] = new QAction(QString("&%1x").arg(i), this);
-        displaySizes[i]->setCheckable(true);
-        displaySizes[i]->setData(i);
+        displaySizeActions[i] = new QAction(QString("&%1x").arg(i), this);
+        displaySizeActions[i]->setCheckable(true);
+        displaySizeActions[i]->setData(i);
         if (i == displayScale)
-            displaySizes[i]->setChecked(true);
-        displaySizeMenu->addAction(displaySizes[i]);
-        displaySizeGroup->addAction(displaySizes[i]);
-        connect(displaySizes[i], SIGNAL(triggered()), this, SLOT(slotSetDisplayScale()));
+            displaySizeActions[i]->setChecked(true);
+        displaySizeMenu->addAction(displaySizeActions[i]);
+        displaySizeGroup->addAction(displaySizeActions[i]);
+        connect(displaySizeActions[i], SIGNAL(triggered()), this, SLOT(SlotSetDisplayScale()));
     }
+
+    displayDebugWindowAction = displayMenu->addAction("&Debug Window");
+    displayDebugWindowAction->setCheckable(true);
+    displayDebugWindowAction->setChecked(settings.value("DisplayDebugWindow", true).toBool());
+    displaySizeMenu->addAction(displayDebugWindowAction);
+    connect(displayDebugWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayDebugWindow(bool)));
 }
 
 
@@ -306,7 +316,7 @@ void MainWindow::RequestMessageBox(const std::string &message)
 }
 
 
-void MainWindow::slotOpenRom()
+void MainWindow::SlotOpenRom()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Open ROM File", "./data");
     QString message = "filename = ";
@@ -318,7 +328,7 @@ void MainWindow::slotOpenRom()
 }
 
 
-void MainWindow::slotOpenRecentRom()
+void MainWindow::SlotOpenRecentRom()
 {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action)
@@ -333,13 +343,13 @@ void MainWindow::slotOpenRecentRom()
 }
 
 
-void MainWindow::slotReset()
+void MainWindow::SlotReset()
 {
     emulator->ResetEmulation();
 }
 
 
-void MainWindow::slotTogglePause(bool checked)
+void MainWindow::SlotTogglePause(bool checked)
 {
     paused = checked;
     labelPause->setText(checked ? "Paused" : "");
@@ -347,27 +357,27 @@ void MainWindow::slotTogglePause(bool checked)
 }
 
 
-void MainWindow::slotEndEmulation()
+void MainWindow::SlotEndEmulation()
 {
     emulator->EndEmulation();
     graphicsView->scene()->clear();
 }
 
 
-void MainWindow::slotToggleCapFps(bool checked)
+void MainWindow::SlotToggleCapFps(bool checked)
 {
     capFps = checked;
 }
 
 
-void MainWindow::slotQuit()
+void MainWindow::SlotQuit()
 {
     emulator->EndEmulation();
     qApp->quit();
 }
 
 
-void MainWindow::slotDrawFrame()
+void MainWindow::SlotDrawFrame()
 {
     uint64_t elapsedTime = fpsTimer.elapsed();
 
@@ -392,7 +402,7 @@ void MainWindow::slotDrawFrame()
 }
 
 
-void MainWindow::slotShowMessageBox(const QString &message)
+void MainWindow::SlotShowMessageBox(const QString &message)
 {
     QMessageBox msg;
     msg.setText(message);
@@ -400,7 +410,7 @@ void MainWindow::slotShowMessageBox(const QString &message)
 }
 
 
-void MainWindow::slotSetDisplayScale()
+void MainWindow::SlotSetDisplayScale()
 {
     QAction *action = qobject_cast<QAction *>(sender());
     if (action)
@@ -415,4 +425,22 @@ void MainWindow::slotSetDisplayScale()
         QSettings settings;
         settings.setValue("DisplayScale", scale);
     }
+}
+
+
+void MainWindow::SlotSetDisplayDebugWindow(bool checked)
+{
+    QSettings settings;
+    settings.setValue("DisplayDebugWindow", checked);
+
+    if (checked)
+        debugWindow->show();
+    else
+        debugWindow->hide();
+}
+
+
+void MainWindow::SlotDebugWindowClosed()
+{
+    displayDebugWindowAction->setChecked(false);
 }

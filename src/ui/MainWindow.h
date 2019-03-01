@@ -68,20 +68,23 @@ private:
     int displayScale;
 
     DebugWindow *debugWindow;
+    QAction *displayDebugWindowAction;
 
     QAction *recentFilesActions[MAX_RECENT_FILES];
 
 private slots:
-    void slotOpenRom();
-    void slotOpenRecentRom();
-    void slotReset();
-    void slotTogglePause(bool checked);
-    void slotEndEmulation();
-    void slotToggleCapFps(bool checked);
-    void slotQuit();
-    void slotDrawFrame();
-    void slotShowMessageBox(const QString &message);
-    void slotSetDisplayScale();
+    void SlotOpenRom();
+    void SlotOpenRecentRom();
+    void SlotReset();
+    void SlotTogglePause(bool checked);
+    void SlotEndEmulation();
+    void SlotToggleCapFps(bool checked);
+    void SlotQuit();
+    void SlotDrawFrame();
+    void SlotShowMessageBox(const QString &message);
+    void SlotSetDisplayScale();
+    void SlotSetDisplayDebugWindow(bool checked);
+    void SlotDebugWindowClosed();
 
 signals:
     void SignalFrameReady();

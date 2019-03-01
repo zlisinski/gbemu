@@ -48,4 +48,7 @@ private:
     int mappedRomBank;
     int mappedRamBank;
     bool batteryBackedRam;
+
+signals:
+    void SignalDebugWindowClosed();
 };

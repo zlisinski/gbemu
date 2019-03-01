@@ -35,6 +35,8 @@ DebugWindow::DebugWindow(QWidget *parent) :
     QSettings settings;
     restoreGeometry(settings.value("DebugWindowGeometry").toByteArray());
 
+    connect(this, SIGNAL(SignalDebugWindowClosed()), parent, SLOT(SlotDebugWindowClosed()));
+
     DrawFrame();
 }
 
@@ -56,6 +58,9 @@ void DebugWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
     settings.setValue("DebugWindowGeometry", saveGeometry());
+
+    emit SignalDebugWindowClosed();
+
     QWidget::closeEvent(event);
 }
 
