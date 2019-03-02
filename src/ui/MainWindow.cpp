@@ -398,7 +398,9 @@ void MainWindow::SlotDrawFrame()
     QGraphicsPixmapItem *pixmap = graphicsView->scene()->addPixmap(QPixmap::fromImage(img));
     pixmap->setScale(displayScale);
 
-    debugWindow->DrawFrame();
+    // Only update debugWindow 60 time a second, this stops the program locking up when frame cap is off.
+    if ((elapsedTime & 0x0F) == 0)
+        debugWindow->DrawFrame();
 }
 
 
