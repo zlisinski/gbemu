@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>738</width>
+    <width>614</width>
     <height>658</height>
    </rect>
   </property>
@@ -28,16 +28,16 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>544</width>
-         <height>611</height>
+         <width>403</width>
+         <height>603</height>
         </rect>
        </property>
       </widget>
       <widget class="QGraphicsView" name="gvTilePreview">
        <property name="geometry">
         <rect>
-         <x>570</x>
-         <y>10</y>
+         <x>435</x>
+         <y>0</y>
          <width>128</width>
          <height>128</height>
         </rect>
@@ -474,13 +474,13 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_7"/>
-  <buttongroup name="buttonGroup_4"/>
-  <buttongroup name="buttonGroup_2"/>
-  <buttongroup name="buttonGroup"/>
-  <buttongroup name="buttonGroup_3"/>
   <buttongroup name="buttonGroup_8"/>
-  <buttongroup name="buttonGroup_5"/>
   <buttongroup name="buttonGroup_6"/>
+  <buttongroup name="buttonGroup_7"/>
+  <buttongroup name="buttonGroup"/>
+  <buttongroup name="buttonGroup_5"/>
+  <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup_3"/>
+  <buttongroup name="buttonGroup_4"/>
  </buttongroups>
 </ui>
