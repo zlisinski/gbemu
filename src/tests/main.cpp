@@ -3,7 +3,6 @@
 #include "main.h"
 #include "../Display.h"
 
-bool debugOutput = false;
 
 SDL_Window *sdlWindow = NULL;
 SDL_Renderer *sdlRenderer = NULL;

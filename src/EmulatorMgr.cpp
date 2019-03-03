@@ -10,8 +10,6 @@
 #include "Timer.h"
 
 
-bool debugOutput = false;
-
 EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInterface) :
     paused(false),
     quit(false),
