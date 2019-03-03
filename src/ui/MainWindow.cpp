@@ -219,14 +219,12 @@ void MainWindow::SetupMenuBar()
     displayDebugWindowAction = displayMenu->addAction("&Debug Window");
     displayDebugWindowAction->setCheckable(true);
     displayDebugWindowAction->setChecked(settings.value("DisplayDebugWindow", true).toBool());
-    displaySizeMenu->addAction(displayDebugWindowAction);
     connect(displayDebugWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayDebugWindow(bool)));
 
     // Display | Log Window
     displayLogWindowAction = displayMenu->addAction("&Log Window");
     displayLogWindowAction->setCheckable(true);
     displayLogWindowAction->setChecked(settings.value("DisplayLogWindow", true).toBool());
-    displaySizeMenu->addAction(displayLogWindowAction);
     connect(displayLogWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayLogWindow(bool)));
 }
 
