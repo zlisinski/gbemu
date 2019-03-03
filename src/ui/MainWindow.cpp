@@ -341,12 +341,16 @@ void MainWindow::RequestMessageBox(const std::string &message)
 void MainWindow::SlotOpenRom()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Open ROM File", "./data");
-    QString message = "filename = ";
-    statusBar()->showMessage(message + filename, 5000);
 
-    UpdateRecentFile(filename);
+    if (filename != "")
+    {
+        QString message = "filename = ";
+        statusBar()->showMessage(message + filename, 5000);
 
-    emulator->LoadRom(filename.toLatin1().data());
+        UpdateRecentFile(filename);
+
+        emulator->LoadRom(filename.toLatin1().data());
+    }
 }
 
 
