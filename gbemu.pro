@@ -36,6 +36,7 @@ HEADERS += \
 	src/Globals.h \
 	src/Input.h \
 	src/Interrupt.h \
+	src/Logger.h \
 	src/MemoryBankController.h \
 	src/MemoryByteObserver.h \
 	src/MemoryByteProxy.h \
@@ -48,6 +49,7 @@ HEADERS += \
 	src/TimerSubject.h \
 	src/Utils.h \
 	src/ui/DebugWindow.h \
+	src/ui/LogWindow.h \
 	src/ui/MainWindow.h \
 	src/ui/QtFrameHandler.h
 
@@ -58,6 +60,7 @@ SOURCES += \
 	src/EmulatorMgr.cpp \
 	src/Input.cpp \
 	src/Interrupt.cpp \
+	src/Logger.cpp \
 	src/MemoryBankController.cpp \
 	src/Memory.cpp \
 	src/main.cpp \
@@ -65,9 +68,11 @@ SOURCES += \
 	src/Timer.cpp \
 	src/Utils.cpp \
 	src/ui/DebugWindow.cpp \
+	src/ui/LogWindow.cpp \
 	src/ui/MainWindow.cpp
 
 FORMS += \
-	src/ui/DebugWindow.ui
+	src/ui/DebugWindow.ui \
+	src/ui/LogWindow.ui
 
 

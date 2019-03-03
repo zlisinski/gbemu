@@ -10,6 +10,7 @@
 
 class DebugWindow;
 class EmulatorMgr;
+class LogWindow;
 class QtFrameHandler;
 
 const int MAX_RECENT_FILES = 10;
@@ -69,6 +70,8 @@ private:
 
     DebugWindow *debugWindow;
     QAction *displayDebugWindowAction;
+    LogWindow *logWindow;
+    QAction *displayLogWindowAction;
 
     QAction *recentFilesActions[MAX_RECENT_FILES];
 
@@ -85,6 +88,8 @@ private slots:
     void SlotSetDisplayScale();
     void SlotSetDisplayDebugWindow(bool checked);
     void SlotDebugWindowClosed();
+    void SlotSetDisplayLogWindow(bool checked);
+    void SlotLogWindowClosed();
 
 signals:
     void SignalFrameReady();

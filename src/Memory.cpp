@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include "DebugInterface.h"
+#include "Logger.h"
 #include "Memory.h"
 
 const uint16_t MbcTypeOffset = 0x0147;
@@ -305,7 +306,7 @@ void Memory::CheckRom()
         throw NotYetImplementedException(ss.str());
     }
     romBankCount = it->second;
-    printf("ROM size = %02X\n", romBankCount);
+    LogInfo("ROM size = %02X", romBankCount);
 
     // Check for valid RAM size.
     it = RamBankCountMap.find(memory[RamSizeOffset]);
@@ -318,7 +319,7 @@ void Memory::CheckRom()
     ramBankCount = it->second;
     if (ramBankCount > 1)
         throw NotYetImplementedException("Multiple RAM banks not yet implemented");
-    printf("RAM size = %02X\n", ramBankCount);
+    LogInfo("RAM size = %02X", ramBankCount);
 
     // Check Memory Bank Controller.
     auto mbcIt = MbcTypesMap.find(memory[MbcTypeOffset]);
@@ -329,7 +330,7 @@ void Memory::CheckRom()
         throw NotYetImplementedException(ss.str());
     }
     mbcType = mbcIt->second;
-    printf("MBC type = %02X\n", mbcType);
+    LogInfo("MBC type = %02X", mbcType);
 
     // MBC2 has 512 * 4 bits of RAM, even though the RAM bank count is 0.
     if (mbcType == eMbc2)
@@ -386,5 +387,5 @@ void Memory::MapRamBank(uint bank)
 
 void Memory::EnableRam(bool enable)
 {
-    printf("Enable RAM = %s\n", enable ? "true" : "false");
+    LogInfo("Enable RAM = %s", enable ? "true" : "false");
 }

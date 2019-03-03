@@ -2,10 +2,12 @@
 #include <stdint.h>
 #include <thread>
 #include "DebugWindow.h"
+#include "LogWindow.h"
 #include "MainWindow.h"
 #include "QtFrameHandler.h"
 #include "../EmulatorMgr.h"
 #include "../Input.h"
+#include "../Logger.h"
 
 
 const QHash<int, Buttons::Button> keymap {
@@ -34,10 +36,19 @@ MainWindow::MainWindow(QWidget *parent) :
     gamepad(NULL),
     gamepadKeyNavigation(NULL),
     debugWindow(NULL),
-    displayDebugWindowAction(NULL)
+    displayDebugWindowAction(NULL),
+    logWindow(NULL),
+    displayLogWindowAction(NULL)
 {
     QSettings settings;
     displayScale = settings.value("DisplayScale", 5).toInt();
+
+    // Setup logger before anything else.
+    Logger::SetLogLevel(static_cast<LogLevel>(settings.value("LogLevel", 0).toInt()));
+    logWindow = new LogWindow(this);
+    Logger::SetOutput(logWindow);
+    if (settings.value("DisplayLogWindow", true).toBool())
+        logWindow->show();
 
     SetupMenuBar();
     SetupStatusBar();
@@ -78,6 +89,8 @@ MainWindow::~MainWindow()
 {
     delete emulator;
     delete frameHandler;
+
+    Logger::SetOutput(NULL);
 }
 
 
@@ -112,6 +125,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     debugWindow->close();
+    logWindow->close();
 
     QSettings settings;
     settings.setValue("MainWindowGeometry", saveGeometry());
@@ -201,11 +215,19 @@ void MainWindow::SetupMenuBar()
         connect(displaySizeActions[i], SIGNAL(triggered()), this, SLOT(SlotSetDisplayScale()));
     }
 
+    // Display | Debug Window
     displayDebugWindowAction = displayMenu->addAction("&Debug Window");
     displayDebugWindowAction->setCheckable(true);
     displayDebugWindowAction->setChecked(settings.value("DisplayDebugWindow", true).toBool());
     displaySizeMenu->addAction(displayDebugWindowAction);
     connect(displayDebugWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayDebugWindow(bool)));
+
+    // Display | Log Window
+    displayLogWindowAction = displayMenu->addAction("&Log Window");
+    displayLogWindowAction->setCheckable(true);
+    displayLogWindowAction->setChecked(settings.value("DisplayLogWindow", true).toBool());
+    displaySizeMenu->addAction(displayLogWindowAction);
+    connect(displayLogWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayLogWindow(bool)));
 }
 
 
@@ -445,4 +467,22 @@ void MainWindow::SlotSetDisplayDebugWindow(bool checked)
 void MainWindow::SlotDebugWindowClosed()
 {
     displayDebugWindowAction->setChecked(false);
+}
+
+
+void MainWindow::SlotSetDisplayLogWindow(bool checked)
+{
+    QSettings settings;
+    settings.setValue("DisplayLogWindow", checked);
+
+    if (checked)
+        logWindow->show();
+    else
+        logWindow->hide();
+}
+
+
+void MainWindow::SlotLogWindowClosed()
+{
+    displayLogWindowAction->setChecked(false);
 }
