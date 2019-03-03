@@ -203,12 +203,12 @@ void MainWindow::SetupMenuBar()
     QMenu *displaySizeMenu = displayMenu->addMenu("&Size");
     QActionGroup *displaySizeGroup = new QActionGroup(this);
     QAction *displaySizeActions[6];
-    for (int i = 1; i <= 6; i++)
+    for (int i = 0; i < 6; i++)
     {
-        displaySizeActions[i] = new QAction(QString("&%1x").arg(i), this);
+        displaySizeActions[i] = new QAction(QString("&%1x").arg(i+1), this);
         displaySizeActions[i]->setCheckable(true);
-        displaySizeActions[i]->setData(i);
-        if (i == displayScale)
+        displaySizeActions[i]->setData(i+1);
+        if (i+1 == displayScale)
             displaySizeActions[i]->setChecked(true);
         displaySizeMenu->addAction(displaySizeActions[i]);
         displaySizeGroup->addAction(displaySizeActions[i]);
