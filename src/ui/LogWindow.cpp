@@ -67,6 +67,8 @@ void LogWindow::Output(std::unique_ptr<LogEntry> entry)
 
     entries.push_back(std::move(entry));
 
+    lock.unlock();
+
     // Signal the main thread to add the text.
     emit SignalMessageReady();
 }
