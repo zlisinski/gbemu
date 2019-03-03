@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "Input.h"
+#include "Logger.h"
 #include "Memory.h"
 
 enum ButtonMask
@@ -43,7 +44,6 @@ void Input::AttachToMemorySubject(MemoryByteSubject* subject)
 
 void Input::UpdateMemoryAddr(uint16_t addr, uint8_t value)
 {
-    DBG("UpdateMemoryAddr %04X, %02X\n", addr, value);
     if (addr == eRegP1)
         UpdateRegP1(value);
 }
@@ -73,22 +73,22 @@ void Input::UpdateRegP1(uint8_t newP1)
         if (buttonData.IsUpPressed())
         {
             newP1 &= eMaskSelectUp;
-            DBG("Up pressed\n");
+            //LogDebug("Up pressed");
         }
         if (buttonData.IsDownPressed())
         {
             newP1 &= eMaskStartDown;
-            DBG("Down pressed\n");
+            //LogDebug("Down pressed");
         }
         if (buttonData.IsLeftPressed())
         {
             newP1 &= eMaskBLeft;
-            DBG("Left pressed\n");
+            //LogDebug("Left pressed");
         }
         if (buttonData.IsRightPressed())
         {
             newP1 &= eMaskARight;
-            DBG("Right pressed\n");
+            //LogDebug("Right pressed");
         }
     }
     else if ((newP1 & eMaskButtons) == 0)
@@ -96,22 +96,22 @@ void Input::UpdateRegP1(uint8_t newP1)
         if (buttonData.IsSelectPressed())
         {
             newP1 &= eMaskSelectUp;
-            DBG("Select pressed\n");
+            //LogDebug("Select pressed");
         }
         if (buttonData.IsStartPressed())
         {
             newP1 &= eMaskStartDown;
-            DBG("Start pressed\n");
+            //LogDebug("Start pressed");
         }
         if (buttonData.IsBPressed())
         {
             newP1 &= eMaskBLeft;
-            DBG("B pressed\n");
+            //LogDebug("B pressed");
         }
         if (buttonData.IsAPressed())
         {
             newP1 &= eMaskARight;
-            DBG("A pressed\n");
+            //LogDebug("A pressed");
         }
     }
 

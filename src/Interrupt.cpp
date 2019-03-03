@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "Interrupt.h"
+#include "Logger.h"
 #include "Memory.h"
 
 const uint16_t interruptBaseAddr = 0x0040;
@@ -92,7 +93,7 @@ void Interrupt::AttachToMemorySubject(MemoryByteSubject* subject)
 
 void Interrupt::UpdateMemoryAddr(uint16_t addr, uint8_t value)
 {
-    DBG("UpdateMemoryAddr %04X, %02X\n", addr, value);
+    LogInstruction("UpdateMemoryAddr %04X, %02X", addr, value);
     switch (addr)
     {
         case eRegIE:

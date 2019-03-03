@@ -1,5 +1,6 @@
 #include <memory>
 #include "Serial.h"
+#include "Logger.h"
 #include "Memory.h"
 
 const uint cyclesPerBit = 8;
@@ -71,7 +72,7 @@ void Serial::UpdateTimer(uint value)
         FILE *file = fopen("serial.txt", "a");
         fputc(*regSB, file);
         fclose(file);
-        DBG("Serial: %02X, '%c'\n", *regSB, *regSB);
+        LogDebug("Serial: %02X, '%c'", *regSB, *regSB);
 
         inProgress = false;
 

@@ -5,6 +5,7 @@
 #include "gbemu.h"
 #include "AbsByteProxy.h"
 #include "Interrupt.h"
+#include "Logger.h"
 
 // Yes, I know that this is probably Undefined Behavior in Standard C++. Type punning works in C (at least in GCC), but I'm having
 // trouble nailing down whether it is accepted in G++. And I know about the the "warning: ISO C++ prohibits anonymous structs"
@@ -113,7 +114,7 @@ public:
 
     inline void PrintState()
     {
-        DBG("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X\n",// int:%d\n",
+        LogInstruction("State: a=%02X, b=%02X, c=%02X, d=%02X, e=%02X, h=%02X, l=%02X, pc=%04X, sp=%04X, flags=z:%X n:%X h:%X c:%X\n",// int:%d\n",
                reg.a, reg.b, reg.c, reg.d, reg.e, reg.h, reg.l, reg.pc, reg.sp, reg.flags.z, reg.flags.n, reg.flags.h, reg.flags.c/*, interrupts->Enabled()*/);
     }
 

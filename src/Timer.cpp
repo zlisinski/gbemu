@@ -1,5 +1,6 @@
 #include <memory>
 
+#include "Logger.h"
 #include "Timer.h"
 
 
@@ -95,7 +96,7 @@ void Timer::ProcessCounterChange(uint16_t oldValue, uint16_t newValue)
         // If TIMA overflowed, set the copy of TMA to TIMA on the next cycle.
         if (*regTIMA == 0)
         {
-            DBG("Timer overflow\n");
+            LogDebug("Timer overflow");
             regTIMAOverflowed = true;
         }
     }
@@ -123,7 +124,7 @@ void Timer::WriteTAC(uint8_t newValue)
 
 void Timer::UpdateMemoryAddr(uint16_t addr, uint8_t value)
 {
-    DBG("UpdateMemoryAddr %04X, %02X\n", addr, value);
+    LogDebug("UpdateMemoryAddr %04X, %02X", addr, value);
     switch (addr)
     {
         /*case eRegTIMA:
@@ -142,5 +143,5 @@ void Timer::UpdateMemoryAddr(uint16_t addr, uint8_t value)
 
 void Timer::PrintTimerData()
 {
-    DBG("Timer: TIMA=%02X, TMA=%02X, TAC=%02X, DIV=%02x, counter=%02X\n", *regTIMA, *regTMA, *regTAC, *regDIV, internalCounter);
+    LogDebug("Timer: TIMA=%02X, TMA=%02X, TAC=%02X, DIV=%02x, counter=%02X", *regTIMA, *regTMA, *regTAC, *regDIV, internalCounter);
 }

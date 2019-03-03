@@ -159,9 +159,8 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
             if (!paused)
             {
                 cpu->ProcessOpCode();
-                //cpu->PrintState();
+                cpu->PrintState();
                 //timer->PrintTimerData();
-                DBG("\n");
             }
         }
 

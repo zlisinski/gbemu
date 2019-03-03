@@ -181,7 +181,7 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
     // Writes to ROM area get mapped to MBC.
     if (index < 0x8000)
     {
-        DBG("Write to ROM area 0x%04X value 0x%02X\n", index, byte);
+        LogInstruction("Write to ROM area 0x%04X value 0x%02X", index, byte);
         if (mbc)
             mbc->WriteByte(index, byte);
 
@@ -361,7 +361,7 @@ void Memory::MapRomBank(uint bank)
         //throw std::range_error(ss.str());
     }
 
-    DBG("Copying ROM bank 0x%02X\n", bank);
+    LogInstruction("Copying ROM bank 0x%02X", bank);
     if (debugInterface)
         debugInterface->SetMappedRomBank(bank);
 

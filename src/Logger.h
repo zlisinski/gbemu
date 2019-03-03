@@ -70,8 +70,8 @@ private:
     static LogLevel logLevel;
 };
 
-#define LogError(format, ...) do {Logger::Log(LogLevel::eError, format, __VA_ARGS__);} while (0);
-#define LogWarning(format, ...) do {Logger::Log(LogLevel::eWarning, format, __VA_ARGS__);} while (0);
-#define LogInfo(format, ...) do {Logger::Log(LogLevel::eInfo, format, __VA_ARGS__);} while (0);
-#define LogDebug(format, ...) do {Logger::Log(LogLevel::eDebug, format, __VA_ARGS__);} while (0);
-#define LogInstruction(format, ...) do {Logger::Log(LogLevel::eInstruction, format, __VA_ARGS__);} while (0);
+#define LogError(...) do {Logger::Log(LogLevel::eError, __VA_ARGS__);} while (0);
+#define LogWarning(...) do {Logger::Log(LogLevel::eWarning, __VA_ARGS__);} while (0);
+#define LogInfo(...) do {Logger::Log(LogLevel::eInfo, __VA_ARGS__);} while (0);
+#define LogDebug(...) do {Logger::Log(LogLevel::eDebug, __VA_ARGS__);} while (0);
+#define LogInstruction(...) do {Logger::Log(LogLevel::eInstruction, __VA_ARGS__);} while (0);

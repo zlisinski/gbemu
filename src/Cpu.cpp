@@ -3,6 +3,7 @@
 #include "gbemu.h"
 #include "Cpu.h"
 #include "Interrupt.h"
+#include "Logger.h"
 #include "MemoryByteProxy.h"
 #include "RegisterByteProxy.h"
 #include "Timer.h"
@@ -241,7 +242,7 @@ void Cpu::ProcessInterrupt(eInterruptTypes intType)
     // Jump to ISR.
     reg.pc = interrupts->GetInterruptAddress(intType);
 
-    DBG("Interrupt %d, Jump to 0x%04X\n\n", intType, reg.pc);
+    LogInstruction("Interrupt %d, Jump to 0x%04X", intType, reg.pc);
 }
 
 
@@ -267,7 +268,7 @@ void Cpu::ProcessOpCode()
 
     if (halted)
     {
-        DBG("Halted\n");
+        LogInstruction("Halted");
         timer->AddCycle();
         return;
     }
@@ -309,7 +310,7 @@ void Cpu::ProcessOpCode()
                 if (dest->ExtraCycles() || src->ExtraCycles())
                     timer->AddCycle();
                 
-                DBG("%02X: LD %s, %s\n", opcode, destStr, srcStr);
+                LogInstruction("%02X: LD %s, %s", opcode, destStr, srcStr);
 
                 *dest = src->Value();
             }
@@ -332,7 +333,7 @@ void Cpu::ProcessOpCode()
                 if (dest->ExtraCycles())
                     timer->AddCycle();
                 
-                DBG("%02X %02X: LD %s, %02X\n", opcode, x, destStr, x);
+                LogInstruction("%02X %02X: LD %s, %02X", opcode, x, destStr, x);
 
                 *dest = x;
             }
@@ -340,21 +341,21 @@ void Cpu::ProcessOpCode()
 
         case 0x0A: // LD A, (BC)
             {
-                DBG("%02X: LD A, (BC)\n", opcode);
+                LogInstruction("%02X: LD A, (BC)", opcode);
                 timer->AddCycle();
                 reg.a = memory->ReadByte(reg.bc);
             }
             break;
         case 0x1A: // LD A, (DE)
             {
-                DBG("%02X: LD A, (DE)\n", opcode);
+                LogInstruction("%02X: LD A, (DE)", opcode);
                 timer->AddCycle();
                 reg.a = memory->ReadByte(reg.de);
             }
             break;
         case 0xF2: // LD A, (0xFF00 + C)
             {
-                DBG("%02X: LD A, (0xFF00+C)\n", opcode);
+                LogInstruction("%02X: LD A, (0xFF00+C)", opcode);
                 timer->AddCycle();
                 reg.a = memory->ReadByte(0xFF00 + reg.c);
             }
@@ -362,7 +363,7 @@ void Cpu::ProcessOpCode()
         case 0xF0: // LD A, (0xFF00 + n)
             {
                 uint8_t x = ReadPC8Bit();
-                DBG("%02X %02X: LD A, (0xFF00+0x%02X)\n", opcode, x, x);
+                LogInstruction("%02X %02X: LD A, (0xFF00+0x%02X)", opcode, x, x);
                 timer->AddCycle();
                 reg.a = memory->ReadByte(0xFF00 + x);
             }
@@ -370,14 +371,14 @@ void Cpu::ProcessOpCode()
         case 0xFA: // LD A, (nn)
             {
                 uint16_t x = ReadPC16Bit();
-                DBG("%02X %02X %02X: LD A, (%04X)\n", opcode, LowByte(x), HighByte(x), x);
+                LogInstruction("%02X %02X %02X: LD A, (%04X)", opcode, LowByte(x), HighByte(x), x);
                 timer->AddCycle();
                 reg.a = memory->ReadByte(x);
             }
             break;
         case 0x2A: // LD A, (HL+)
             {
-                DBG("%02X: LD A, (HL+)\n", opcode);
+                LogInstruction("%02X: LD A, (HL+)", opcode);
                 timer->AddCycle();
                 reg.a = memory->ReadByte(reg.hl);
                 reg.hl++;
@@ -385,7 +386,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x3A: // LD A, (HL-)
             {
-                DBG("%02X: LD A, (HL-)\n", opcode);
+                LogInstruction("%02X: LD A, (HL-)", opcode);
                 timer->AddCycle();
                 reg.a = memory->ReadByte(reg.hl);
                 reg.hl--;
@@ -395,7 +396,7 @@ void Cpu::ProcessOpCode()
         case 0xE0: // LD (0xFF00 + n), A
             {
                 uint8_t x = ReadPC8Bit();
-                DBG("%02X %02X: LD (0xFF00+0x%02X), A\n", opcode, x, x);
+                LogInstruction("%02X %02X: LD (0xFF00+0x%02X), A", opcode, x, x);
                 uint8_t val = reg.a;
                 timer->AddCycle();
                 memory->WriteByte(0xFF00 + x, val);
@@ -403,7 +404,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0xE2: // LD (0xFF00 + C), A
             {
-                DBG("%02X: LD (0xFF00+C), A\n", opcode);
+                LogInstruction("%02X: LD (0xFF00+C), A", opcode);
                 uint8_t val = reg.a;
                 timer->AddCycle();
                 memory->WriteByte(0xFF00 + reg.c, val);
@@ -412,7 +413,7 @@ void Cpu::ProcessOpCode()
         case 0xEA: // LD (nn), A
             {
                 uint16_t x = ReadPC16Bit();
-                DBG("%02X %02X %02X: LD (%04X), A\n", opcode, LowByte(x), HighByte(x), x);
+                LogInstruction("%02X %02X %02X: LD (%04X), A", opcode, LowByte(x), HighByte(x), x);
                 uint8_t val = reg.a;
                 timer->AddCycle();
                 memory->WriteByte(x, val);
@@ -420,7 +421,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x02: // LD (BC), A
             {
-                DBG("%02X: LD (BC), A\n", opcode);
+                LogInstruction("%02X: LD (BC), A", opcode);
                 uint8_t val = reg.a;
                 timer->AddCycle();
                 memory->WriteByte(reg.bc, val);
@@ -428,7 +429,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x12: // LD (DE), A
             {
-                DBG("%02X: LD (DE), A\n", opcode);
+                LogInstruction("%02X: LD (DE), A", opcode);
                 uint8_t val = reg.a;
                 timer->AddCycle();
                 memory->WriteByte(reg.de, val);
@@ -436,7 +437,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x22: // LD (HL+), A
             {
-                DBG("%02X: LD (HL+), A\n", opcode);
+                LogInstruction("%02X: LD (HL+), A", opcode);
                 uint8_t val = reg.a;
                 timer->AddCycle();
                 memory->WriteByte(reg.hl, val);
@@ -445,7 +446,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x32: // LD (HL-), A
             {
-                DBG("%02X: LD (HL-), A\n", opcode);
+                LogInstruction("%02X: LD (HL-), A", opcode);
                 uint8_t val = reg.a;
                 timer->AddCycle();
                 memory->WriteByte(reg.hl, val);
@@ -469,7 +470,7 @@ void Cpu::ProcessOpCode()
                 uint16_t x = ReadPC16Bit();
                 const char *destStr = regNameMap16Bit[destRegBits];
                 
-                DBG("%02X %02X %02X: LD %s, %04X\n", opcode, LowByte(x), HighByte(x), destStr, x);
+                LogInstruction("%02X %02X %02X: LD %s, %04X", opcode, LowByte(x), HighByte(x), destStr, x);
 
                 *dest = x;
             }
@@ -490,7 +491,7 @@ void Cpu::ProcessOpCode()
                 uint16_t *src = regMap16BitStack[regBits];
                 const char *srcStr = regNameMap16BitStack[regBits];
 
-                DBG("%02X: PUSH %s\n", opcode, srcStr);
+                LogInstruction("%02X: PUSH %s", opcode, srcStr);
 
                 timer->AddCycle();
 
@@ -511,7 +512,7 @@ void Cpu::ProcessOpCode()
                 uint16_t *dest = regMap16BitStack[regBits];
                 const char *destStr = regNameMap16BitStack[regBits];
 
-                DBG("%02X: POP %s\n", opcode, destStr);
+                LogInstruction("%02X: POP %s", opcode, destStr);
 
                 Pop(dest);
 
@@ -523,7 +524,7 @@ void Cpu::ProcessOpCode()
 
         case 0xF9: // LD SP, HL
             {
-                DBG("%02X: LD SP, HL\n", opcode);
+                LogInstruction("%02X: LD SP, HL", opcode);
                 uint16_t val = reg.hl;
                 timer->AddCycle();
                 reg.sp = val;
@@ -532,7 +533,7 @@ void Cpu::ProcessOpCode()
         case 0xF8: // LD HL, SP + e
             {
                 int8_t x = ReadPC8Bit();
-                DBG("%02X %02X: LD HL, SP+0x%02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: LD HL, SP+0x%02X", opcode, x, x);
 
                 reg.hl = Add16BitSigned8Bit(reg.sp, x);
 
@@ -545,7 +546,7 @@ void Cpu::ProcessOpCode()
         case 0x08: // LD (nn), SP
             {
                 uint16_t x = ReadPC16Bit();
-                DBG("%02X %02X %02X: LD (0x%04X), SP\n", opcode, HighByte(x), LowByte(x), x);
+                LogInstruction("%02X %02X %02X: LD (0x%04X), SP", opcode, HighByte(x), LowByte(x), x);
 
                 memory->WriteByte(x, LowByte(reg.sp));
                 timer->AddCycle();
@@ -576,7 +577,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: ADD A, %s\n", opcode, srcStr);
+                LogInstruction("%02X: ADD A, %s", opcode, srcStr);
 
                 reg.a = Add8Bit(reg.a, *src);
             }
@@ -584,7 +585,7 @@ void Cpu::ProcessOpCode()
         case 0xC6: // ADD A, n
             {
                 uint8_t x = ReadPC8Bit();
-                DBG("%02X %02X: ADD A, 0x%02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: ADD A, 0x%02X", opcode, x, x);
                 reg.a = Add8Bit(reg.a, x);
             }
             break;
@@ -605,7 +606,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: ADC A, %s, %d\n", opcode, srcStr, reg.flags.c);
+                LogInstruction("%02X: ADC A, %s, %d", opcode, srcStr, reg.flags.c);
 
                 reg.a = Add8Bit(reg.a, *src, reg.flags.c);
             }
@@ -613,7 +614,7 @@ void Cpu::ProcessOpCode()
         case 0xCE: // ADC A, n
             {
                 uint8_t x = ReadPC8Bit();
-                DBG("%02X %02X: ADC A, 0x%02X, %d\n", opcode, x, x, reg.flags.c);
+                LogInstruction("%02X %02X: ADC A, 0x%02X, %d", opcode, x, x, reg.flags.c);
                 reg.a = Add8Bit(reg.a, x, reg.flags.c);
             }
             break;
@@ -634,7 +635,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: SUB A, %s\n", opcode, srcStr);
+                LogInstruction("%02X: SUB A, %s", opcode, srcStr);
 
                 reg.a = Sub8Bit(reg.a, *src);
             }
@@ -642,7 +643,7 @@ void Cpu::ProcessOpCode()
         case 0xD6: // SUB A, n
             {
                 uint8_t x = ReadPC8Bit();
-                DBG("%02X %02X: SUB A, 0x%02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: SUB A, 0x%02X", opcode, x, x);
                 reg.a = Sub8Bit(reg.a, x);
             }
             break;
@@ -663,7 +664,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: SBC A, %s, %d\n", opcode, srcStr, reg.flags.c);
+                LogInstruction("%02X: SBC A, %s, %d", opcode, srcStr, reg.flags.c);
 
                 reg.a = Sub8Bit(reg.a, *src, reg.flags.c);
             }
@@ -671,7 +672,7 @@ void Cpu::ProcessOpCode()
         case 0xDE: // SBC A, n
             {
                 uint8_t x = ReadPC8Bit();
-                DBG("%02X %02X: SBC A, 0x%02X, %d\n", opcode, x, x, reg.flags.c);
+                LogInstruction("%02X %02X: SBC A, 0x%02X, %d", opcode, x, x, reg.flags.c);
                 reg.a = Sub8Bit(reg.a, x, reg.flags.c);
             }
             break;
@@ -686,7 +687,7 @@ void Cpu::ProcessOpCode()
                 const char *srcStr = regNameMap16Bit[regBits];
                 timer->AddCycle();
 
-                DBG("%02X: ADD HL, %s\n", opcode, srcStr);
+                LogInstruction("%02X: ADD HL, %s", opcode, srcStr);
 
                 // Zero flag not changed.
                 uint8_t oldZero = reg.flags.z;
@@ -698,7 +699,7 @@ void Cpu::ProcessOpCode()
         case 0xE8: // ADD SP, e
             {
                 int8_t x = ReadPC8Bit();
-                DBG("%02X %02X: ADD SP, %02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: ADD SP, %02X", opcode, x, x);
 
                 // Extra delay for this intruction.
                 timer->AddCycle();
@@ -733,7 +734,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: AND A, %s\n", opcode, srcStr);
+                LogInstruction("%02X: AND A, %s", opcode, srcStr);
 
                 reg.a = reg.a & *src;
 
@@ -746,7 +747,7 @@ void Cpu::ProcessOpCode()
             {
                 uint8_t x = ReadPC8Bit();
 
-                DBG("%02X %02X: AND A, 0x%02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: AND A, 0x%02X", opcode, x, x);
 
                 reg.a = reg.a & x;
 
@@ -772,7 +773,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: XOR A, %s\n", opcode, srcStr);
+                LogInstruction("%02X: XOR A, %s", opcode, srcStr);
 
                 reg.a = reg.a ^ *src;
 
@@ -784,7 +785,7 @@ void Cpu::ProcessOpCode()
             {
                 uint8_t x = ReadPC8Bit();
 
-                DBG("%02X %02X: XOR A, 0x%02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: XOR A, 0x%02X", opcode, x, x);
 
                 reg.a = reg.a ^ x;
 
@@ -809,7 +810,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: OR A, %s\n", opcode, srcStr);
+                LogInstruction("%02X: OR A, %s", opcode, srcStr);
 
                 reg.a = reg.a | *src;
 
@@ -821,7 +822,7 @@ void Cpu::ProcessOpCode()
             {
                 uint8_t x = ReadPC8Bit();
 
-                DBG("%02X %02X: OR A, 0x%02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: OR A, 0x%02X", opcode, x, x);
 
                 reg.a = reg.a | x;
 
@@ -846,7 +847,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: CP A, %s\n", opcode, srcStr);
+                LogInstruction("%02X: CP A, %s", opcode, srcStr);
 
                 // Subtract and don't save result.
                 Sub8Bit(reg.a, *src);
@@ -855,7 +856,7 @@ void Cpu::ProcessOpCode()
         case 0xFE: // CP A, n
             {
                 uint8_t x = ReadPC8Bit();
-                DBG("%02X %02X: CP A, 0x%02X\n", opcode, x, x);
+                LogInstruction("%02X %02X: CP A, 0x%02X", opcode, x, x);
 
                 // Subtract and don't save result.
                 Sub8Bit(reg.a, x);
@@ -864,7 +865,7 @@ void Cpu::ProcessOpCode()
 
         case 0x2F: // CPL A
             {
-                DBG("%02X: CPL A\n", opcode);
+                LogInstruction("%02X: CPL A", opcode);
                 reg.a = ~reg.a;
                 reg.flags.h = 1;
                 reg.flags.n = 1;
@@ -893,7 +894,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: INC %s\n", opcode, srcStr);
+                LogInstruction("%02X: INC %s", opcode, srcStr);
 
                 uint8_t srcVal = *src;
 
@@ -923,7 +924,7 @@ void Cpu::ProcessOpCode()
                 if (src->ExtraCycles())
                     timer->AddCycle();
 
-                DBG("%02X: DEC %s\n", opcode, srcStr);
+                LogInstruction("%02X: DEC %s", opcode, srcStr);
 
                 uint8_t srcVal = *src;
 
@@ -947,7 +948,7 @@ void Cpu::ProcessOpCode()
                 const char *srcStr = regNameMap16Bit[regBits];
                 timer->AddCycle();
 
-                DBG("%02X: INC %s\n", opcode, srcStr);
+                LogInstruction("%02X: INC %s", opcode, srcStr);
 
                 // Flags not changed.
                 (*src)++;
@@ -964,7 +965,7 @@ void Cpu::ProcessOpCode()
                 const char *srcStr = regNameMap16Bit[regBits];
                 timer->AddCycle();
 
-                DBG("%02X: DEC %s\n", opcode, srcStr);
+                LogInstruction("%02X: DEC %s", opcode, srcStr);
 
                 // Flags not changed.
                 (*src)--;
@@ -979,7 +980,7 @@ void Cpu::ProcessOpCode()
 
         case 0x07: // RLCA
             {
-                DBG("%02X: RLCA\n", opcode);
+                LogInstruction("%02X: RLCA", opcode);
                 ClearFlags();
                 reg.flags.c = (reg.a & 0x80) ? 1 : 0;
                 reg.a = (reg.a << 1) | reg.flags.c;
@@ -987,7 +988,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x17: // RLA
             {
-                DBG("%02X: RLA\n", opcode);
+                LogInstruction("%02X: RLA", opcode);
                 uint8_t oldCarry = reg.flags.c;
                 ClearFlags();
                 reg.flags.c = (reg.a & 0x80) ? 1 : 0;
@@ -996,7 +997,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x0F: // RRCA
             {
-                DBG("%02X: RRCA\n", opcode);
+                LogInstruction("%02X: RRCA", opcode);
                 ClearFlags();
                 reg.flags.c = (reg.a & 0x01) ? 1 : 0;
                 reg.a = (reg.a >> 1) | (reg.flags.c << 7);
@@ -1004,7 +1005,7 @@ void Cpu::ProcessOpCode()
             break;
         case 0x1F: // RRA
             {
-                DBG("%02X: RRA\n", opcode);
+                LogInstruction("%02X: RRA", opcode);
                 uint8_t oldCarry = reg.flags.c;
                 ClearFlags();
                 reg.flags.c = (reg.a & 0x01) ? 1 : 0;
@@ -1037,7 +1038,7 @@ void Cpu::ProcessOpCode()
                     case 0x06: // RLC (HL)
                     case 0x07: // RLC A
                         {
-                            DBG("%02X %02X: RLC %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: RLC %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1063,7 +1064,7 @@ void Cpu::ProcessOpCode()
                     case 0x0E: // RRC (HL)
                     case 0x0F: // RRC A
                         {
-                            DBG("%02X %02X: RRC %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: RRC %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1089,7 +1090,7 @@ void Cpu::ProcessOpCode()
                     case 0x16: // RL (HL)
                     case 0x17: // RL A
                         {
-                            DBG("%02X %02X: RL %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: RL %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1116,7 +1117,7 @@ void Cpu::ProcessOpCode()
                     case 0x1E: // RR (HL)
                     case 0x1F: // RR A
                         {
-                            DBG("%02X %02X: RR %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: RR %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1143,7 +1144,7 @@ void Cpu::ProcessOpCode()
                     case 0x26: // SLA (HL)
                     case 0x27: // SLA A
                         {
-                            DBG("%02X %02X: SLA %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: SLA %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1169,7 +1170,7 @@ void Cpu::ProcessOpCode()
                     case 0x2E: // SRA (HL)
                     case 0x2F: // SRA A
                         {
-                            DBG("%02X %02X: SRA %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: SRA %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1195,7 +1196,7 @@ void Cpu::ProcessOpCode()
                     case 0x36: // SWAP (HL)
                     case 0x37: // SWAP A
                         {
-                            DBG("%02X %02X: SWAP %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: SWAP %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1220,7 +1221,7 @@ void Cpu::ProcessOpCode()
                     case 0x3E: // SRL (HL)
                     case 0x3F: // SRL A
                         {
-                            DBG("%02X %02X: SRL %s\n", opcode, subcode, srcStr);
+                            LogInstruction("%02X %02X: SRL %s", opcode, subcode, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1251,7 +1252,7 @@ void Cpu::ProcessOpCode()
 
                             uint8_t bit = (subcode >> 3) & 0x07;
                             
-                            DBG("%02X %02X: BIT %d, %s\n", opcode, subcode, bit, srcStr);
+                            LogInstruction("%02X %02X: BIT %d, %s", opcode, subcode, bit, srcStr);
 
                             // Carry bit not changed.
                             reg.flags.z = !(*src & (1 << bit));
@@ -1271,7 +1272,7 @@ void Cpu::ProcessOpCode()
                         {
                             uint8_t bit = (subcode >> 3) & 0x07;
                             
-                            DBG("%02X %02X: RES %d, %s\n", opcode, subcode, bit, srcStr);
+                            LogInstruction("%02X %02X: RES %d, %s", opcode, subcode, bit, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1296,7 +1297,7 @@ void Cpu::ProcessOpCode()
                         {
                             uint8_t bit = (subcode >> 3) & 0x07;
                             
-                            DBG("%02X %02X: SET %d, %s\n", opcode, subcode, bit, srcStr);
+                            LogInstruction("%02X %02X: SET %d, %s", opcode, subcode, bit, srcStr);
 
                             if (src->ExtraCycles())
                                 timer->AddCycle();
@@ -1322,14 +1323,14 @@ void Cpu::ProcessOpCode()
         case 0xC3: // JP nn
             {
                 uint16_t addr = ReadPC16Bit();
-                DBG("%02X %02X %02X: JP 0x%04X\n", opcode, LowByte(addr), HighByte(addr), addr);
+                LogInstruction("%02X %02X %02X: JP 0x%04X", opcode, LowByte(addr), HighByte(addr), addr);
                 timer->AddCycle();
                 reg.pc = addr;
             }
             break;
         case 0xE9: // JP (HL)
             {
-                DBG("%02X: JP (HL)\n", opcode);
+                LogInstruction("%02X: JP (HL)", opcode);
                 reg.pc = reg.hl;
             }
             break;
@@ -1340,7 +1341,7 @@ void Cpu::ProcessOpCode()
             {
                 uint16_t addr = ReadPC16Bit();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
-                DBG("%02X %02X %02X: JP %s, 0x%04X\n", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
+                LogInstruction("%02X %02X %02X: JP %s, 0x%04X", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
                 if (GetFlagValue(flagBits))
                 {
                     reg.pc = addr;
@@ -1352,7 +1353,7 @@ void Cpu::ProcessOpCode()
         case 0x18: // JR e
             {
                 int8_t offset = ReadPC8Bit();
-                DBG("%02X %02X: JR %d\n", opcode, offset, offset);
+                LogInstruction("%02X %02X: JR %d", opcode, offset, offset);
                 if (offset == -2)
                 {
                     throw InfiniteLoopException();
@@ -1368,7 +1369,7 @@ void Cpu::ProcessOpCode()
             {
                 int8_t offset = ReadPC8Bit();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
-                DBG("%02X %02X: JR %s, %d\n", opcode, (uint8_t)offset, flagNameMap[flagBits], offset);
+                LogInstruction("%02X %02X: JR %s, %d", opcode, (uint8_t)offset, flagNameMap[flagBits], offset);
                 if (GetFlagValue(flagBits))
                 {
                     if (offset == -2)
@@ -1384,7 +1385,7 @@ void Cpu::ProcessOpCode()
         case 0xCD: // CALL nn
             {
                 uint16_t addr = ReadPC16Bit();
-                DBG("%02X %02X %02X: CALL %04X\n", opcode, LowByte(addr), HighByte(addr), addr);
+                LogInstruction("%02X %02X %02X: CALL %04X", opcode, LowByte(addr), HighByte(addr), addr);
                 timer->AddCycle();
                 Push(reg.pc);
                 reg.pc = addr;
@@ -1397,7 +1398,7 @@ void Cpu::ProcessOpCode()
             {
                 uint16_t addr = ReadPC16Bit();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
-                DBG("%02X %02X %02X: CALL %s, %04X\n", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
+                LogInstruction("%02X %02X %02X: CALL %s, %04X", opcode, LowByte(addr), HighByte(addr), flagNameMap[flagBits], addr);
                 if (GetFlagValue(flagBits))
                 {
                     timer->AddCycle();
@@ -1409,14 +1410,14 @@ void Cpu::ProcessOpCode()
 
         case 0xC9: // RET
             {
-                DBG("%02X: RET\n", opcode);
+                LogInstruction("%02X: RET", opcode);
                 timer->AddCycle();
                 Pop(&reg.pc);
             }
             break;
         case 0xD9: // RETI
             {
-                DBG("%02X: RETI\n", opcode);
+                LogInstruction("%02X: RETI", opcode);
                 timer->AddCycle();
                 Pop(&reg.pc);
                 interrupts->SetEnabled(true);
@@ -1429,7 +1430,7 @@ void Cpu::ProcessOpCode()
             {
                 timer->AddCycle();
                 uint8_t flagBits = (opcode >> 3) & 0x03;
-                DBG("%02X: RET %s\n", opcode, flagNameMap[flagBits]);
+                LogInstruction("%02X: RET %s", opcode, flagNameMap[flagBits]);
                 if (GetFlagValue(flagBits))
                 {
                     Pop(&reg.pc);
@@ -1448,7 +1449,7 @@ void Cpu::ProcessOpCode()
         case 0xFF: // RST 0x38
             {
                 uint8_t addr = ((opcode >> 3) & 0x07) * 8;
-                DBG("%02X: RST 0x%02X\n", opcode, addr);
+                LogInstruction("%02X: RST 0x%02X", opcode, addr);
                 timer->AddCycle();
                 Push(reg.pc);
                 reg.pc = (uint16_t)addr;
@@ -1463,13 +1464,13 @@ void Cpu::ProcessOpCode()
 
         case 0x00: // NOP
             {
-                DBG("%02X: NOP\n", opcode);
+                LogInstruction("%02X: NOP", opcode);
             }
             break;
 
         case 0x76: // HALT
             {
-                DBG("%02X: HALT\n", opcode);
+                LogInstruction("%02X: HALT", opcode);
                 eInterruptTypes intType;
                 if (!interrupts->Enabled() && interrupts->CheckInterrupts(intType))
                     haltBug = true;
@@ -1480,21 +1481,21 @@ void Cpu::ProcessOpCode()
 
         case 0x37: // SCF
             {
-                DBG("%02X: SCF\n", opcode);
+                LogInstruction("%02X: SCF", opcode);
                 reg.flags.c = 1;
             }
             break;
 
         case 0x3F: // CCF
             {
-                DBG("%02X: CCF\n", opcode);
+                LogInstruction("%02X: CCF", opcode);
                 reg.flags.c = !reg.flags.c;
             }
             break;
 
         case 0x27: // DAA
             {
-                DBG("%02X: DAA\n", opcode);
+                LogInstruction("%02X: DAA", opcode);
 
                 if (!reg.flags.n)
                 {
@@ -1533,14 +1534,14 @@ void Cpu::ProcessOpCode()
 
         case 0xF3: // DI
             {
-                DBG("%02X: DI\n", opcode);
+                LogInstruction("%02X: DI", opcode);
                 interrupts->SetEnabled(false);
             }
             break;
 
         case 0xFB: // EI
             {
-                DBG("%02X: EI\n", opcode);
+                LogInstruction("%02X: EI", opcode);
 
                 // Interrupts aren't immediately enabled, we have to process one opcode before enabling interrupts.
                 enableInterruptsDelay = true;
