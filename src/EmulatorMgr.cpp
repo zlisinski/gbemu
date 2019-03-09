@@ -302,6 +302,11 @@ void EmulatorMgr::ThreadFunc()
                 cpu->PrintState();
                 //timer->PrintTimerData();
             }
+            else
+            {
+                // Sleep to avoid pegging the CPU when paused.
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
         }
 
         memory->SaveRam(ramFilename);
