@@ -82,7 +82,7 @@ enum SpecialRegisters
 };
 
 
-const size_t MEM_SIZE = 0xFFFF;
+const size_t MEM_SIZE = 0x10000;
 
 const size_t SWITCHABLE_ROM_BANK_OFFSET = 0x4000;
 const size_t ROM_BANK_SIZE = 0x4000;
@@ -115,6 +115,9 @@ public:
     void LoadRam(const std::string &filename);
     void SaveRam(const std::string &filename);
 
+    bool SaveState(FILE *file);
+    bool LoadState(FILE *file);
+
     // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
@@ -135,7 +138,7 @@ private:
 
     std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
     std::vector<uint8_t> gameRomMemory;
-    std::vector<uint8_t[ROM_BANK_SIZE]> ramBanks;
+    std::vector<uint8_t[RAM_BANK_SIZE]> ramBanks;
 
     std::unique_ptr<MemoryBankController> mbc;
 

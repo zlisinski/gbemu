@@ -82,6 +82,30 @@ void Interrupt::ClearInterrupt(eInterruptTypes type)
 }
 
 
+bool Interrupt::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&flagIME, sizeof(flagIME), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
+bool Interrupt::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&flagIME, sizeof(flagIME), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
 void Interrupt::AttachToMemorySubject(MemoryByteSubject* subject)
 {
     this->memorySubject = subject;

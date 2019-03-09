@@ -29,6 +29,9 @@ public:
 
     void WriteByte(uint16_t addr, uint8_t byte);
 
+    bool SaveState(FILE *file);
+    bool LoadState(FILE *file);
+
 private:
     MbcTypes mbcType;
     uint8_t romBankCount;

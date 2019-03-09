@@ -118,6 +118,9 @@ public:
                reg.a, reg.b, reg.c, reg.d, reg.e, reg.h, reg.l, reg.pc, reg.sp, reg.flags.z, reg.flags.n, reg.flags.h, reg.flags.c/*, interrupts->Enabled()*/);
     }
 
+    bool SaveState(FILE *file);
+    bool LoadState(FILE *file);
+
     Registers reg;
 
 private:

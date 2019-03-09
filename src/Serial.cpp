@@ -27,6 +27,38 @@ Serial::~Serial()
 }
 
 
+bool Serial::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&counter, sizeof(counter), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&inProgress, sizeof(inProgress), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
+bool Serial::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&counter, sizeof(counter), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&inProgress, sizeof(inProgress), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
 void Serial::AttachToMemorySubject(MemoryByteSubject* subject)
 {
    this->memorySubject = subject;

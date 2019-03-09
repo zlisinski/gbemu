@@ -90,3 +90,51 @@ void MemoryBankController::WriteByte(uint16_t addr, uint8_t byte)
             break;
     }
 }
+
+
+bool MemoryBankController::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&register0, sizeof(register0), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&register1, sizeof(register1), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&register2, sizeof(register2), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&register3, sizeof(register3), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
+bool MemoryBankController::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&register0, sizeof(register0), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&register1, sizeof(register1), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&register2, sizeof(register2), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&register3, sizeof(register3), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}

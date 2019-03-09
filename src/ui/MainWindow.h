@@ -44,6 +44,7 @@ private:
     void UpdateRecentFile(const QString &filename);
     void UpdateRecentFilesActions();
     void SetDisplayScale(int scale);
+    void OpenRom(const QString &filename);
 
     QGraphicsView *graphicsView;
     QLabel *labelFps;
@@ -73,6 +74,9 @@ private:
     LogWindow *logWindow;
     QAction *displayLogWindowAction;
 
+    QAction *emuSaveStateAction;
+    QAction *emuLoadStateAction;
+
     QAction *recentFilesActions[MAX_RECENT_FILES];
 
 private slots:
@@ -90,6 +94,8 @@ private slots:
     void SlotDebugWindowClosed();
     void SlotSetDisplayLogWindow(bool checked);
     void SlotLogWindowClosed();
+    void SlotSaveState();
+    void SlotLoadState();
 
 signals:
     void SignalFrameReady();

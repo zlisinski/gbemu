@@ -1575,3 +1575,51 @@ void Cpu::ProcessOpCode()
 
     return;
 }
+
+
+bool Cpu::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&reg, sizeof(reg), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&enableInterruptsDelay, sizeof(enableInterruptsDelay), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&halted, sizeof(halted), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&haltBug, sizeof(haltBug), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
+bool Cpu::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&reg, sizeof(reg), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&enableInterruptsDelay, sizeof(enableInterruptsDelay), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&halted, sizeof(halted), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&haltBug, sizeof(haltBug), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}

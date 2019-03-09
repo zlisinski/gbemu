@@ -17,6 +17,9 @@ public:
     Display(Memory* memory, Interrupt* interrupts, AbsFrameHandler *frameHandler);
     virtual ~Display();
 
+    bool SaveState(FILE *file);
+    bool LoadState(FILE *file);
+
     // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);

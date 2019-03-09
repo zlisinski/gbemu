@@ -56,6 +56,30 @@ void Input::SetButtons(const Buttons &buttons)
 }
 
 
+bool Input::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&buttonData.data, sizeof(buttonData.data), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
+bool Input::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&buttonData.data, sizeof(buttonData.data), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
 void Input::UpdateRegP1(uint8_t newP1)
 {
     if ((newP1 & 0x30) == 0x30)

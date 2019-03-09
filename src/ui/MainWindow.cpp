@@ -38,7 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
     debugWindow(NULL),
     displayDebugWindowAction(NULL),
     logWindow(NULL),
-    displayLogWindowAction(NULL)
+    displayLogWindowAction(NULL),
+    emuSaveStateAction(NULL),
+    emuLoadStateAction(NULL)
 {
     QSettings settings;
     displayScale = settings.value("DisplayScale", 5).toInt();
@@ -73,8 +75,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     if (qApp->arguments().size() >= 2)
     {
-        QString filename = qApp->arguments().at(1);
-        emulator->LoadRom(filename.toLatin1().data());
+        QString filename = QFileInfo(qApp->arguments().at(1)).canonicalFilePath();
+        OpenRom(filename);
     }
 
     restoreGeometry(settings.value("MainWindowGeometry").toByteArray());
@@ -194,6 +196,20 @@ void MainWindow::SetupMenuBar()
     emuMenu->addAction(emuCapFpsAction);
     connect(emuCapFpsAction, SIGNAL(triggered(bool)), this, SLOT(SlotToggleCapFps(bool)));
 
+    // Emulator | Save State
+    emuSaveStateAction = new QAction("&Save State", this);
+    emuSaveStateAction->setShortcut(Qt::Key_F1);
+    emuSaveStateAction->setEnabled(false);
+    emuMenu->addAction(emuSaveStateAction);
+    connect(emuSaveStateAction, SIGNAL(triggered()), this, SLOT(SlotSaveState()));
+
+    // Emulator | Load State
+    emuLoadStateAction = new QAction("&Load State", this);
+    emuLoadStateAction->setShortcut(Qt::Key_F3);
+    emuLoadStateAction->setEnabled(false);
+    emuMenu->addAction(emuLoadStateAction);
+    connect(emuLoadStateAction, SIGNAL(triggered()), this, SLOT(SlotLoadState()));
+
     ///////////////////////////////////////////////////////////////////////////
 
     // Display Menu
@@ -305,6 +321,22 @@ void MainWindow::SetDisplayScale(int scale)
 }
 
 
+void MainWindow::OpenRom(const QString &filename)
+{
+    if (filename != "")
+    {
+        statusBar()->showMessage("Filename = " + filename, 5000);
+
+        UpdateRecentFile(filename);
+
+        emulator->LoadRom(filename.toLatin1().data());
+
+        emuSaveStateAction->setEnabled(true);
+        emuLoadStateAction->setEnabled(true);
+    }
+}
+
+
 void MainWindow::FrameReady(uint32_t *displayFrameBuffer)
 {
     // This function runs in the thread context of the Emulator worker thread.
@@ -340,15 +372,7 @@ void MainWindow::SlotOpenRom()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Open ROM File", "./data");
 
-    if (filename != "")
-    {
-        QString message = "filename = ";
-        statusBar()->showMessage(message + filename, 5000);
-
-        UpdateRecentFile(filename);
-
-        emulator->LoadRom(filename.toLatin1().data());
-    }
+    OpenRom(filename);
 }
 
 
@@ -358,11 +382,7 @@ void MainWindow::SlotOpenRecentRom()
     if (action)
     {
         QString filename = action->data().toString();
-        statusBar()->showMessage("Filename = " + filename, 5000);
-
-        UpdateRecentFile(filename);
-
-        emulator->LoadRom(filename.toLatin1().data());
+        OpenRom(filename);
     }
 }
 
@@ -385,6 +405,9 @@ void MainWindow::SlotEndEmulation()
 {
     emulator->EndEmulation();
     graphicsView->scene()->clear();
+
+    emuSaveStateAction->setEnabled(false);
+    emuLoadStateAction->setEnabled(false);
 }
 
 
@@ -487,4 +510,16 @@ void MainWindow::SlotSetDisplayLogWindow(bool checked)
 void MainWindow::SlotLogWindowClosed()
 {
     displayLogWindowAction->setChecked(false);
+}
+
+
+void MainWindow::SlotSaveState()
+{
+    emulator->SaveState(1);
+}
+
+
+void MainWindow::SlotLoadState()
+{
+    emulator->LoadState(1);
 }

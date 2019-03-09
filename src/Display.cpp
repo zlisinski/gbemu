@@ -90,6 +90,42 @@ Display::~Display()
 }
 
 
+bool Display::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&displayMode, sizeof(displayMode), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&counter, sizeof(counter), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
+bool Display::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&displayMode, sizeof(displayMode), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&counter, sizeof(counter), 1, file);
+    if (cnt == 0)
+        return false;
+
+    // Update framebuffer so the first frame isn't garbage.
+    for (uint i = 0; i < SCREEN_Y; i++)
+        DrawScanline(i);
+
+    return true;
+}
+
+
 void Display::AttachToTimerSubject(TimerSubject* subject)
 {
     this->timerSubject = subject;

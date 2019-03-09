@@ -39,6 +39,9 @@ public:
 
     void RequestInterrupt(eInterruptTypes type);
     void ClearInterrupt(eInterruptTypes type);
+
+    bool SaveState(FILE *file);
+    bool LoadState(FILE *file);
     
     // Inherited from MemoryByteObserver.
     virtual void AttachToMemorySubject(MemoryByteSubject* subject);

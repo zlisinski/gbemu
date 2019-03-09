@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include "gbemu.h"
 #include "AbsFrameHandler.h"
 #include "Cpu.h"
@@ -49,10 +51,10 @@ bool EmulatorMgr::LoadRom(const char *filename)
     long size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    std::vector<uint8_t> *romMemory = new std::vector<uint8_t>();
-    romMemory->resize(size);
+    gameRomMemory.clear();
+    gameRomMemory.resize(size);
 
-    size_t cnt = fread(&(*romMemory)[0], 1, size, file);
+    size_t cnt = fread(&gameRomMemory[0], 1, size, file);
     if (cnt != (size_t)size)
     {
         printf("Only read %lu bytes of %ld from %s", cnt, size, filename);
@@ -63,7 +65,25 @@ bool EmulatorMgr::LoadRom(const char *filename)
     ramFilename = romFilename + ".ram";
 
     quit = false;
-    workThread = std::thread(&EmulatorMgr::ThreadFunc, this, romMemory);
+
+    memory = new Memory(debugInterface);
+    interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
+    timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
+                        memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
+    display = new Display(memory, interrupts, frameHandler);
+    input = new Input(memory->GetBytePtr(eRegP1), interrupts);
+    serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
+    cpu = new Cpu(interrupts, memory, timer);
+
+    /*if (runbootRom)
+        memory->SetRomMemory(bootRomMemory, *gameRomMemory);
+    else*/
+    {
+        memory->SetRomMemory(gameRomMemory);
+        memory->LoadRam(ramFilename);
+        SetBootState(memory, cpu);
+    }
+    workThread = std::thread(&EmulatorMgr::ThreadFunc, this);
 
     return true;
 }
@@ -116,19 +136,147 @@ void EmulatorMgr::ButtonReleased(Buttons::Button button)
 }
 
 
-void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
+void EmulatorMgr::SaveState(int slot)
+{
+    // Lock mutex to make the worker thread wait while the state is saved.
+    std::lock_guard<std::mutex> lock(saveStateMutex);
+
+    // Open a temp file so that errors writing don't mess up an existing save file.
+    char tempFilename[] = "tmpsav.XXXXXX";
+    int fd = mkstemp(tempFilename);
+    FILE *file = fdopen(fd, "w");
+    if (file == NULL)
+    {
+        LogError("Error opening save state file %s: %s", tempFilename, strerror(errno));
+        frameHandler->MessageBox("Error opening save state file");
+        return;
+    }
+
+    bool success = true;
+
+    // Write header.
+    size_t cnt = fwrite("ZLGB01", 6, 1, file);
+    if (cnt == 0)
+        success = false;
+
+    // Write data.
+    success &= memory->SaveState(file);
+    success &= interrupts->SaveState(file);
+    success &= timer->SaveState(file);
+    success &= display->SaveState(file);
+    success &= input->SaveState(file);
+    success &= serial->SaveState(file);
+    success &= cpu->SaveState(file);
+
+    fclose(file);
+
+    if (success == false)
+    {
+        LogError("Error saving state");
+        frameHandler->MessageBox("Error saving state");
+        //unlink(tempFilename);
+        return;
+    }
+
+    std::string saveFilename = romFilename + ".sav" + std::to_string(slot);
+    if (rename(tempFilename, saveFilename.c_str()))
+    {
+        LogError("Error renaming temp save state file %s to %s: %s", tempFilename, saveFilename.c_str(), strerror(errno));
+        frameHandler->MessageBox("Error renaming temp save state file");
+        return;
+    }
+
+    LogError("Saved state to %s", saveFilename.c_str());
+}
+
+
+void EmulatorMgr::LoadState(int slot)
+{
+    std::string loadFilename = romFilename + ".sav" + std::to_string(slot);
+    FILE *file = fopen(loadFilename.c_str(), "rb");
+    if (file == NULL)
+    {
+        LogError("Error opening save state file %s: %s", loadFilename.c_str(), strerror(errno));
+        frameHandler->MessageBox("Error opening save state file");
+        return;
+    }
+
+    // Read header.
+    const int headerLen = 6;
+    char header[headerLen + 1] = {0};
+    size_t cnt = fread(header, 1, headerLen, file);
+    if (cnt != headerLen)
+    {
+        LogError("Error reading header from save state file. Only read %u bytes.", cnt);
+        frameHandler->MessageBox("Error reading header from save state file.");
+        fclose(file);
+        return;
+    }
+    if (strcmp(header, "ZLGB01"))
+    {
+        LogError("Save state header doesn't match expected value: %s", header);
+        frameHandler->MessageBox("Save state header doesn't match expected value.");
+        fclose(file);
+        return;
+    }
+
+    // Create new objects so if there is an error loading, the current game doesn't get killed.
+    Memory *newMemory = new Memory(debugInterface);
+    Interrupt *newInterrupts = new Interrupt(newMemory->GetBytePtr(eRegIE), newMemory->GetBytePtr(eRegIF));
+    Timer *newTimer = new Timer(newMemory->GetBytePtr(eRegTIMA), newMemory->GetBytePtr(eRegTMA),
+                                newMemory->GetBytePtr(eRegTAC), newMemory->GetBytePtr(eRegDIV), newInterrupts);
+    Display *newDisplay = new Display(newMemory, newInterrupts, frameHandler);
+    Input *newInput = new Input(newMemory->GetBytePtr(eRegP1), newInterrupts);
+    Serial *newSerial = new Serial(newMemory->GetBytePtr(eRegSB), newMemory->GetBytePtr(eRegSC), newInterrupts);
+    Cpu *newCpu = new Cpu(newInterrupts, newMemory, newTimer);
+
+    newMemory->SetRomMemory(gameRomMemory);
+
+    bool success = true;
+
+    // Load data.
+    success &= newMemory->LoadState(file);
+    success &= newInterrupts->LoadState(file);
+    success &= newTimer->LoadState(file);
+    success &= newDisplay->LoadState(file);
+    success &= newInput->LoadState(file);
+    success &= newSerial->LoadState(file);
+    success &= newCpu->LoadState(file);
+
+    fclose(file);
+
+    if (success == false)
+    {
+        LogError("Error loading state");
+        frameHandler->MessageBox("Error loading state");
+        return;
+    }
+
+    // End the current game.
+    EndEmulation();
+
+    // Replace pointers with new objects.
+    memory = newMemory;
+    interrupts = newInterrupts;
+    timer = newTimer;
+    display = newDisplay;
+    input = newInput;
+    serial = newSerial;
+    cpu = newCpu;
+
+    // Start emulation.
+    paused = false;
+    quit = false;
+    workThread = std::thread(&EmulatorMgr::ThreadFunc, this);
+
+    LogError("Loaded save file %s", loadFilename.c_str());
+}
+
+
+void EmulatorMgr::ThreadFunc()
 {
     try
     {
-        memory = new Memory(debugInterface);
-        interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
-        timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
-                          memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
-        display = new Display(memory, interrupts, frameHandler);
-        input = new Input(memory->GetBytePtr(eRegP1), interrupts);
-        serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
-        cpu = new Cpu(interrupts, memory, timer);
-
         // Setup Memory observers.
         interrupts->AttachToMemorySubject(memory);
         timer->AttachToMemorySubject(memory);
@@ -143,17 +291,11 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
         if (debugInterface)
             debugInterface->SetMemory(memory->GetBytePtr(0));
 
-        /*if (runbootRom)
-            memory->SetRomMemory(bootRomMemory, *gameRomMemory);
-        else*/
-        {
-            memory->SetRomMemory(*gameRomMemory);
-            memory->LoadRam(ramFilename);
-            SetBootState(memory, cpu);
-        }
-
         while (!quit)
         {
+            // Block this thread while state is being saved.
+            std::lock_guard<std::mutex> lock(saveStateMutex);
+
             if (!paused)
             {
                 cpu->ProcessOpCode();
@@ -168,8 +310,6 @@ void EmulatorMgr::ThreadFunc(std::vector<uint8_t> *gameRomMemory)
     {
         frameHandler->MessageBox(e.what());
     }
-
-    delete gameRomMemory;
 
     delete cpu;
     cpu = NULL;

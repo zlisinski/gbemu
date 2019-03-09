@@ -255,6 +255,46 @@ void Memory::SaveRam(const std::string &filename)
 }
 
 
+bool Memory::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&memory[0], MEM_SIZE, 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&isDmaActive, sizeof(isDmaActive), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&dmaOffset, sizeof(dmaOffset), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return mbc->SaveState(file);
+}
+
+
+bool Memory::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&memory[0], MEM_SIZE, 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&isDmaActive, sizeof(isDmaActive), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&dmaOffset, sizeof(dmaOffset), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return mbc->LoadState(file);
+}
+
+
 void Memory::AttachToTimerSubject(TimerSubject* subject)
 {
     this->timerSubject = subject;

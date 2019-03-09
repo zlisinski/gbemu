@@ -14,6 +14,9 @@ public:
     Serial(uint8_t *regSB, uint8_t *regSC, Interrupt* interrupts);
     virtual ~Serial();
 
+    bool SaveState(FILE *file);
+    bool LoadState(FILE *file);
+
     virtual void AttachToMemorySubject(MemoryByteSubject* subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
 

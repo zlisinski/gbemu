@@ -145,3 +145,35 @@ void Timer::PrintTimerData()
 {
     LogDebug("Timer: TIMA=%02X, TMA=%02X, TAC=%02X, DIV=%02x, counter=%02X", *regTIMA, *regTMA, *regTAC, *regDIV, internalCounter);
 }
+
+
+bool Timer::SaveState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fwrite(&internalCounter, sizeof(internalCounter), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fwrite(&regTIMAOverflowed, sizeof(regTIMAOverflowed), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}
+
+
+bool Timer::LoadState(FILE *file)
+{
+    size_t cnt;
+
+    cnt = fread(&internalCounter, sizeof(internalCounter), 1, file);
+    if (cnt == 0)
+        return false;
+
+    cnt = fread(&regTIMAOverflowed, sizeof(regTIMAOverflowed), 1, file);
+    if (cnt == 0)
+        return false;
+
+    return true;
+}

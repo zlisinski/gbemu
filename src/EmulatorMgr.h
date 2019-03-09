@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <thread>
 #include <vector>
 #include "Buttons.h"
@@ -27,18 +28,24 @@ public:
     void ButtonPressed(Buttons::Button button);
     void ButtonReleased(Buttons::Button button);
 
+    void SaveState(int slot);
+    void LoadState(int slot);
+
 private:
-    void ThreadFunc(std::vector<uint8_t> *gameRomMemory);
+    void ThreadFunc();
 
     void SetBootState(Memory *memory, Cpu *cpu);
 
     bool paused;
     bool quit;
 
+    std::vector<uint8_t> gameRomMemory;
+
     std::string romFilename;
     std::string ramFilename;
 
     std::thread workThread;
+    std::mutex saveStateMutex;
 
     AbsFrameHandler *frameHandler;
     DebugInterface *debugInterface;
