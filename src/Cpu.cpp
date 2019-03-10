@@ -1483,6 +1483,8 @@ void Cpu::ProcessOpCode()
             {
                 LogInstruction("%02X: SCF", opcode);
                 reg.flags.c = 1;
+                reg.flags.n = 0;
+                reg.flags.h = 0;
             }
             break;
 
@@ -1490,6 +1492,8 @@ void Cpu::ProcessOpCode()
             {
                 LogInstruction("%02X: CCF", opcode);
                 reg.flags.c = !reg.flags.c;
+                reg.flags.n = 0;
+                reg.flags.h = 0;
             }
             break;
 
