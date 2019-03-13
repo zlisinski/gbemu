@@ -27,12 +27,12 @@ MainWindow::MainWindow(QWidget *parent) :
     labelFps(NULL),
     labelPause(NULL),
     paused(false),
-    capFps(true),
     frameHandler(NULL),
     emulator(NULL),
     fpsTimer(),
     frameCount(0),
     frameCapTimer(),
+    frameCapSetting(60),
     gamepad(NULL),
     gamepadKeyNavigation(NULL),
     debugWindow(NULL),
@@ -188,13 +188,22 @@ void MainWindow::SetupMenuBar()
     emuMenu->addAction(emuEndAction);
     connect(emuEndAction, SIGNAL(triggered()), this, SLOT(SlotEndEmulation()));
 
-    // Emulator | Cap FPS
-    QAction *emuCapFpsAction = new QAction("&Cap FPS", this);
-    emuCapFpsAction->setShortcut(Qt::Key_F10);
-    emuCapFpsAction->setCheckable(true);
-    emuCapFpsAction->setChecked(true);
-    emuMenu->addAction(emuCapFpsAction);
-    connect(emuCapFpsAction, SIGNAL(triggered(bool)), this, SLOT(SlotToggleCapFps(bool)));
+    // Emulator | Speed
+    QMenu *emuSpeedMenu = emuMenu->addMenu("&Speed");
+    QActionGroup *emuSpeedGroup = new QActionGroup(this);
+    std::pair<std::string, int> speedVals[4] = {{"&Half", 30}, {"&Normal", 60}, {"&Double", 120}, {"&Uncapped", 0}};
+    QAction *emuSpeedActions[4];
+    for (int i = 0; i < 4; i++)
+    {
+        emuSpeedActions[i] = new QAction(speedVals[i].first.c_str(), this);
+        emuSpeedActions[i]->setCheckable(true);
+        emuSpeedActions[i]->setData(speedVals[i].second);
+        if (speedVals[i].second == frameCapSetting)
+            emuSpeedActions[i]->setChecked(true);
+        emuSpeedMenu->addAction(emuSpeedActions[i]);
+        emuSpeedGroup->addAction(emuSpeedActions[i]);
+        connect(emuSpeedActions[i], SIGNAL(triggered()), this, SLOT(SlotSetFpsCap()));
+    }
 
     // Emulator | Save State
     emuSaveStateAction = new QAction("&Save State", this);
@@ -349,11 +358,15 @@ void MainWindow::FrameReady(uint32_t *displayFrameBuffer)
 
     uint64_t elapsedTime = frameCapTimer.elapsed();
 
-    const float frameMillis = 1.0 / 60 * 1000;
-    if (capFps && elapsedTime < frameMillis)
+    if (frameCapSetting > 0)
     {
-        // Block the Emulator from running to limit frame rate.
-        std::this_thread::sleep_for(std::chrono::milliseconds((int)(frameMillis - elapsedTime)));
+        const float frameMillis = 1.0 / frameCapSetting * 1000;
+
+        if (elapsedTime < frameMillis)
+        {
+            // Block the Emulator from running to limit frame rate.
+            std::this_thread::sleep_for(std::chrono::milliseconds((int)(frameMillis - elapsedTime)));
+        }
     }
 
     frameCapTimer.restart();
@@ -411,9 +424,13 @@ void MainWindow::SlotEndEmulation()
 }
 
 
-void MainWindow::SlotToggleCapFps(bool checked)
+void MainWindow::SlotSetFpsCap()
 {
-    capFps = checked;
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action)
+    {
+        frameCapSetting = action->data().toInt();
+    }
 }
 
 

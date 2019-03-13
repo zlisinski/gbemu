@@ -51,7 +51,6 @@ private:
     QLabel *labelPause;
 
     bool paused;
-    bool capFps;
 
     QtFrameHandler *frameHandler;
     EmulatorMgr *emulator;
@@ -62,6 +61,7 @@ private:
 
     // Frame cap variables.
     QElapsedTimer frameCapTimer;
+    int frameCapSetting;
 
     QGamepad *gamepad;
     QGamepadKeyNavigation *gamepadKeyNavigation;
@@ -85,7 +85,7 @@ private slots:
     void SlotReset();
     void SlotTogglePause(bool checked);
     void SlotEndEmulation();
-    void SlotToggleCapFps(bool checked);
+    void SlotSetFpsCap();
     void SlotQuit();
     void SlotDrawFrame();
     void SlotShowMessageBox(const QString &message);
