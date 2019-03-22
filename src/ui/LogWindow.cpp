@@ -29,7 +29,9 @@ LogWindow::LogWindow(QWidget *parent) :
             ui->rbDebug->setChecked(true);
             break;
         case LogLevel::eInstruction:
-            ui->rbInstruction->setChecked(true);
+            //ui->rbInstruction->setChecked(true);
+            ui->rbDebug->setChecked(true);
+            Logger::SetLogLevel(LogLevel::eDebug);
             break;
     }
 

@@ -1,6 +1,8 @@
 #include <QtWidgets/QtWidgets>
 #include <stdint.h>
 #include <thread>
+
+#include "Debugger/DebuggerWindow.h"
 #include "DebugWindow.h"
 #include "LogWindow.h"
 #include "MainWindow.h"
@@ -39,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent) :
     displayDebugWindowAction(NULL),
     logWindow(NULL),
     displayLogWindowAction(NULL),
+    debuggerWindow(NULL),
+    displayDebuggerWindowAction(NULL),
     emuSaveStateAction(NULL),
     emuLoadStateAction(NULL)
 {
@@ -67,11 +71,15 @@ MainWindow::MainWindow(QWidget *parent) :
     if (settings.value("DisplayDebugWindow", true).toBool())
         debugWindow->show();
 
+    debuggerWindow = new DebuggerWindow(this);
+    if (settings.value("DisplayDebuggerWindow", true).toBool())
+        debuggerWindow->show();
+
     fpsTimer.start();
     frameCapTimer.start();
 
     frameHandler = new QtFrameHandler(this);
-    emulator = new EmulatorMgr(frameHandler, debugWindow);
+    emulator = new EmulatorMgr(frameHandler, debugWindow, debuggerWindow);
 
     if (qApp->arguments().size() >= 2)
     {
@@ -128,6 +136,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     debugWindow->close();
     logWindow->close();
+    debuggerWindow->close();
 
     QSettings settings;
     settings.setValue("MainWindowGeometry", saveGeometry());
@@ -251,6 +260,12 @@ void MainWindow::SetupMenuBar()
     displayLogWindowAction->setCheckable(true);
     displayLogWindowAction->setChecked(settings.value("DisplayLogWindow", true).toBool());
     connect(displayLogWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayLogWindow(bool)));
+
+    // Display | Debugger Window
+    displayDebuggerWindowAction = displayMenu->addAction("&Debugger Window");
+    displayDebuggerWindowAction->setCheckable(true);
+    displayDebuggerWindowAction->setChecked(settings.value("DisplayDebuggerWindow", true).toBool());
+    connect(displayDebuggerWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayDebuggerWindow(bool)));
 }
 
 
@@ -527,6 +542,24 @@ void MainWindow::SlotSetDisplayLogWindow(bool checked)
 void MainWindow::SlotLogWindowClosed()
 {
     displayLogWindowAction->setChecked(false);
+}
+
+
+void MainWindow::SlotSetDisplayDebuggerWindow(bool checked)
+{
+    QSettings settings;
+    settings.setValue("DisplayDebuggerWindow", checked);
+
+    if (checked)
+        debuggerWindow->show();
+    else
+        debuggerWindow->hide();
+}
+
+
+void MainWindow::SlotDebuggerWindowClosed()
+{
+    displayDebuggerWindowAction->setChecked(false);
 }
 
 

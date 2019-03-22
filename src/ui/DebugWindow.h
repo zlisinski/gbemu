@@ -35,8 +35,6 @@ private:
     void UpdateTileView();
     void UpdateMemoryView();
 
-    QString FormatByte(uint8_t num);
-    QString FormatWord(uint16_t num);
     void SetRadioButton(bool val, QRadioButton *radio0, QRadioButton *radio1);
 
     Ui::DebugWindow *ui;

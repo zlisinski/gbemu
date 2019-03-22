@@ -105,8 +105,13 @@ public:
     void SetRomMemory(std::vector<uint8_t> &gameRomMemory);
 
     uint8_t ReadByte(uint16_t index) const;
-    uint8_t *GetBytePtr(uint16_t index); // Bypasses checking of writes to special addresses. Don't use unless you know what you are doing.
-    uint8_t operator[](uint16_t index) const;
+    uint8_t operator[](uint16_t index) const {return ReadByte(index);}
+
+    // Bypasses checking of reads/writes from/to special addresses. Don't use unless you know what you are doing.
+    const uint8_t *GetBytePtr(uint16_t index) const {return &memory[index];}
+    uint8_t *GetBytePtr(uint16_t index) {return &memory[index];}
+
+    uint8_t GetDmaOffset() const {return dmaOffset;}
 
     void WriteByte(uint16_t index, uint8_t byte);
 

@@ -48,6 +48,9 @@ HEADERS += \
 	src/TimerObserver.h \
 	src/TimerSubject.h \
 	src/Utils.h \
+	src/ui/Debugger/DebuggerWindow.h \
+	src/ui/Debugger/DisassemblyModel.h \
+	src/ui/Debugger/Opcode.h \
 	src/ui/DebugWindow.h \
 	src/ui/LogWindow.h \
 	src/ui/MainWindow.h \
@@ -67,11 +70,15 @@ SOURCES += \
 	src/Serial.cpp \
 	src/Timer.cpp \
 	src/Utils.cpp \
+	src/ui/Debugger/DebuggerWindow.cpp \
+	src/ui/Debugger/DisassemblyModel.cpp \
+	src/ui/Debugger/Opcode.cpp \
 	src/ui/DebugWindow.cpp \
 	src/ui/LogWindow.cpp \
 	src/ui/MainWindow.cpp
 
 FORMS += \
+	src/ui/Debugger/DebuggerWindow.ui \
 	src/ui/DebugWindow.ui \
 	src/ui/LogWindow.ui
 

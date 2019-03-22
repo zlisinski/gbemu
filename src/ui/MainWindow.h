@@ -8,6 +8,7 @@
 
 #include "../Display.h"
 
+class DebuggerWindow;
 class DebugWindow;
 class EmulatorMgr;
 class LogWindow;
@@ -73,6 +74,8 @@ private:
     QAction *displayDebugWindowAction;
     LogWindow *logWindow;
     QAction *displayLogWindowAction;
+    DebuggerWindow *debuggerWindow;
+    QAction *displayDebuggerWindowAction;
 
     QAction *emuSaveStateAction;
     QAction *emuLoadStateAction;
@@ -94,6 +97,8 @@ private slots:
     void SlotDebugWindowClosed();
     void SlotSetDisplayLogWindow(bool checked);
     void SlotLogWindowClosed();
+    void SlotSetDisplayDebuggerWindow(bool checked);
+    void SlotDebuggerWindowClosed();
     void SlotSaveState();
     void SlotLoadState();
 

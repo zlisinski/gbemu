@@ -3,6 +3,7 @@
 #include "gbemu.h"
 #include "AbsFrameHandler.h"
 #include "Cpu.h"
+#include "DebuggerInterface.h"
 #include "DebugInterface.h"
 #include "Display.h"
 #include "EmulatorMgr.h"
@@ -12,11 +13,12 @@
 #include "Timer.h"
 
 
-EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInterface) :
+EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInterface, DebuggerInterface *debuggerInterface) :
     paused(false),
     quit(false),
     frameHandler(frameHandler),
     debugInterface(debugInterface),
+    debuggerInterface(debuggerInterface),
     buttons(),
     cpu(NULL),
     display(NULL),
@@ -291,21 +293,45 @@ void EmulatorMgr::ThreadFunc()
         if (debugInterface)
             debugInterface->SetMemory(memory->GetBytePtr(0));
 
+        if (debuggerInterface)
+        {
+            debuggerInterface->SetMemory(memory);
+            debuggerInterface->SetCpu(cpu);
+            debuggerInterface->SetInterrupt(interrupts);
+        }
+
         while (!quit)
         {
-            // Block this thread while state is being saved.
-            std::lock_guard<std::mutex> lock(saveStateMutex);
-
-            if (!paused)
+            if (debuggerInterface->GetDebuggingEnabled())
             {
-                cpu->ProcessOpCode();
-                cpu->PrintState();
-                //timer->PrintTimerData();
+                if (debuggerInterface->GetStep())
+                {
+                    cpu->ProcessOpCode();
+                    debuggerInterface->SetCurrentOp(cpu->reg.pc);
+                    cpu->PrintState();
+                }
+                else
+                {
+                    // Sleep to avoid pegging the CPU when paused.
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
             }
             else
             {
-                // Sleep to avoid pegging the CPU when paused.
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                // Block this thread while state is being saved.
+                std::lock_guard<std::mutex> lock(saveStateMutex);
+
+                if (!paused)
+                {
+                    cpu->ProcessOpCode();
+                    cpu->PrintState();
+                    //timer->PrintTimerData();
+                }
+                else
+                {
+                    // Sleep to avoid pegging the CPU when paused.
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
             }
         }
 
@@ -314,6 +340,15 @@ void EmulatorMgr::ThreadFunc()
     catch(const std::exception& e)
     {
         frameHandler->MessageBox(e.what());
+    }
+
+    if (debugInterface)
+        debugInterface->SetMemory(NULL);
+    if (debuggerInterface)
+    {
+        debuggerInterface->SetMemory(NULL);
+        debuggerInterface->SetCpu(NULL);
+        debuggerInterface->SetInterrupt(NULL);
     }
 
     delete cpu;
@@ -330,8 +365,6 @@ void EmulatorMgr::ThreadFunc()
     timer = NULL;
     delete memory;
     memory = NULL;
-
-    debugInterface->SetMemory(NULL);
 }
 
 

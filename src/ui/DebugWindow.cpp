@@ -3,6 +3,7 @@
 #include <QtWidgets/QGraphicsPixmapItem>
 #include "DebugWindow.h"
 #include "ui_DebugWindow.h"
+#include "UiUtils.h"
 
 #include "../Memory.h"
 
@@ -145,7 +146,7 @@ void DebugWindow::UpdateMemoryView()
     else
     {
         uint8_t lcdc = memory[eRegLCDC];
-        ui->txtLCDC->setText(FormatByte(lcdc));
+        ui->txtLCDC->setText(UiUtils::FormatHexByte(lcdc));
         SetRadioButton(lcdc & 0x01, ui->rbBGEnable0, ui->rbBGEnable1);
         SetRadioButton(lcdc & 0x02, ui->rbSpriteEnable0, ui->rbSpriteEnable1);
         SetRadioButton(lcdc & 0x04, ui->rbSpriteSize0, ui->rbSpriteSize1);
@@ -155,10 +156,10 @@ void DebugWindow::UpdateMemoryView()
         SetRadioButton(lcdc & 0x40, ui->rbWindowTilemap0, ui->rbWindowTilemap1);
         SetRadioButton(lcdc & 0x80, ui->rbPower0, ui->rbPower1);
 
-        ui->txtSCX->setText(FormatByte(memory[eRegSCX]));
-        ui->txtSCY->setText(FormatByte(memory[eRegSCY]));
-        ui->txtWX->setText(FormatByte(memory[eRegWX]));
-        ui->txtWY->setText(FormatByte(memory[eRegWY]));
+        ui->txtSCX->setText(UiUtils::FormatHexByte(memory[eRegSCX]));
+        ui->txtSCY->setText(UiUtils::FormatHexByte(memory[eRegSCY]));
+        ui->txtWX->setText(UiUtils::FormatHexByte(memory[eRegWX]));
+        ui->txtWY->setText(UiUtils::FormatHexByte(memory[eRegWY]));
 
         ui->txtMbcType->setText(MBC_NAMES[mbcType]);
         ui->txtRomBanks->setText(QString::number(romBanks));
@@ -167,18 +168,6 @@ void DebugWindow::UpdateMemoryView()
         ui->txtMappedRam->setText(QString::number(mappedRamBank));
         ui->chkBatteryBackedRam->setChecked(batteryBackedRam);
     }
-}
-
-
-QString DebugWindow::FormatByte(uint8_t num)
-{
-    return QString("%1").arg(num, 2, 16, QChar('0')).toUpper();
-}
-
-
-QString DebugWindow::FormatWord(uint16_t num)
-{
-    return QString("%1").arg(num, 4, 16, QChar('0')).toUpper();
 }
 
 
