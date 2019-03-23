@@ -23,6 +23,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     //ui->disassemblyView->setFocusPolicy(Qt::NoFocus);
 
     qRegisterMetaType<QItemSelection>();
+    qRegisterMetaType<uint16_t>("uint16_t");
 
     QSettings settings;
     restoreGeometry(settings.value("DebuggerWindowGeometry").toByteArray());
@@ -34,6 +35,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     connect(ui->actionToggleDebugging, SIGNAL(triggered(bool)), this, SLOT(SlotToggleDebugging(bool)));
     connect(ui->actionStep, SIGNAL(triggered()), this, SLOT(SlotStep()));
     connect(this, SIGNAL(SignalDebuggerWindowClosed()), parent, SLOT(SlotDebuggerWindowClosed()));
+    connect(this, SIGNAL(SignalUpdateReady(uint16_t)), this, SLOT(SlotProcessUpdate(uint16_t)));
 }
 
 
@@ -57,6 +59,15 @@ void DebuggerWindow::closeEvent(QCloseEvent *event)
 
 
 void DebuggerWindow::SetCurrentOp(uint16_t pc)
+{
+    //This function runs in the thread context of the Emulator worker thread.
+    step = false;
+
+    emit SignalUpdateReady(pc);
+}
+
+
+void DebuggerWindow::SlotProcessUpdate(uint16_t pc)
 {
     disassemblyModel->AddRow(pc, memory->GetBytePtr(0));
 
@@ -105,8 +116,6 @@ void DebuggerWindow::SetCurrentOp(uint16_t pc)
 
     if (interrupt != NULL)
         ui->chkRegIME->setChecked(interrupt->Enabled());
-
-    step = false;
 }
 
 

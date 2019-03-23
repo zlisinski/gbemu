@@ -47,9 +47,11 @@ private:
     DisassemblyModel *disassemblyModel;
 
 private slots:
+    void SlotProcessUpdate(uint16_t pc);
     void SlotToggleDebugging(bool checked);
     void SlotStep();
 
 signals:
     void SignalDebuggerWindowClosed();
+    void SignalUpdateReady(uint16_t pc);
 };
