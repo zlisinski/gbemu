@@ -12,7 +12,7 @@ class DisassemblyModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    DisassemblyModel(QObject *parent = NULL);
+    DisassemblyModel(const QPalette &palette, QObject *parent = NULL);
     virtual ~DisassemblyModel();
 
     void AddRow(uint16_t pc, const uint8_t *memory);
@@ -24,7 +24,6 @@ public:
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-    virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 
 private:
     static const int colCount = 4;
@@ -34,4 +33,6 @@ private:
     QSet<uint16_t> addresses;
 
     int currentRow;
+    const QPalette &palette;
+    const QColor &currentRowColor;
 };

@@ -16,7 +16,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     interrupt(NULL),
     debuggingEnabled(false),
     step(true),
-    disassemblyModel(new DisassemblyModel(this))
+    disassemblyModel(new DisassemblyModel(palette(), this))
 {
     ui->setupUi(this);
 
@@ -63,8 +63,9 @@ void DebuggerWindow::SetCurrentOp(uint16_t pc)
     int rowIndex = disassemblyModel->GetRowIndex(pc);
     if (rowIndex >= 0)
     {
-        ui->disassemblyView->selectRow(rowIndex);
         disassemblyModel->SetCurrentRow(rowIndex);
+        ui->disassemblyView->scrollTo(ui->disassemblyView->model()->index(rowIndex, 0));
+        ui->disassemblyView->viewport()->update();
     }
 
     if (cpu != NULL)

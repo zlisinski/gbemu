@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <QtGui/QPalette>
 
 #include "DisassemblyModel.h"
 #include "Opcode.h"
@@ -22,9 +23,11 @@ const QSet<uint8_t> DisassemblyModel::stopOpcodes = {
 };
 
 
-DisassemblyModel::DisassemblyModel(QObject *parent /*= NULL*/) :
+DisassemblyModel::DisassemblyModel(const QPalette &palette, QObject *parent /*= NULL*/) :
     QAbstractTableModel(parent),
-    currentRow(-1)
+    currentRow(-1),
+    palette(palette),
+    currentRowColor(palette.color(QPalette::AlternateBase))
 {
 
 }
@@ -131,6 +134,11 @@ QVariant DisassemblyModel::data(const QModelIndex &index, int role /*= Qt::Displ
                 return item.GetArg2Str();
         }
     }
+    else if (role == Qt::BackgroundRole)
+    {
+        if (index.row() == currentRow)
+            return currentRowColor;
+    }
 
     return QVariant();
 }
@@ -153,13 +161,4 @@ QVariant DisassemblyModel::headerData(int section, Qt::Orientation orientation, 
         uint16_t pc = opcodes[section].GetAddress();
         return QStringLiteral("%1").arg(pc, 4, 16, QChar('0')).toUpper();
     }
-}
-
-
-Qt::ItemFlags DisassemblyModel::flags(const QModelIndex &index) const
-{
-    if (currentRow == index.row())
-        return QAbstractItemModel::flags(index) | Qt::ItemIsSelectable;
-
-    return QAbstractItemModel::flags(index) & ~Qt::ItemIsSelectable;
 }
