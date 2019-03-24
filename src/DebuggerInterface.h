@@ -16,4 +16,6 @@ public:
     virtual bool GetDebuggingEnabled() = 0;
     virtual bool GetStep() = 0;
     virtual void SetCurrentOp(uint16_t pc) = 0;
+
+    virtual void MemoryChanged(uint16_t address, uint16_t len) = 0;
 };

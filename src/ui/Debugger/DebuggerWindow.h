@@ -31,6 +31,8 @@ public:
     virtual bool GetStep() {return step;}
     virtual void SetCurrentOp(uint16_t pc);
 
+    virtual void MemoryChanged(uint16_t address, uint16_t len);
+
 protected:
     virtual void closeEvent(QCloseEvent *event);
 

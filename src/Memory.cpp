@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "DebuggerInterface.h"
 #include "DebugInterface.h"
 #include "Logger.h"
 #include "Memory.h"
@@ -61,14 +62,15 @@ const std::unordered_map<uint8_t, uint8_t> RamBankCountMap = {
 };
 
 
-Memory::Memory(DebugInterface *debugInterface) :
+Memory::Memory(DebugInterface *debugInterface, DebuggerInterface *debuggerInterface) :
     isDmaActive(false),
     dmaOffset(0),
     mbcType(eMbcNone),
     romBankCount(0),
     ramBankCount(0),
     batteryBackedRam(false),
-    debugInterface(debugInterface)
+    debugInterface(debugInterface),
+    debuggerInterface(debuggerInterface)
 {
     ClearMemory();
 }
@@ -175,6 +177,9 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
 
         return;
     }
+
+    if (debuggerInterface != NULL)
+        debuggerInterface->MemoryChanged(index, 1);
 
     // Let observers handle the update. If there are no observers for this address, update the value.
     if (!NotifyObservers(index, byte))
@@ -320,6 +325,9 @@ void Memory::DisableBootRom()
 {
     // TODO: Fix this segfaulting when gameRomMemory isn't set.
     memcpy(memory.data(), gameRomMemory.data(), BOOT_ROM_SIZE);
+
+    if (debuggerInterface != NULL)
+        debuggerInterface->MemoryChanged(0, BOOT_ROM_SIZE);
 }
 
 
@@ -394,6 +402,9 @@ void Memory::MapRomBank(uint bank)
         debugInterface->SetMappedRomBank(bank);
 
     memcpy(&memory[SWITCHABLE_ROM_BANK_OFFSET], &gameRomMemory[bank * ROM_BANK_SIZE], ROM_BANK_SIZE);
+
+    if (debuggerInterface != NULL)
+        debuggerInterface->MemoryChanged(SWITCHABLE_ROM_BANK_OFFSET, ROM_BANK_SIZE);
 }
 
 
@@ -410,6 +421,9 @@ void Memory::MapRamBank(uint bank)
         ss << "Trying to switch to RAM bank 0x" << std::hex << std::uppercase << (int)bank << "\nRAM bank switching not yet implemented";
         throw NotYetImplementedException(ss.str());
     }
+
+    /*if (debuggerInterface != NULL)
+        debuggerInterface->MemoryChanged(SWITCHABLE_RAM_BANK_OFFSET, RAM_BANK_SIZE);*/
 }
 
 

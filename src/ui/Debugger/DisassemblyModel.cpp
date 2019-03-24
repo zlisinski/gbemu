@@ -81,6 +81,42 @@ void DisassemblyModel::AddRow(uint16_t pc, const uint8_t *memory)
 }
 
 
+void DisassemblyModel::RemoveRows(uint16_t address, uint16_t len)
+{
+    // Find the first opcode that contains address.
+    auto startIt = std::find_if(opcodes.cbegin(), opcodes.cend(),
+        [&address](const Opcode &item)
+        {
+            return address >= item.GetAddress() && address < item.GetAddress() + item.GetByteCount();
+        });
+
+    if (startIt == opcodes.cend())
+        return;
+
+    // Find the first element past the end of address+len.
+    auto endIt = startIt + 1;
+    if (len > 1)
+    {
+        uint16_t endAddr = address + len;
+        endIt = std::find_if(opcodes.cbegin(), opcodes.cend(),
+            [&endAddr](const Opcode &item)
+            {
+                return item.GetAddress() + item.GetByteCount() > endAddr;
+            });
+    }
+
+    int startIndex = std::distance(opcodes.cbegin(), startIt);
+    int endIndex = std::distance(opcodes.cbegin(), endIt) - 1;
+
+    for (auto it = startIt; it < endIt; ++it)
+        addresses.remove(it->GetAddress());
+
+    beginRemoveRows(QModelIndex(), startIndex, endIndex);
+    opcodes.erase(startIt, endIt);
+    endRemoveRows();
+}
+
+
 int DisassemblyModel::GetRowIndex(uint16_t pc)
 {
     auto it = std::find_if(opcodes.cbegin(), opcodes.cend(), [&pc](const Opcode &item){return item.GetAddress() == pc;});

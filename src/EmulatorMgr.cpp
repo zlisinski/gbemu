@@ -68,7 +68,7 @@ bool EmulatorMgr::LoadRom(const char *filename)
 
     quit = false;
 
-    memory = new Memory(debugInterface);
+    memory = new Memory(debugInterface, debuggerInterface);
     interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
     timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                         memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
@@ -223,7 +223,7 @@ void EmulatorMgr::LoadState(int slot)
     }
 
     // Create new objects so if there is an error loading, the current game doesn't get killed.
-    Memory *newMemory = new Memory(debugInterface);
+    Memory *newMemory = new Memory(debugInterface, debuggerInterface);
     Interrupt *newInterrupts = new Interrupt(newMemory->GetBytePtr(eRegIE), newMemory->GetBytePtr(eRegIF));
     Timer *newTimer = new Timer(newMemory->GetBytePtr(eRegTIMA), newMemory->GetBytePtr(eRegTMA),
                                 newMemory->GetBytePtr(eRegTAC), newMemory->GetBytePtr(eRegDIV), newInterrupts);

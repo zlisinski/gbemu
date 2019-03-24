@@ -67,6 +67,13 @@ void DebuggerWindow::SetCurrentOp(uint16_t pc)
 }
 
 
+void DebuggerWindow::MemoryChanged(uint16_t address, uint16_t len)
+{
+    // Memory has changed, so the disassembled opcodes are no longer valid.
+    disassemblyModel->RemoveRows(address, len);
+}
+
+
 void DebuggerWindow::SlotProcessUpdate(uint16_t pc)
 {
     disassemblyModel->AddRow(pc, memory->GetBytePtr(0));
