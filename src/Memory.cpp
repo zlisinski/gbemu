@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 #include "DebuggerInterface.h"
-#include "DebugInterface.h"
+#include "InfoInterface.h"
 #include "Logger.h"
 #include "Memory.h"
 
@@ -62,14 +62,14 @@ const std::unordered_map<uint8_t, uint8_t> RamBankCountMap = {
 };
 
 
-Memory::Memory(DebugInterface *debugInterface, DebuggerInterface *debuggerInterface) :
+Memory::Memory(InfoInterface *infoInterface, DebuggerInterface *debuggerInterface) :
     isDmaActive(false),
     dmaOffset(0),
     mbcType(eMbcNone),
     romBankCount(0),
     ramBankCount(0),
     batteryBackedRam(false),
-    debugInterface(debugInterface),
+    infoInterface(infoInterface),
     debuggerInterface(debuggerInterface)
 {
     ClearMemory();
@@ -375,12 +375,12 @@ void Memory::CheckRom()
     // Get battery backed ram.
     batteryBackedRam = BatteryBackedRamSet.count(memory[MbcTypeOffset]);
 
-    if (debugInterface)
+    if (infoInterface)
     {
-        debugInterface->SetMbcType(mbcType);
-        debugInterface->SetRomBanks(romBankCount);
-        debugInterface->SetRamBanks(ramBankCount);
-        debugInterface->SetBatteryBackedRam(batteryBackedRam);
+        infoInterface->SetMbcType(mbcType);
+        infoInterface->SetRomBanks(romBankCount);
+        infoInterface->SetRamBanks(ramBankCount);
+        infoInterface->SetBatteryBackedRam(batteryBackedRam);
     }
 }
 
@@ -398,8 +398,8 @@ void Memory::MapRomBank(uint bank)
     }
 
     LogInstruction("Copying ROM bank 0x%02X", bank);
-    if (debugInterface)
-        debugInterface->SetMappedRomBank(bank);
+    if (infoInterface)
+        infoInterface->SetMappedRomBank(bank);
 
     memcpy(&memory[SWITCHABLE_ROM_BANK_OFFSET], &gameRomMemory[bank * ROM_BANK_SIZE], ROM_BANK_SIZE);
 
@@ -410,8 +410,8 @@ void Memory::MapRomBank(uint bank)
 
 void Memory::MapRamBank(uint bank)
 {
-    if (debugInterface)
-        debugInterface->SetMappedRamBank(bank);
+    if (infoInterface)
+        infoInterface->SetMappedRamBank(bank);
 
     // RAM bank switching is not yet implemented, however some games try to switch banks even when there is only one bank.
     // Only throw if trying to switch to a bank other than the first one.

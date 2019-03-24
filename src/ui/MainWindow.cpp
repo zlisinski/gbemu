@@ -3,7 +3,7 @@
 #include <thread>
 
 #include "Debugger/DebuggerWindow.h"
-#include "DebugWindow.h"
+#include "InfoWindow.h"
 #include "LogWindow.h"
 #include "MainWindow.h"
 #include "QtFrameHandler.h"
@@ -37,8 +37,8 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapSetting(60),
     gamepad(NULL),
     gamepadKeyNavigation(NULL),
-    debugWindow(NULL),
-    displayDebugWindowAction(NULL),
+    infoWindow(NULL),
+    displayInfoWindowAction(NULL),
     logWindow(NULL),
     displayLogWindowAction(NULL),
     debuggerWindow(NULL),
@@ -67,9 +67,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QGraphicsScene *scene = new QGraphicsScene(this);
     graphicsView->setScene(scene);
 
-    debugWindow = new DebugWindow(this);
-    if (settings.value("DisplayDebugWindow", true).toBool())
-        debugWindow->show();
+    infoWindow = new InfoWindow(this);
+    if (settings.value("DisplayInfoWindow", true).toBool())
+        infoWindow->show();
 
     debuggerWindow = new DebuggerWindow(this);
     if (settings.value("DisplayDebuggerWindow", true).toBool())
@@ -79,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapTimer.start();
 
     frameHandler = new QtFrameHandler(this);
-    emulator = new EmulatorMgr(frameHandler, debugWindow, debuggerWindow);
+    emulator = new EmulatorMgr(frameHandler, infoWindow, debuggerWindow);
 
     if (qApp->arguments().size() >= 2)
     {
@@ -134,7 +134,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    debugWindow->close();
+    infoWindow->close();
     logWindow->close();
     debuggerWindow->close();
 
@@ -249,11 +249,11 @@ void MainWindow::SetupMenuBar()
         connect(displaySizeActions[i], SIGNAL(triggered()), this, SLOT(SlotSetDisplayScale()));
     }
 
-    // Display | Debug Window
-    displayDebugWindowAction = displayMenu->addAction("&Debug Window");
-    displayDebugWindowAction->setCheckable(true);
-    displayDebugWindowAction->setChecked(settings.value("DisplayDebugWindow", true).toBool());
-    connect(displayDebugWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayDebugWindow(bool)));
+    // Display | Info Window
+    displayInfoWindowAction = displayMenu->addAction("&Info Window");
+    displayInfoWindowAction->setCheckable(true);
+    displayInfoWindowAction->setChecked(settings.value("DisplayInfoWindow", true).toBool());
+    connect(displayInfoWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayInfoWindow(bool)));
 
     // Display | Log Window
     displayLogWindowAction = displayMenu->addAction("&Log Window");
@@ -477,9 +477,9 @@ void MainWindow::SlotDrawFrame()
     QGraphicsPixmapItem *pixmap = graphicsView->scene()->addPixmap(QPixmap::fromImage(img));
     pixmap->setScale(displayScale);
 
-    // Only update debugWindow 60 time a second, this stops the program locking up when frame cap is off.
+    // Only update infoWindow 60 time a second, this stops the program locking up when frame cap is off.
     if ((elapsedTime & 0x0F) == 0)
-        debugWindow->DrawFrame();
+        infoWindow->DrawFrame();
 }
 
 
@@ -509,21 +509,21 @@ void MainWindow::SlotSetDisplayScale()
 }
 
 
-void MainWindow::SlotSetDisplayDebugWindow(bool checked)
+void MainWindow::SlotSetDisplayInfoWindow(bool checked)
 {
     QSettings settings;
-    settings.setValue("DisplayDebugWindow", checked);
+    settings.setValue("DisplayInfoWindow", checked);
 
     if (checked)
-        debugWindow->show();
+        infoWindow->show();
     else
-        debugWindow->hide();
+        infoWindow->hide();
 }
 
 
-void MainWindow::SlotDebugWindowClosed()
+void MainWindow::SlotInfoWindowClosed()
 {
-    displayDebugWindowAction->setChecked(false);
+    displayInfoWindowAction->setChecked(false);
 }
 
 

@@ -9,7 +9,7 @@
 #include "../Display.h"
 
 class DebuggerWindow;
-class DebugWindow;
+class InfoWindow;
 class EmulatorMgr;
 class LogWindow;
 class QtFrameHandler;
@@ -70,8 +70,8 @@ private:
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
     int displayScale;
 
-    DebugWindow *debugWindow;
-    QAction *displayDebugWindowAction;
+    InfoWindow *infoWindow;
+    QAction *displayInfoWindowAction;
     LogWindow *logWindow;
     QAction *displayLogWindowAction;
     DebuggerWindow *debuggerWindow;
@@ -93,8 +93,8 @@ private slots:
     void SlotDrawFrame();
     void SlotShowMessageBox(const QString &message);
     void SlotSetDisplayScale();
-    void SlotSetDisplayDebugWindow(bool checked);
-    void SlotDebugWindowClosed();
+    void SlotSetDisplayInfoWindow(bool checked);
+    void SlotInfoWindowClosed();
     void SlotSetDisplayLogWindow(bool checked);
     void SlotLogWindowClosed();
     void SlotSetDisplayDebuggerWindow(bool checked);

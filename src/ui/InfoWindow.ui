@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DebugWindow</class>
- <widget class="QDialog" name="DebugWindow">
+ <class>InfoWindow</class>
+ <widget class="QDialog" name="InfoWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Debug Window</string>
+   <string>Info Window</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">

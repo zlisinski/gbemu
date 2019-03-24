@@ -29,11 +29,13 @@ HEADERS += \
 	src/AbsFrameHandler.h \
 	src/Buttons.h \
 	src/Cpu.h \
+	src/DebuggerInterface.h \
 	src/Display.h \
 	src/EmulatorMgr.h \
 	src/Exceptions.h \
 	src/gbemu.h \
 	src/Globals.h \
+	src/InfoInterface.h \
 	src/Input.h \
 	src/Interrupt.h \
 	src/Logger.h \
@@ -51,7 +53,7 @@ HEADERS += \
 	src/ui/Debugger/DebuggerWindow.h \
 	src/ui/Debugger/DisassemblyModel.h \
 	src/ui/Debugger/Opcode.h \
-	src/ui/DebugWindow.h \
+	src/ui/InfoWindow.h \
 	src/ui/LogWindow.h \
 	src/ui/MainWindow.h \
 	src/ui/QtFrameHandler.h
@@ -73,13 +75,13 @@ SOURCES += \
 	src/ui/Debugger/DebuggerWindow.cpp \
 	src/ui/Debugger/DisassemblyModel.cpp \
 	src/ui/Debugger/Opcode.cpp \
-	src/ui/DebugWindow.cpp \
+	src/ui/InfoWindow.cpp \
 	src/ui/LogWindow.cpp \
 	src/ui/MainWindow.cpp
 
 FORMS += \
 	src/ui/Debugger/DebuggerWindow.ui \
-	src/ui/DebugWindow.ui \
+	src/ui/InfoWindow.ui \
 	src/ui/LogWindow.ui
 
 

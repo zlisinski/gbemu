@@ -1,8 +1,8 @@
 #include <memory>
 #include <QtCore/QSettings>
 #include <QtWidgets/QGraphicsPixmapItem>
-#include "DebugWindow.h"
-#include "ui_DebugWindow.h"
+#include "InfoWindow.h"
+#include "ui_InfoWindow.h"
 #include "UiUtils.h"
 
 #include "../Memory.h"
@@ -17,9 +17,9 @@ const QMap<MbcTypes, QString> MBC_NAMES {
     {eMbc5, "MBC5"},
 };
 
-DebugWindow::DebugWindow(QWidget *parent) :
+InfoWindow::InfoWindow(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::DebugWindow),
+    ui(new Ui::InfoWindow),
     memory(NULL),
     mbcType(eMbcNone),
     romBanks(0),
@@ -34,39 +34,39 @@ DebugWindow::DebugWindow(QWidget *parent) :
     ui->gvTiles->setScene(scene);
 
     QSettings settings;
-    restoreGeometry(settings.value("DebugWindowGeometry").toByteArray());
+    restoreGeometry(settings.value("InfoWindowGeometry").toByteArray());
 
-    connect(this, SIGNAL(SignalDebugWindowClosed()), parent, SLOT(SlotDebugWindowClosed()));
+    connect(this, SIGNAL(SignalInfoWindowClosed()), parent, SLOT(SlotInfoWindowClosed()));
 
     DrawFrame();
 }
 
 
-DebugWindow::~DebugWindow()
+InfoWindow::~InfoWindow()
 {
     delete ui;
 }
 
 
-void DebugWindow::DrawFrame()
+void InfoWindow::DrawFrame()
 {
     UpdateTileView();
     UpdateMemoryView();
 }
 
 
-void DebugWindow::closeEvent(QCloseEvent *event)
+void InfoWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
-    settings.setValue("DebugWindowGeometry", saveGeometry());
+    settings.setValue("InfoWindowGeometry", saveGeometry());
 
-    emit SignalDebugWindowClosed();
+    emit SignalInfoWindowClosed();
 
     QWidget::closeEvent(event);
 }
 
 
-void DebugWindow::UpdateTileView()
+void InfoWindow::UpdateTileView()
 {
     ui->gvTiles->scene()->clear();
     ui->gvTiles->setBackgroundBrush(QBrush(Qt::white, Qt::SolidPattern));
@@ -117,7 +117,7 @@ void DebugWindow::UpdateTileView()
 }
 
 
-void DebugWindow::UpdateMemoryView()
+void InfoWindow::UpdateMemoryView()
 {
     if (memory == NULL)
     {
@@ -171,7 +171,7 @@ void DebugWindow::UpdateMemoryView()
 }
 
 
-void DebugWindow::SetRadioButton(bool val, QRadioButton *radio0, QRadioButton *radio1)
+void InfoWindow::SetRadioButton(bool val, QRadioButton *radio0, QRadioButton *radio1)
 {
     if (val)
         radio1->setChecked(true);

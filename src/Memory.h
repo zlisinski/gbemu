@@ -9,8 +9,8 @@
 #include "TimerObserver.h"
 #include "TimerSubject.h"
 
-class DebugInterface;
 class DebuggerInterface;
+class InfoInterface;
 
 enum SpecialRegisters
 {
@@ -99,7 +99,7 @@ const uint8_t OAM_RAM_LEN = 0xA0;
 class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver
 {
 public:
-    Memory(DebugInterface *debugInterface, DebuggerInterface *debuggerInterface);
+    Memory(InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
     virtual ~Memory();
 
     void SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory);
@@ -156,6 +156,6 @@ private:
     uint8_t ramBankCount;
     bool batteryBackedRam;
 
-    DebugInterface *debugInterface;
+    InfoInterface *infoInterface;
     DebuggerInterface *debuggerInterface;
 };

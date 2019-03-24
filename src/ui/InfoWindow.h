@@ -2,21 +2,21 @@
 
 #include <QtWidgets/QDialog>
 
-#include "../DebugInterface.h"
+#include "../InfoInterface.h"
 
 namespace Ui {
-class DebugWindow;
+class InfoWindow;
 }
 
 class QRadioButton;
 
-class DebugWindow : public QDialog, public DebugInterface
+class InfoWindow : public QDialog, public InfoInterface
 {
     Q_OBJECT
 
 public:
-    explicit DebugWindow(QWidget *parent = 0);
-    ~DebugWindow();
+    explicit InfoWindow(QWidget *parent = 0);
+    ~InfoWindow();
 
     virtual void SetMemory(uint8_t *memory) {this->memory = memory;}
     virtual void SetMbcType(MbcTypes mbcType) {this->mbcType = mbcType;}
@@ -37,7 +37,7 @@ private:
 
     void SetRadioButton(bool val, QRadioButton *radio0, QRadioButton *radio1);
 
-    Ui::DebugWindow *ui;
+    Ui::InfoWindow *ui;
 
     uint8_t *memory;
     MbcTypes mbcType;
@@ -48,5 +48,5 @@ private:
     bool batteryBackedRam;
 
 signals:
-    void SignalDebugWindowClosed();
+    void SignalInfoWindowClosed();
 };

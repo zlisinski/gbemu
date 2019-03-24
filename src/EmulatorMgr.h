@@ -8,8 +8,8 @@
 class AbsFrameHandler;
 class Cpu;
 class DebuggerInterface;
-class DebugInterface;
 class Display;
+class InfoInterface;
 class Input;
 class Interrupt;
 class Memory;
@@ -19,7 +19,7 @@ class Timer;
 class EmulatorMgr
 {
 public:
-    EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInterface, DebuggerInterface *debuggerInterface);
+    EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
     ~EmulatorMgr();
 
     bool LoadRom(const char *filename);
@@ -49,7 +49,7 @@ private:
     std::mutex saveStateMutex;
 
     AbsFrameHandler *frameHandler;
-    DebugInterface *debugInterface;
+    InfoInterface *infoInterface;
     DebuggerInterface *debuggerInterface;
 
     Buttons buttons;

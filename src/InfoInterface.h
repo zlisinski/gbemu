@@ -3,7 +3,7 @@
 #include "gbemu.h"
 #include "MemoryBankController.h"
 
-class DebugInterface
+class InfoInterface
 {
 public:
     virtual void SetMemory(uint8_t *memory) = 0;

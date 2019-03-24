@@ -4,20 +4,20 @@
 #include "AbsFrameHandler.h"
 #include "Cpu.h"
 #include "DebuggerInterface.h"
-#include "DebugInterface.h"
 #include "Display.h"
 #include "EmulatorMgr.h"
+#include "InfoInterface.h"
 #include "Input.h"
 #include "Memory.h"
 #include "Serial.h"
 #include "Timer.h"
 
 
-EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, DebugInterface *debugInterface, DebuggerInterface *debuggerInterface) :
+EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface) :
     paused(false),
     quit(false),
     frameHandler(frameHandler),
-    debugInterface(debugInterface),
+    infoInterface(infoInterface),
     debuggerInterface(debuggerInterface),
     buttons(),
     cpu(NULL),
@@ -68,7 +68,7 @@ bool EmulatorMgr::LoadRom(const char *filename)
 
     quit = false;
 
-    memory = new Memory(debugInterface, debuggerInterface);
+    memory = new Memory(infoInterface, debuggerInterface);
     interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
     timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
                         memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
@@ -223,7 +223,7 @@ void EmulatorMgr::LoadState(int slot)
     }
 
     // Create new objects so if there is an error loading, the current game doesn't get killed.
-    Memory *newMemory = new Memory(debugInterface, debuggerInterface);
+    Memory *newMemory = new Memory(infoInterface, debuggerInterface);
     Interrupt *newInterrupts = new Interrupt(newMemory->GetBytePtr(eRegIE), newMemory->GetBytePtr(eRegIF));
     Timer *newTimer = new Timer(newMemory->GetBytePtr(eRegTIMA), newMemory->GetBytePtr(eRegTMA),
                                 newMemory->GetBytePtr(eRegTAC), newMemory->GetBytePtr(eRegDIV), newInterrupts);
@@ -290,8 +290,8 @@ void EmulatorMgr::ThreadFunc()
         memory->AttachToTimerSubject(timer);
         serial->AttachToTimerSubject(timer);
 
-        if (debugInterface)
-            debugInterface->SetMemory(memory->GetBytePtr(0));
+        if (infoInterface)
+            infoInterface->SetMemory(memory->GetBytePtr(0));
 
         if (debuggerInterface)
         {
@@ -342,8 +342,8 @@ void EmulatorMgr::ThreadFunc()
         frameHandler->MessageBox(e.what());
     }
 
-    if (debugInterface)
-        debugInterface->SetMemory(NULL);
+    if (infoInterface)
+        infoInterface->SetMemory(NULL);
     if (debuggerInterface)
     {
         debuggerInterface->SetMemory(NULL);
