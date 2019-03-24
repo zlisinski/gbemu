@@ -36,6 +36,8 @@ private slots:
     void SlotInfoClicked();
     void SlotDebugClicked();
     void SlotInstructionClicked();
+    void SlotClearOutputClicked();
+    void SlotSaveOutputClicked();
 
 signals:
     void SignalLogWindowClosed();

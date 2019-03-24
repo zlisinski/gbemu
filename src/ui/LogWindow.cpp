@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <sstream>
 #include <QtCore/QSettings>
+#include <QtWidgets/QtWidgets>
 
 #include "LogWindow.h"
 #include "ui_LogWindow.h"
@@ -42,6 +43,8 @@ LogWindow::LogWindow(QWidget *parent) :
     connect(ui->rbInfo, SIGNAL(clicked()), this, SLOT(SlotInfoClicked()));
     connect(ui->rbDebug, SIGNAL(clicked()), this, SLOT(SlotDebugClicked()));
     connect(ui->rbInstruction, SIGNAL(clicked()), this, SLOT(SlotInstructionClicked()));
+    connect(ui->btnClear, SIGNAL(clicked()), this, SLOT(SlotClearOutputClicked()));
+    connect(ui->btnSave, SIGNAL(clicked()), this, SLOT(SlotSaveOutputClicked()));
 }
 
 
@@ -131,4 +134,29 @@ void LogWindow::SlotInstructionClicked()
     QSettings settings;
     settings.setValue("LogLevel", static_cast<int>(LogLevel::eInstruction));
     Logger::SetLogLevel(LogLevel::eInstruction);
+}
+
+
+void LogWindow::SlotClearOutputClicked()
+{
+    ui->txtOutput->clear();
+}
+
+
+void LogWindow::SlotSaveOutputClicked()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Save log output");
+    if (filename == "")
+        return;
+
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        QMessageBox msg;
+        msg.setText("Error opening " + filename);
+        msg.exec();
+        return;
+    }
+
+    file.write(ui->txtOutput->toPlainText().toLatin1().data());
 }
