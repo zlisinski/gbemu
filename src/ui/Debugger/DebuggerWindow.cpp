@@ -15,12 +15,11 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     cpu(NULL),
     interrupt(NULL),
     debuggingEnabled(false),
-    step(true),
+    singleStep(true),
+    runToAddress(0xFFFF),
     disassemblyModel(new DisassemblyModel(palette(), this))
 {
     ui->setupUi(this);
-
-    //ui->disassemblyView->setFocusPolicy(Qt::NoFocus);
 
     qRegisterMetaType<QItemSelection>();
     qRegisterMetaType<uint16_t>("uint16_t");
@@ -34,6 +33,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
 
     connect(ui->actionToggleDebugging, SIGNAL(triggered(bool)), this, SLOT(SlotToggleDebugging(bool)));
     connect(ui->actionStep, SIGNAL(triggered()), this, SLOT(SlotStep()));
+    connect(ui->actionRunToLine, SIGNAL(triggered()), this, SLOT(SlotRunToLine()));
     connect(this, SIGNAL(SignalDebuggerWindowClosed()), parent, SLOT(SlotDebuggerWindowClosed()));
     connect(this, SIGNAL(SignalUpdateReady(uint16_t)), this, SLOT(SlotProcessUpdate(uint16_t)));
 }
@@ -58,10 +58,26 @@ void DebuggerWindow::closeEvent(QCloseEvent *event)
 }
 
 
+bool DebuggerWindow::ShouldRun()
+{
+    // Run if we're in single step mode, or we have a run-to address and we're not there.
+    return debuggingEnabled == true && (singleStep == true || (runToAddress != 0xFFFF && currentAddress != runToAddress));
+}
+
+
 void DebuggerWindow::SetCurrentOp(uint16_t pc)
 {
     //This function runs in the thread context of the Emulator worker thread.
-    step = false;
+
+    currentAddress = pc;
+
+    // Stop single step mode.
+    singleStep = false;
+
+    // If we've hit the run-to address, reset the variable.
+    // 0xFFFF is a data register, so it's safe to use for an invalid address value.
+    if (runToAddress == currentAddress)
+        runToAddress = 0xFFFF;
 
     emit SignalUpdateReady(pc);
 }
@@ -139,5 +155,19 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
 
 void DebuggerWindow::SlotStep()
 {
-    step = true;
+    singleStep = true;
+}
+
+
+void DebuggerWindow::SlotRunToLine()
+{
+    QItemSelectionModel *selection = ui->disassemblyView->selectionModel();
+
+    if (!selection->hasSelection())
+    {
+        UiUtils::MessageBox("No row selected");
+        return;
+    }
+
+    runToAddress = disassemblyModel->GetAddressOfRow(selection->selectedRows()[0].row());
 }

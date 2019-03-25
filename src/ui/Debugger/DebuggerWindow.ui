@@ -20,7 +20,14 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QTableView" name="disassemblyView"/>
+      <widget class="QTableView" name="disassemblyView">
+       <property name="selectionMode">
+        <enum>QAbstractItemView::SingleSelection</enum>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+      </widget>
       <widget class="QTableView" name="memoryView"/>
      </widget>
     </item>
@@ -342,6 +349,7 @@
    </attribute>
    <addaction name="actionToggleDebugging"/>
    <addaction name="actionStep"/>
+   <addaction name="actionRunToLine"/>
   </widget>
   <action name="actionToggleDebugging">
    <property name="checkable">
@@ -354,6 +362,11 @@
   <action name="actionStep">
    <property name="text">
     <string>Step</string>
+   </property>
+  </action>
+  <action name="actionRunToLine">
+   <property name="text">
+    <string>Run To Line</string>
    </property>
   </action>
  </widget>

@@ -28,7 +28,7 @@ public:
     virtual void SetInterrupt(Interrupt *interrupt) {this->interrupt = interrupt;}
 
     virtual bool GetDebuggingEnabled() {return debuggingEnabled;}
-    virtual bool GetStep() {return step;}
+    virtual bool ShouldRun();
     virtual void SetCurrentOp(uint16_t pc);
 
     virtual void MemoryChanged(uint16_t address, uint16_t len);
@@ -44,7 +44,9 @@ private:
     Memory *memory;
 
     bool debuggingEnabled;
-    bool step;
+    bool singleStep;
+    uint16_t runToAddress;
+    uint16_t currentAddress;
 
     DisassemblyModel *disassemblyModel;
 
@@ -52,6 +54,7 @@ private slots:
     void SlotProcessUpdate(uint16_t pc);
     void SlotToggleDebugging(bool checked);
     void SlotStep();
+    void SlotRunToLine();
 
 signals:
     void SignalDebuggerWindowClosed();

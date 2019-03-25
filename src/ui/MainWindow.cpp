@@ -7,6 +7,7 @@
 #include "LogWindow.h"
 #include "MainWindow.h"
 #include "QtFrameHandler.h"
+#include "UiUtils.h"
 #include "../EmulatorMgr.h"
 #include "../Input.h"
 #include "../Logger.h"
@@ -485,9 +486,7 @@ void MainWindow::SlotDrawFrame()
 
 void MainWindow::SlotShowMessageBox(const QString &message)
 {
-    QMessageBox msg;
-    msg.setText(message);
-    msg.exec();
+    UiUtils::MessageBox(message);
 }
 
 

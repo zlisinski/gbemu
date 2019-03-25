@@ -17,7 +17,8 @@ public:
 
     void AddRow(uint16_t pc, const uint8_t *memory);
     void RemoveRows(uint16_t address, uint16_t len);
-    int GetRowIndex(uint16_t pc);
+    int GetRowIndex(uint16_t pc) const;
+    uint16_t GetAddressOfRow(int row) const {return opcodes[row].GetAddress();}
     void SetCurrentRow(int row) {currentRow = row;}
 
     // Overrides for QAbstractTableModel.

@@ -304,7 +304,7 @@ void EmulatorMgr::ThreadFunc()
         {
             if (debuggerInterface->GetDebuggingEnabled())
             {
-                if (debuggerInterface->GetStep())
+                if (debuggerInterface->ShouldRun())
                 {
                     cpu->ProcessOpCode();
                     debuggerInterface->SetCurrentOp(cpu->reg.pc);

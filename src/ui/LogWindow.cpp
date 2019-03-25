@@ -5,6 +5,7 @@
 
 #include "LogWindow.h"
 #include "ui_LogWindow.h"
+#include "UiUtils.h"
 
 LogWindow::LogWindow(QWidget *parent) :
     QDialog(parent),
@@ -152,9 +153,7 @@ void LogWindow::SlotSaveOutputClicked()
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly))
     {
-        QMessageBox msg;
-        msg.setText("Error opening " + filename);
-        msg.exec();
+        UiUtils::MessageBox("Error opening " + filename);
         return;
     }
 

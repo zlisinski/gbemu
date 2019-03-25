@@ -117,7 +117,7 @@ void DisassemblyModel::RemoveRows(uint16_t address, uint16_t len)
 }
 
 
-int DisassemblyModel::GetRowIndex(uint16_t pc)
+int DisassemblyModel::GetRowIndex(uint16_t pc) const
 {
     auto it = std::find_if(opcodes.cbegin(), opcodes.cend(), [&pc](const Opcode &item){return item.GetAddress() == pc;});
     
