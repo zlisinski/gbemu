@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <vector>
 
 #include "gbemu.h"
@@ -114,6 +115,8 @@ public:
 
     uint8_t GetDmaOffset() const {return dmaOffset;}
 
+    uint8_t GetCurRomBank() const {return curRomBank;}
+
     void WriteByte(uint16_t index, uint8_t byte);
 
     void ClearMemory();
@@ -154,6 +157,7 @@ private:
     MbcTypes mbcType;
     uint8_t romBankCount;
     uint8_t ramBankCount;
+    uint8_t curRomBank;
     bool batteryBackedRam;
 
     InfoInterface *infoInterface;

@@ -13,6 +13,7 @@ class Cpu;
 class DisassemblyModel;
 class Interrupt;
 class Memory;
+class MemoryModel;
 
 
 class DebuggerWindow : public QMainWindow, public DebuggerInterface
@@ -23,7 +24,7 @@ public:
     explicit DebuggerWindow(QWidget *parent = 0);
     ~DebuggerWindow();
 
-    virtual void SetMemory(Memory *memory) {this->memory = memory;}
+    virtual void SetMemory(Memory *newMemory);
     virtual void SetCpu(Cpu *cpu) {this->cpu = cpu;}
     virtual void SetInterrupt(Interrupt *interrupt) {this->interrupt = interrupt;}
 
@@ -49,6 +50,7 @@ private:
     uint16_t currentAddress;
 
     DisassemblyModel *disassemblyModel;
+    MemoryModel *memoryModel;
 
 private slots:
     void SlotProcessUpdate(uint16_t pc);

@@ -6,6 +6,7 @@
 #include "../UiUtils.h"
 #include "DebuggerWindow.h"
 #include "DisassemblyModel.h"
+#include "MemoryModel.h"
 #include "ui_DebuggerWindow.h"
 
 
@@ -17,7 +18,8 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     debuggingEnabled(false),
     singleStep(true),
     runToAddress(0xFFFF),
-    disassemblyModel(new DisassemblyModel(palette(), this))
+    disassemblyModel(new DisassemblyModel(palette(), this)),
+    memoryModel(new MemoryModel(this))
 {
     ui->setupUi(this);
 
@@ -30,6 +32,9 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     ui->splitter->restoreState(settings.value("DebuggerWindowSplitterState").toByteArray());
 
     ui->disassemblyView->setModel(disassemblyModel);
+    ui->memoryView->setModel(memoryModel);
+
+    ui->memoryView->resizeColumnsToContents();
 
     connect(ui->actionToggleDebugging, SIGNAL(triggered(bool)), this, SLOT(SlotToggleDebugging(bool)));
     connect(ui->actionStep, SIGNAL(triggered()), this, SLOT(SlotStep()));
@@ -55,6 +60,14 @@ void DebuggerWindow::closeEvent(QCloseEvent *event)
     emit SignalDebuggerWindowClosed();
 
     QWidget::closeEvent(event);
+}
+
+
+void DebuggerWindow::SetMemory(Memory *newMemory)
+{
+    memory = newMemory;
+
+    memoryModel->SetMemory(memory);
 }
 
 
@@ -87,6 +100,12 @@ void DebuggerWindow::MemoryChanged(uint16_t address, uint16_t len)
 {
     // Memory has changed, so the disassembled opcodes are no longer valid.
     disassemblyModel->RemoveRows(address, len);
+
+    // Only update memory table when debugging to avoid slowing things down.
+    if (debuggingEnabled == true)
+    {
+        memoryModel->InvalidateMemory(address, len);
+    }
 }
 
 
@@ -147,7 +166,12 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
     debuggingEnabled = checked;
 
     if (debuggingEnabled)
+    {
         ui->actionToggleDebugging->setText("Stop Debugging");
+
+        // Update memory table with new values.
+        memoryModel->SetMemory(memory);
+    }
     else
         ui->actionToggleDebugging->setText("Start Debugging");
 }

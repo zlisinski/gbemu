@@ -52,6 +52,7 @@ HEADERS += \
 	src/Utils.h \
 	src/ui/Debugger/DebuggerWindow.h \
 	src/ui/Debugger/DisassemblyModel.h \
+	src/ui/Debugger/MemoryModel.h \
 	src/ui/Debugger/Opcode.h \
 	src/ui/InfoWindow.h \
 	src/ui/LogWindow.h \
@@ -74,6 +75,7 @@ SOURCES += \
 	src/Utils.cpp \
 	src/ui/Debugger/DebuggerWindow.cpp \
 	src/ui/Debugger/DisassemblyModel.cpp \
+	src/ui/Debugger/MemoryModel.cpp \
 	src/ui/Debugger/Opcode.cpp \
 	src/ui/InfoWindow.cpp \
 	src/ui/LogWindow.cpp \

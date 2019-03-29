@@ -68,6 +68,7 @@ Memory::Memory(InfoInterface *infoInterface, DebuggerInterface *debuggerInterfac
     mbcType(eMbcNone),
     romBankCount(0),
     ramBankCount(0),
+    curRomBank(1),
     batteryBackedRam(false),
     infoInterface(infoInterface),
     debuggerInterface(debuggerInterface)
@@ -391,11 +392,12 @@ void Memory::MapRomBank(uint bank)
     {
         std::stringstream ss;
         ss << "Asking for ROM bank 0x" << std::hex << std::uppercase << (int)bank << " when ROM bank count is 0x" << (int)romBankCount;
-        printf("%s\n", ss.str().c_str());
+        LogWarning(ss.str().c_str());
 
         bank = bank % romBankCount;
-        //throw std::range_error(ss.str());
     }
+
+    curRomBank = bank;
 
     LogInstruction("Copying ROM bank 0x%02X", bank);
     if (infoInterface)
