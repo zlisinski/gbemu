@@ -15,6 +15,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     ui(new Ui::DebuggerWindow),
     cpu(NULL),
     interrupt(NULL),
+    memory(NULL),
     debuggingEnabled(false),
     singleStep(true),
     runToAddress(0xFFFF),
@@ -22,6 +23,8 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     memoryModel(new MemoryModel(this))
 {
     ui->setupUi(this);
+    ui->actionToggleDebugging->setChecked(debuggingEnabled);
+    SlotToggleDebugging(debuggingEnabled);
 
     qRegisterMetaType<QItemSelection>();
     qRegisterMetaType<uint16_t>("uint16_t");
@@ -168,12 +171,18 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
     if (debuggingEnabled)
     {
         ui->actionToggleDebugging->setText("Stop Debugging");
+        ui->actionStep->setEnabled(true);
+        ui->actionRunToLine->setEnabled(true);
 
         // Update memory table with new values.
         memoryModel->SetMemory(memory);
     }
     else
+    {
         ui->actionToggleDebugging->setText("Start Debugging");
+        ui->actionStep->setEnabled(false);
+        ui->actionRunToLine->setEnabled(false);
+    }
 }
 
 
