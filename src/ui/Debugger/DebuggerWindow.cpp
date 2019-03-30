@@ -26,6 +26,10 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->actionToggleDebugging->setChecked(debuggingEnabled);
     SlotToggleDebugging(debuggingEnabled);
+    ui->menuView->addAction(ui->dockCallStack->toggleViewAction());
+    ui->menuView->addAction(ui->dockMemory->toggleViewAction());
+    ui->menuView->addAction(ui->dockRegisters->toggleViewAction());
+    ui->menuView->addAction(ui->dockStack->toggleViewAction());
 
     qRegisterMetaType<QItemSelection>();
     qRegisterMetaType<uint16_t>("uint16_t");
@@ -33,7 +37,6 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     QSettings settings;
     restoreGeometry(settings.value("DebuggerWindowGeometry").toByteArray());
     restoreState(settings.value("DebuggerWindowState").toByteArray());
-    ui->splitter->restoreState(settings.value("DebuggerWindowSplitterState").toByteArray());
 
     ui->disassemblyView->setModel(disassemblyModel);
     ui->memoryView->setModel(memoryModel);
@@ -60,7 +63,6 @@ void DebuggerWindow::closeEvent(QCloseEvent *event)
     QSettings settings;
     settings.setValue("DebuggerWindowGeometry", saveGeometry());
     settings.setValue("DebuggerWindowState", saveState());
-    settings.setValue("DebuggerWindowSplitterState", ui->splitter->saveState());
 
     emit SignalDebuggerWindowClosed();
 

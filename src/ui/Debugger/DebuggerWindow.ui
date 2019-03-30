@@ -6,322 +6,23 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>761</width>
-    <height>620</height>
+    <width>885</width>
+    <height>783</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Debugger</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
-     <widget class="QSplitter" name="splitter">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
+   <layout class="QGridLayout" name="gridLayout_4">
+    <item row="0" column="0">
+     <widget class="QTableView" name="disassemblyView">
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
-      <widget class="QTableView" name="disassemblyView">
-       <property name="selectionMode">
-        <enum>QAbstractItemView::SingleSelection</enum>
-       </property>
-       <property name="selectionBehavior">
-        <enum>QAbstractItemView::SelectRows</enum>
-       </property>
-      </widget>
-      <widget class="QTableView" name="memoryView"/>
-     </widget>
-    </item>
-    <item>
-     <widget class="QFrame" name="frame">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>221</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <layout class="QGridLayout" name="gridLayout">
-         <item row="4" column="1">
-          <widget class="QLineEdit" name="txtRegP1"/>
-         </item>
-         <item row="2" column="2">
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>PC</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="3" colspan="2">
-          <widget class="QLineEdit" name="txtHL"/>
-         </item>
-         <item row="5" column="2" colspan="2">
-          <widget class="QLabel" name="label_26">
-           <property name="text">
-            <string>IF</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_16">
-           <property name="text">
-            <string>P1</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="1">
-          <widget class="QLineEdit" name="txtRegLCDC"/>
-         </item>
-         <item row="6" column="2" colspan="2">
-          <widget class="QLabel" name="label_24">
-           <property name="text">
-            <string>TIMA</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>DE</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="3" colspan="2">
-          <widget class="QLineEdit" name="txtPC"/>
-         </item>
-         <item row="5" column="4">
-          <widget class="QLineEdit" name="txtRegIF"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>BC</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="2" colspan="2">
-          <widget class="QLabel" name="label_25">
-           <property name="text">
-            <string>SCY</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QLineEdit" name="txtRegDIV"/>
-         </item>
-         <item row="3" column="3" colspan="2">
-          <widget class="QLineEdit" name="txtSP"/>
-         </item>
-         <item row="8" column="2" colspan="2">
-          <widget class="QLabel" name="label_23">
-           <property name="text">
-            <string>STAT</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1">
-          <widget class="QLineEdit" name="txtRegIE"/>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="label_5">
-           <property name="text">
-            <string>IE</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="label_8">
-           <property name="text">
-            <string>DIV</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>HL</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="1">
-          <widget class="QLineEdit" name="txtRegDMA"/>
-         </item>
-         <item row="7" column="2" colspan="2">
-          <widget class="QLabel" name="label_22">
-           <property name="text">
-            <string>TAC</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="txtBC"/>
-         </item>
-         <item row="3" column="2">
-          <widget class="QLabel" name="label_7">
-           <property name="text">
-            <string>SP</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="0">
-          <widget class="QLabel" name="label_13">
-           <property name="text">
-            <string>DMA</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="4">
-          <widget class="QCheckBox" name="chkFlagC">
-           <property name="text">
-            <string>C</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="0">
-          <widget class="QLabel" name="label_11">
-           <property name="text">
-            <string>SCX</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="txtDE"/>
-         </item>
-         <item row="11" column="1">
-          <widget class="QLineEdit" name="txtRegLY"/>
-         </item>
-         <item row="9" column="1">
-          <widget class="QLineEdit" name="txtRegSCX"/>
-         </item>
-         <item row="4" column="4">
-          <widget class="QCheckBox" name="chkRegIME">
-           <property name="text">
-            <string>IME</string>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="1">
-          <widget class="QLineEdit" name="txtRegWX"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>AF</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="4">
-          <widget class="QLineEdit" name="txtRegSTAT"/>
-         </item>
-         <item row="6" column="4">
-          <widget class="QLineEdit" name="txtRegTIMA"/>
-         </item>
-         <item row="7" column="0">
-          <widget class="QLabel" name="label_9">
-           <property name="text">
-            <string>TMA</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="2" colspan="2">
-          <widget class="QLabel" name="label_17">
-           <property name="text">
-            <string>LYC</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="txtAF"/>
-         </item>
-         <item row="10" column="4">
-          <widget class="QLineEdit" name="txtRegWY"/>
-         </item>
-         <item row="0" column="2">
-          <widget class="QCheckBox" name="chkFlagH">
-           <property name="text">
-            <string>H</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="4">
-          <widget class="QLineEdit" name="txtRegSCY"/>
-         </item>
-         <item row="7" column="1">
-          <widget class="QLineEdit" name="txtRegTMA"/>
-         </item>
-         <item row="11" column="0">
-          <widget class="QLabel" name="label_12">
-           <property name="text">
-            <string>LY</string>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="0">
-          <widget class="QLabel" name="label_15">
-           <property name="text">
-            <string>WX</string>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="2" colspan="2">
-          <widget class="QLabel" name="label_18">
-           <property name="text">
-            <string>WY</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="4">
-          <widget class="QLineEdit" name="txtRegTAC"/>
-         </item>
-         <item row="12" column="4">
-          <widget class="QLineEdit" name="txtRegCurDMA"/>
-         </item>
-         <item row="11" column="4">
-          <widget class="QLineEdit" name="txtRegLYC"/>
-         </item>
-         <item row="8" column="0">
-          <widget class="QLabel" name="label_10">
-           <property name="text">
-            <string>LCDC</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="2" colspan="2">
-          <widget class="QLabel" name="label_14">
-           <property name="text">
-            <string>DMAO</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QCheckBox" name="chkFlagN">
-           <property name="text">
-            <string>N</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="chkFlagZ">
-           <property name="text">
-            <string>Z</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
      </widget>
     </item>
    </layout>
@@ -331,10 +32,22 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>761</width>
+     <width>885</width>
      <height>30</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -351,6 +64,340 @@
    <addaction name="actionStep"/>
    <addaction name="actionRunToLine"/>
    <addaction name="actionDisassemble"/>
+  </widget>
+  <widget class="QDockWidget" name="dockRegisters">
+   <property name="maximumSize">
+    <size>
+     <width>524287</width>
+     <height>434</height>
+    </size>
+   </property>
+   <property name="windowTitle">
+    <string>&amp;Registers</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <property name="maximumSize">
+     <size>
+      <width>16777215</width>
+      <height>400</height>
+     </size>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="chkFlagZ">
+       <property name="text">
+        <string>Z</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QCheckBox" name="chkFlagN">
+       <property name="text">
+        <string>N</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QCheckBox" name="chkFlagH">
+       <property name="text">
+        <string>H</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QCheckBox" name="chkFlagC">
+       <property name="text">
+        <string>C</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>AF</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="txtAF"/>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>HL</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLineEdit" name="txtHL"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>BC</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="txtBC"/>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>PC</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QLineEdit" name="txtPC"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>DE</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="txtDE"/>
+     </item>
+     <item row="3" column="2">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>SP</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="3">
+      <widget class="QLineEdit" name="txtSP"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_16">
+       <property name="text">
+        <string>P1</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="txtRegP1"/>
+     </item>
+     <item row="4" column="3">
+      <widget class="QCheckBox" name="chkRegIME">
+       <property name="text">
+        <string>IME</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>IE</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="txtRegIE"/>
+     </item>
+     <item row="5" column="2">
+      <widget class="QLabel" name="label_26">
+       <property name="text">
+        <string>IF</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="3">
+      <widget class="QLineEdit" name="txtRegIF"/>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>DIV</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="txtRegDIV"/>
+     </item>
+     <item row="6" column="2">
+      <widget class="QLabel" name="label_24">
+       <property name="text">
+        <string>TIMA</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="3">
+      <widget class="QLineEdit" name="txtRegTIMA"/>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string>TMA</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLineEdit" name="txtRegTMA"/>
+     </item>
+     <item row="7" column="2">
+      <widget class="QLabel" name="label_22">
+       <property name="text">
+        <string>TAC</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="3">
+      <widget class="QLineEdit" name="txtRegTAC"/>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_10">
+       <property name="text">
+        <string>LCDC</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QLineEdit" name="txtRegLCDC"/>
+     </item>
+     <item row="8" column="2">
+      <widget class="QLabel" name="label_23">
+       <property name="text">
+        <string>STAT</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="3">
+      <widget class="QLineEdit" name="txtRegSTAT"/>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>SCX</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="QLineEdit" name="txtRegSCX"/>
+     </item>
+     <item row="9" column="2">
+      <widget class="QLabel" name="label_25">
+       <property name="text">
+        <string>SCY</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="3">
+      <widget class="QLineEdit" name="txtRegSCY"/>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_15">
+       <property name="text">
+        <string>WX</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QLineEdit" name="txtRegWX"/>
+     </item>
+     <item row="10" column="2">
+      <widget class="QLabel" name="label_18">
+       <property name="text">
+        <string>WY</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="3">
+      <widget class="QLineEdit" name="txtRegWY"/>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="label_12">
+       <property name="text">
+        <string>LY</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
+      <widget class="QLineEdit" name="txtRegLY"/>
+     </item>
+     <item row="11" column="2">
+      <widget class="QLabel" name="label_17">
+       <property name="text">
+        <string>LYC</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="3">
+      <widget class="QLineEdit" name="txtRegLYC"/>
+     </item>
+     <item row="12" column="0">
+      <widget class="QLabel" name="label_13">
+       <property name="text">
+        <string>DMA</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="QLineEdit" name="txtRegDMA"/>
+     </item>
+     <item row="12" column="2">
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>DMAO</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="3">
+      <widget class="QLineEdit" name="txtRegCurDMA"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockStack">
+   <property name="windowTitle">
+    <string>Stac&amp;k</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="0">
+      <widget class="QTableView" name="stackView"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockMemory">
+   <property name="windowTitle">
+    <string>&amp;Memory</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QGridLayout" name="gridLayout_6">
+     <item row="0" column="0">
+      <widget class="QTableView" name="memoryView"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockCallStack">
+   <property name="windowTitle">
+    <string>Ca&amp;ll Stack</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="0" column="0">
+      <widget class="QListWidget" name="callStackView"/>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <action name="actionToggleDebugging">
    <property name="checkable">
