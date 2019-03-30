@@ -17,6 +17,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     cpu(NULL),
     interrupt(NULL),
     memory(NULL),
+    currentSp(0),
     debuggingEnabled(false),
     singleStep(true),
     runToAddress(0xFFFF),
@@ -116,6 +117,31 @@ void DebuggerWindow::MemoryChanged(uint16_t address, uint16_t len)
 }
 
 
+void DebuggerWindow::UpdateStack()
+{
+    if (cpu == NULL || memory == NULL)
+        return;
+
+    currentSp = cpu->reg.sp;
+
+    // Let the view determine how many rows to be displayed.
+    const int rowCount = ui->stackView->rowCount();
+
+    ui->stackView->clearContents();
+
+    for (int i = 0; i < rowCount; i++)
+    {
+        uint16_t address = currentSp + (i * 2);
+        QTableWidgetItem *item = new QTableWidgetItem(UiUtils::FormatHexWord(address));
+        ui->stackView->setItem(i, 0, item);
+
+        uint16_t value = memory->ReadByte(address) | (memory->ReadByte(address + 1) << 8);
+        item = new QTableWidgetItem(UiUtils::FormatHexWord(value));
+        ui->stackView->setItem(i, 1, item);
+    }
+}
+
+
 void DebuggerWindow::SlotProcessUpdate(uint16_t pc)
 {
     disassemblyModel->AddRow(pc, memory->GetBytePtr(0));
@@ -140,6 +166,9 @@ void DebuggerWindow::SlotProcessUpdate(uint16_t pc)
         ui->txtHL->setText(UiUtils::FormatHexWord(cpu->reg.hl));
         ui->txtPC->setText(UiUtils::FormatHexWord(cpu->reg.pc));
         ui->txtSP->setText(UiUtils::FormatHexWord(cpu->reg.sp));
+
+        if (currentSp != cpu->reg.sp)
+            UpdateStack();
     }
 
     if (memory != NULL)
@@ -181,6 +210,9 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
 
         // Update memory table with new values.
         memoryModel->SetMemory(memory);
+
+        // Update stack table with new values.
+        UpdateStack();
     }
     else
     {
@@ -209,6 +241,9 @@ void DebuggerWindow::SlotRunToLine()
     }
 
     runToAddress = disassemblyModel->GetAddressOfRow(selection->selectedRows()[0].row());
+
+    // Clear selection so we can see when the line has been reached. TODO: Add "wait" dialog while running.
+    ui->disassemblyView->clearSelection();
 }
 
 

@@ -38,11 +38,14 @@ protected:
     virtual void closeEvent(QCloseEvent *event);
 
 private:
+    void UpdateStack();
+
     Ui::DebuggerWindow *ui;
 
     Cpu *cpu;
     Interrupt *interrupt;
     Memory *memory;
+    uint16_t currentSp;
 
     bool debuggingEnabled;
     bool singleStep;
