@@ -57,6 +57,7 @@ private slots:
     void SlotToggleDebugging(bool checked);
     void SlotStep();
     void SlotRunToLine();
+    void SlotDisassembleAddress();
 
 signals:
     void SignalDebuggerWindowClosed();

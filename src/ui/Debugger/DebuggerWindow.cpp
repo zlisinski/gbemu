@@ -4,6 +4,7 @@
 #include "../../Interrupt.h"
 #include "../../Memory.h"
 #include "../UiUtils.h"
+#include "AddressDialog.h"
 #include "DebuggerWindow.h"
 #include "DisassemblyModel.h"
 #include "MemoryModel.h"
@@ -42,6 +43,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     connect(ui->actionToggleDebugging, SIGNAL(triggered(bool)), this, SLOT(SlotToggleDebugging(bool)));
     connect(ui->actionStep, SIGNAL(triggered()), this, SLOT(SlotStep()));
     connect(ui->actionRunToLine, SIGNAL(triggered()), this, SLOT(SlotRunToLine()));
+    connect(ui->actionDisassemble, SIGNAL(triggered()), this, SLOT(SlotDisassembleAddress()));
     connect(this, SIGNAL(SignalDebuggerWindowClosed()), parent, SLOT(SlotDebuggerWindowClosed()));
     connect(this, SIGNAL(SignalUpdateReady(uint16_t)), this, SLOT(SlotProcessUpdate(uint16_t)));
 }
@@ -173,6 +175,7 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
         ui->actionToggleDebugging->setText("Stop Debugging");
         ui->actionStep->setEnabled(true);
         ui->actionRunToLine->setEnabled(true);
+        ui->actionDisassemble->setEnabled(true);
 
         // Update memory table with new values.
         memoryModel->SetMemory(memory);
@@ -182,6 +185,7 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
         ui->actionToggleDebugging->setText("Start Debugging");
         ui->actionStep->setEnabled(false);
         ui->actionRunToLine->setEnabled(false);
+        ui->actionDisassemble->setEnabled(false);
     }
 }
 
@@ -203,4 +207,23 @@ void DebuggerWindow::SlotRunToLine()
     }
 
     runToAddress = disassemblyModel->GetAddressOfRow(selection->selectedRows()[0].row());
+}
+
+
+void DebuggerWindow::SlotDisassembleAddress()
+{
+    if (memory == NULL)
+    {
+        UiUtils::MessageBox("Game not loaded");
+        return;
+    }
+
+    AddressDialog dialog(this);
+    dialog.setModal(true);
+    int ret = dialog.exec();
+
+    if (ret == 1)
+    {
+        disassemblyModel->AddRow(dialog.address, memory->GetBytePtr(0));
+    }
 }
