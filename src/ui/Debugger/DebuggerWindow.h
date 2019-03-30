@@ -39,6 +39,7 @@ protected:
 
 private:
     void UpdateStack();
+    void UpdateWidgets(uint16_t pc);
 
     Ui::DebuggerWindow *ui;
 

@@ -142,13 +142,9 @@ void DebuggerWindow::UpdateStack()
 }
 
 
-void DebuggerWindow::SlotProcessUpdate(uint16_t pc)
+void DebuggerWindow::UpdateWidgets(uint16_t pc)
 {
     disassemblyModel->AddRow(pc, memory->GetBytePtr(0));
-
-    // Add current instruction to call stack.
-    Opcode opcode = Opcode::GetOpcode(pc, memory->GetBytePtr(pc));
-    new QListWidgetItem(opcode.ToString(), ui->callStackView);
 
     int rowIndex = disassemblyModel->GetRowIndex(pc);
     if (rowIndex >= 0)
@@ -201,6 +197,16 @@ void DebuggerWindow::SlotProcessUpdate(uint16_t pc)
 }
 
 
+void DebuggerWindow::SlotProcessUpdate(uint16_t pc)
+{
+    UpdateWidgets(pc);
+
+    // Add current instruction to call stack.
+    Opcode opcode = Opcode::GetOpcode(pc, memory->GetBytePtr(pc));
+    new QListWidgetItem(opcode.ToString(), ui->callStackView);
+}
+
+
 void DebuggerWindow::SlotToggleDebugging(bool checked)
 {
     debuggingEnabled = checked;
@@ -215,8 +221,9 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
         // Update memory table with new values.
         memoryModel->SetMemory(memory);
 
-        // Update stack table with new values.
-        UpdateStack();
+        // Update widgets with new values.
+        if (cpu != NULL)
+            UpdateWidgets(cpu->reg.pc);
 
         // Clear the call stack. It would be too slow to log the call stack when not debugging.
         ui->callStackView->clear();
