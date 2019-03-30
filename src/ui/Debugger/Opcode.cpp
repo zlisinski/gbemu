@@ -555,7 +555,7 @@ Opcode::Opcode(int byteCount, const QString &opcodeStr, const QString &arg1Str /
 
 QString Opcode::ToString() const
 {
-    QString ret = opcodeStr;
+    QString ret = UiUtils::FormatHexWord(address) + " " + opcodeStr;
 
     if (arg1Str != "")
         ret += " " + arg1Str;
