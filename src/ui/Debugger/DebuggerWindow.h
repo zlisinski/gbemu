@@ -24,12 +24,10 @@ public:
     explicit DebuggerWindow(QWidget *parent = 0);
     ~DebuggerWindow();
 
-    virtual void SetMemory(Memory *newMemory);
-    virtual void SetCpu(Cpu *cpu) {this->cpu = cpu;}
-    virtual void SetInterrupt(Interrupt *interrupt) {this->interrupt = interrupt;}
+    virtual void SetEmulatorObjects(Memory *newMemory, Cpu *newCpu, Interrupt *newInterrupt);
 
     virtual bool GetDebuggingEnabled() {return debuggingEnabled;}
-    virtual bool ShouldRun();
+    virtual bool ShouldRun(uint16_t pc);
     virtual void SetCurrentOp(uint16_t pc);
 
     virtual void MemoryChanged(uint16_t address, uint16_t len);
@@ -48,10 +46,9 @@ private:
     Memory *memory;
     uint16_t currentSp;
 
-    bool debuggingEnabled;
-    bool singleStep;
-    uint16_t runToAddress;
-    uint16_t currentAddress;
+    std::atomic<bool> debuggingEnabled;
+    std::atomic<bool> singleStep;
+    std::atomic<uint16_t> runToAddress;
 
     DisassemblyModel *disassemblyModel;
     MemoryModel *memoryModel;

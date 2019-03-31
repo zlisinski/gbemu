@@ -1,4 +1,5 @@
 #include <QtCore/QSettings>
+#include <thread>
 
 #include "../../Cpu.h"
 #include "../../Interrupt.h"
@@ -19,7 +20,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     memory(NULL),
     currentSp(0),
     debuggingEnabled(false),
-    singleStep(true),
+    singleStep(false),
     runToAddress(0xFFFF),
     disassemblyModel(new DisassemblyModel(palette(), this)),
     memoryModel(new MemoryModel(this))
@@ -71,18 +72,31 @@ void DebuggerWindow::closeEvent(QCloseEvent *event)
 }
 
 
-void DebuggerWindow::SetMemory(Memory *newMemory)
+void DebuggerWindow::SetEmulatorObjects(Memory *newMemory, Cpu *newCpu, Interrupt *newInterrupt)
 {
+    // All values should be NULL or not NULL. If only some are NULL, treat them all as NULL.
+    if (newMemory == NULL || newCpu == NULL || newInterrupt == NULL)
+    {
+        memory = NULL;
+        cpu = NULL;
+        interrupt = NULL;
+        memoryModel->SetMemory(NULL);
+        return;
+    }
+
     memory = newMemory;
+    cpu = newCpu;
+    interrupt = newInterrupt;
 
     memoryModel->SetMemory(memory);
+    UpdateWidgets(cpu->reg.pc);
 }
 
 
-bool DebuggerWindow::ShouldRun()
+bool DebuggerWindow::ShouldRun(uint16_t pc)
 {
     // Run if we're in single step mode, or we have a run-to address and we're not there.
-    return debuggingEnabled == true && (singleStep == true || (runToAddress != 0xFFFF && currentAddress != runToAddress));
+    return debuggingEnabled == false || (singleStep == true || (runToAddress != 0xFFFF && pc != runToAddress));
 }
 
 
@@ -90,14 +104,12 @@ void DebuggerWindow::SetCurrentOp(uint16_t pc)
 {
     //This function runs in the thread context of the Emulator worker thread.
 
-    currentAddress = pc;
-
     // Stop single step mode.
     singleStep = false;
 
     // If we've hit the run-to address, reset the variable.
     // 0xFFFF is a data register, so it's safe to use for an invalid address value.
-    if (runToAddress == currentAddress)
+    if (runToAddress == pc)
         runToAddress = 0xFFFF;
 
     emit SignalUpdateReady(pc);
@@ -223,7 +235,12 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
 
         // Update widgets with new values.
         if (cpu != NULL)
+        {
+            // Sleep to make sure the emulator worker thread has stopped running.
+            // I don't feel like adding proper thread synchronization right now.
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
             UpdateWidgets(cpu->reg.pc);
+        }
 
         // Clear the call stack. It would be too slow to log the call stack when not debugging.
         ui->callStackView->clear();

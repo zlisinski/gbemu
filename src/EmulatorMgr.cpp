@@ -294,36 +294,21 @@ void EmulatorMgr::ThreadFunc()
             infoInterface->SetMemory(memory->GetBytePtr(0));
 
         if (debuggerInterface)
-        {
-            debuggerInterface->SetMemory(memory);
-            debuggerInterface->SetCpu(cpu);
-            debuggerInterface->SetInterrupt(interrupts);
-        }
+            debuggerInterface->SetEmulatorObjects(memory, cpu, interrupts);
 
         while (!quit)
         {
-            if (debuggerInterface->GetDebuggingEnabled())
-            {
-                if (debuggerInterface->ShouldRun())
-                {
-                    cpu->ProcessOpCode();
-                    debuggerInterface->SetCurrentOp(cpu->reg.pc);
-                    cpu->PrintState();
-                }
-                else
-                {
-                    // Sleep to avoid pegging the CPU when paused.
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-            }
-            else
-            {
-                // Block this thread while state is being saved.
-                std::lock_guard<std::mutex> lock(saveStateMutex);
+            // Block this thread while state is being saved.
+            std::lock_guard<std::mutex> lock(saveStateMutex);
 
-                if (!paused)
+            // Run multiple instruction per mutex lock to reduce the impact of locking the mutex.
+            for (int i = 0; i < 100; i++)
+            {
+                if (!paused && debuggerInterface->ShouldRun(cpu->reg.pc))
                 {
                     cpu->ProcessOpCode();
+                    if (debuggerInterface->GetDebuggingEnabled())
+                        debuggerInterface->SetCurrentOp(cpu->reg.pc);
                     cpu->PrintState();
                     //timer->PrintTimerData();
                 }
@@ -345,11 +330,7 @@ void EmulatorMgr::ThreadFunc()
     if (infoInterface)
         infoInterface->SetMemory(NULL);
     if (debuggerInterface)
-    {
-        debuggerInterface->SetMemory(NULL);
-        debuggerInterface->SetCpu(NULL);
-        debuggerInterface->SetInterrupt(NULL);
-    }
+        debuggerInterface->SetEmulatorObjects(NULL, NULL, NULL);
 
     delete cpu;
     cpu = NULL;
