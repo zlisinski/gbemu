@@ -399,7 +399,16 @@ void MainWindow::RequestMessageBox(const std::string &message)
 
 void MainWindow::SlotOpenRom()
 {
-    QString filename = QFileDialog::getOpenFileName(this, "Open ROM File", "./data");
+    QSettings settings;
+    QString dir = settings.value("OpenRomDir").toString();
+
+    QString filename = QFileDialog::getOpenFileName(this, "Open ROM File", dir, "*.gb");
+
+    if (filename != "")
+    {
+        QFileInfo info(filename);
+        settings.setValue("OpenRomDir", info.absoluteDir().path());
+    }
 
     OpenRom(filename);
 }
