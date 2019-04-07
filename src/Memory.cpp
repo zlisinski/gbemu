@@ -70,6 +70,7 @@ Memory::Memory(InfoInterface *infoInterface, DebuggerInterface *debuggerInterfac
     ramBankCount(0),
     curRomBank(1),
     batteryBackedRam(false),
+    ramEnabled(false),
     infoInterface(infoInterface),
     debuggerInterface(debuggerInterface)
 {
@@ -135,8 +136,13 @@ uint8_t Memory::ReadByte(uint16_t index) const
     if (index >= 0xE000 && index <= 0xFDFF)
         return memory[index - 0x2000];
 
-    if (index == eRegSC) // Unused regSC bits are always 1.
+    // Unused regSC bits are always 1.
+    if (index == eRegSC)
         return memory[index] | 0x7E;
+
+    // Reads from SRAM return 0xFF when not enabled.
+    if (index >= 0xA000 && index < 0xC000 && ramEnabled == false)
+        return 0xFF;
 
     return memory[index];
 }
@@ -178,6 +184,10 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
 
         return;
     }
+
+    // Ignore writes to SRAM when not enabled.
+    if (index >= 0xA000 && index < 0xC000 && ramEnabled == false)
+        return;
 
     if (debuggerInterface != NULL)
         debuggerInterface->MemoryChanged(index, 1);
@@ -432,4 +442,5 @@ void Memory::MapRamBank(uint bank)
 void Memory::EnableRam(bool enable)
 {
     LogInfo("Enable RAM = %s", enable ? "true" : "false");
+    ramEnabled = enable;
 }

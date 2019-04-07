@@ -159,6 +159,7 @@ private:
     uint8_t ramBankCount;
     uint8_t curRomBank;
     bool batteryBackedRam;
+    bool ramEnabled;
 
     InfoInterface *infoInterface;
     DebuggerInterface *debuggerInterface;
