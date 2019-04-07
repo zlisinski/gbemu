@@ -356,6 +356,8 @@ void MainWindow::OpenRom(const QString &filename)
 
         emulator->LoadRom(filename.toLatin1().data());
 
+        setWindowTitle("GBEmu - " + filename);
+
         emuSaveStateAction->setEnabled(true);
         emuLoadStateAction->setEnabled(true);
     }
