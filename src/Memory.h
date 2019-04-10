@@ -140,14 +140,11 @@ private:
     void DisableBootRom();
     void CheckRom();
 
-    void LoadRamBanks();
-    void SaveRamBanks();
-
     std::array<uint8_t, MEM_SIZE> memory;
 
     std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
     std::vector<uint8_t> gameRomMemory;
-    std::vector<uint8_t[RAM_BANK_SIZE]> ramBanks;
+    std::vector<uint8_t> ramBanks;
 
     std::unique_ptr<MemoryBankController> mbc;
 
@@ -158,6 +155,7 @@ private:
     uint8_t romBankCount;
     uint8_t ramBankCount;
     uint8_t curRomBank;
+    uint8_t curRamBank;
     bool batteryBackedRam;
     bool ramEnabled;
 

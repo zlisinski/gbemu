@@ -9,7 +9,7 @@ const QSet<uint8_t> DisassemblyModel::stopOpcodes = {
     0xC3, //JP nn
     0xE9, //JP (HL)
     0x18, //JR e
-    0xCD, //CALL
+    //0xCD, //CALL
     0xC9, //RET
     0xD9, //RETI
     0xC7, //RST 0x00

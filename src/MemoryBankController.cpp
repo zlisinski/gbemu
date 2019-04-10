@@ -29,7 +29,7 @@ void MemoryBankController::WriteByte(uint16_t addr, uint8_t byte)
         case eMbcNone:
             break;
         case eMbc1:
-            if (addr >= 0 && addr <= 0x1FFF)
+            if (addr <= 0x1FFF)
             {
                 register0 = byte & 0x0F;
                 memory->EnableRam(register0 == 0x0A);
@@ -59,7 +59,7 @@ void MemoryBankController::WriteByte(uint16_t addr, uint8_t byte)
             }
             break;
         case eMbc2:
-            if (addr >= 0 && addr <= 0x0FFF)
+            if (addr <= 0x0FFF)
             {
                 register0 = byte & 0x0F;
                 memory->EnableRam(register0 == 0x0A);

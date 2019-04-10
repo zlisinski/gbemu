@@ -69,6 +69,7 @@ Memory::Memory(InfoInterface *infoInterface, DebuggerInterface *debuggerInterfac
     romBankCount(0),
     ramBankCount(0),
     curRomBank(1),
+    curRamBank(0),
     batteryBackedRam(false),
     ramEnabled(false),
     infoInterface(infoInterface),
@@ -108,6 +109,8 @@ void Memory::SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std
     CheckRom();
 
     mbc = std::unique_ptr<MemoryBankController>(new MemoryBankController(mbcType, romBankCount, ramBankCount, this));
+
+    ramBanks.resize(ramBankCount * RAM_BANK_SIZE);
 }
 
 
@@ -123,6 +126,8 @@ void Memory::SetRomMemory(std::vector<uint8_t> &gameRomMemory)
     CheckRom();
 
     mbc = std::unique_ptr<MemoryBankController>(new MemoryBankController(mbcType, romBankCount, ramBankCount, this));
+
+    ramBanks.resize(ramBankCount * RAM_BANK_SIZE);
 }
 
 
@@ -221,12 +226,15 @@ void Memory::LoadRam(const std::string &filename)
 
     if (mbcType == eMbc2)
     {
+        // MBC2 has 512 * 4 bits of RAM.
         fread(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, 512, file);
     }
     else
     {
-        // RAM bank switching is not yet implemented, so for now, just write the first bank.
-        fread(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, RAM_BANK_SIZE, file);
+        fread(&ramBanks[0], 1, ramBanks.size(), file);
+
+        // Load the current ram bank into SRAM.
+        memcpy(&memory[SWITCHABLE_RAM_BANK_OFFSET], &ramBanks[curRamBank * RAM_BANK_SIZE], RAM_BANK_SIZE);
     }
 
     fclose(file);
@@ -247,12 +255,15 @@ void Memory::SaveRam(const std::string &filename)
 
     if (mbcType == eMbc2)
     {
+        // MBC2 has 512 * 4 bits of RAM.
         fwrite(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, 512, file);
     }
     else
     {
-        // RAM bank switching is not yet implemented, so for now, just write the first bank.
-        fwrite(&memory[SWITCHABLE_RAM_BANK_OFFSET], 1, RAM_BANK_SIZE, file);
+        // Sync current SRAM bank into banks array.
+        memcpy(&ramBanks[curRamBank * RAM_BANK_SIZE], &memory[SWITCHABLE_RAM_BANK_OFFSET], RAM_BANK_SIZE);
+
+        fwrite(&ramBanks[0], 1, ramBanks.size(), file);
     }
 
     fclose(file);
@@ -364,8 +375,6 @@ void Memory::CheckRom()
         throw NotYetImplementedException(ss.str());
     }
     ramBankCount = it->second;
-    if (ramBankCount > 1)
-        throw NotYetImplementedException("Multiple RAM banks not yet implemented");
     LogInfo("RAM size = %02X", ramBankCount);
 
     // Check Memory Bank Controller.
@@ -398,11 +407,9 @@ void Memory::CheckRom()
 
 void Memory::MapRomBank(uint bank)
 {
-    if (bank > romBankCount)
+    if (bank >= romBankCount)
     {
-        std::stringstream ss;
-        ss << "Asking for ROM bank 0x" << std::hex << std::uppercase << (int)bank << " when ROM bank count is 0x" << (int)romBankCount;
-        LogWarning(ss.str().c_str());
+        LogWarning("Asking for ROM bank 0x%02X when ROM bank count is 0x%02X", bank, romBankCount);
 
         bank = bank % romBankCount;
     }
@@ -422,20 +429,31 @@ void Memory::MapRomBank(uint bank)
 
 void Memory::MapRamBank(uint bank)
 {
+    // One of mooneye's tests does this.
+    if (ramBankCount == 0)
+        return;
+
+    if (bank >= ramBankCount)
+    {
+        LogWarning("Asking for RAM bank 0x%02X when RAM bank count is 0x%02X", bank, ramBankCount);
+
+        bank = bank % ramBankCount;
+        //throw std::range_error("Invalid RAM bank");
+    }
+
+    // Copy from current SRAM into old bank.
+    memcpy(&ramBanks[curRamBank * RAM_BANK_SIZE], &memory[SWITCHABLE_RAM_BANK_OFFSET], RAM_BANK_SIZE);
+
+    curRamBank = bank;
+
     if (infoInterface)
         infoInterface->SetMappedRamBank(bank);
 
-    // RAM bank switching is not yet implemented, however some games try to switch banks even when there is only one bank.
-    // Only throw if trying to switch to a bank other than the first one.
-    if (bank != 0)
-    {
-        std::stringstream ss;
-        ss << "Trying to switch to RAM bank 0x" << std::hex << std::uppercase << (int)bank << "\nRAM bank switching not yet implemented";
-        throw NotYetImplementedException(ss.str());
-    }
+    // Copy new bank into SRAM.
+    memcpy(&memory[SWITCHABLE_RAM_BANK_OFFSET], &ramBanks[curRamBank * RAM_BANK_SIZE], RAM_BANK_SIZE);
 
-    /*if (debuggerInterface != NULL)
-        debuggerInterface->MemoryChanged(SWITCHABLE_RAM_BANK_OFFSET, RAM_BANK_SIZE);*/
+    if (debuggerInterface != NULL)
+        debuggerInterface->MemoryChanged(SWITCHABLE_RAM_BANK_OFFSET, RAM_BANK_SIZE);
 }
 
 
