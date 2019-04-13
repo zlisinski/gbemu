@@ -100,7 +100,7 @@ const uint8_t OAM_RAM_LEN = 0xA0;
 class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver
 {
 public:
-    Memory(InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
+    Memory(InfoInterface *infoInterface = NULL, DebuggerInterface *debuggerInterface = NULL);
     virtual ~Memory();
 
     void SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory);
@@ -131,9 +131,8 @@ public:
     virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
 
-protected:
-    virtual void MapRomBank(uint bank);
-    virtual void MapRamBank(uint bank);
+    virtual void MapRomBank(uint8_t bank);
+    virtual void MapRamBank(uint8_t bank);
     virtual void EnableRam(bool enable);
 
 private:
@@ -146,7 +145,7 @@ private:
     std::vector<uint8_t> gameRomMemory;
     std::vector<uint8_t> ramBanks;
 
-    std::unique_ptr<MemoryBankController> mbc;
+    std::unique_ptr<AbsMbc> mbc;
 
     bool isDmaActive;
     uint8_t dmaOffset;

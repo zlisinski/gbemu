@@ -5,7 +5,7 @@
 
 InputTest::InputTest()
 {
-    memory = new Memory(NULL);
+    memory = new Memory();
 }
 
 

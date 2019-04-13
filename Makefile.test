@@ -27,7 +27,8 @@ MAIN_SRC = $(SRC_DIR)/gbemu.cpp $(CLASSES_SRC)
 TEST_CLASSES_SRC = $(TEST_DIR)/CpuTest.cpp \
 	$(TEST_DIR)/MemoryTest.cpp \
 	$(TEST_DIR)/DisplayTest.cpp \
-	$(TEST_DIR)/InputTest.cpp
+	$(TEST_DIR)/InputTest.cpp \
+	$(TEST_DIR)/MbcTest.cpp
 TEST_SRC = $(TEST_DIR)/main.cpp $(CLASSES_SRC) $(TEST_CLASSES_SRC)
 
 # Rules to build object files. Use wildcards to set foo.o depends on foo.cpp

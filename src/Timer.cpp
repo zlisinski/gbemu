@@ -124,7 +124,7 @@ void Timer::WriteTAC(uint8_t newValue)
 
 void Timer::UpdateMemoryAddr(uint16_t addr, uint8_t value)
 {
-    LogDebug("UpdateMemoryAddr %04X, %02X", addr, value);
+    //LogDebug("UpdateMemoryAddr %04X, %02X", addr, value);
     switch (addr)
     {
         /*case eRegTIMA:

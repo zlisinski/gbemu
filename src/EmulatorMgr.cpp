@@ -157,7 +157,7 @@ void EmulatorMgr::SaveState(int slot)
     bool success = true;
 
     // Write header.
-    size_t cnt = fwrite("ZLGB01", 6, 1, file);
+    size_t cnt = fwrite("ZLGB02", 6, 1, file);
     if (cnt == 0)
         success = false;
 
@@ -214,7 +214,7 @@ void EmulatorMgr::LoadState(int slot)
         fclose(file);
         return;
     }
-    if (strcmp(header, "ZLGB01"))
+    if (strcmp(header, "ZLGB02"))
     {
         LogError("Save state header doesn't match expected value: %s", header);
         frameHandler->MessageBox("Save state header doesn't match expected value.");

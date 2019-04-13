@@ -24,6 +24,8 @@ const std::unordered_map<uint8_t, MbcTypes> MbcTypesMap = {
     {0x06, eMbc2},    // MBC2 + BAT
     {0x08, eMbcNone}, // RAM
     {0x09, eMbcNone}, // RAM + BAT
+    //{0x0F, eMbc3},  // MBC3 + TIMER + BAT
+    //{0x10, eMbc3},  // MBC3 + TIMER + RAM + BAT
     {0x11, eMbc3},    // MBC3
     {0x12, eMbc3},    // MBC3 + RAM
     {0x13, eMbc3},    // MBC3 + RAM + BAT
@@ -36,6 +38,8 @@ const std::unordered_set<uint8_t> BatteryBackedRamSet = {
     0x03, // MBC1
     0x06, // MBC2
     0x09, // No MBC
+    0x0F, // MBC3 + Timer
+    0x10, // MBC3 + Timer
     0x13, // MBC3
     0x1B  // MBC5
 };
@@ -108,7 +112,7 @@ void Memory::SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std
 
     CheckRom();
 
-    mbc = std::unique_ptr<MemoryBankController>(new MemoryBankController(mbcType, romBankCount, ramBankCount, this));
+    mbc = MbcFactory::GetMbcInstance(mbcType, this);
 
     ramBanks.resize(ramBankCount * RAM_BANK_SIZE);
 }
@@ -125,7 +129,7 @@ void Memory::SetRomMemory(std::vector<uint8_t> &gameRomMemory)
 
     CheckRom();
 
-    mbc = std::unique_ptr<MemoryBankController>(new MemoryBankController(mbcType, romBankCount, ramBankCount, this));
+    mbc = MbcFactory::GetMbcInstance(mbcType, this);
 
     ramBanks.resize(ramBankCount * RAM_BANK_SIZE);
 }
@@ -272,18 +276,22 @@ void Memory::SaveRam(const std::string &filename)
 
 bool Memory::SaveState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fwrite(&memory[0], MEM_SIZE, 1, file);
-    if (cnt == 0)
+    if (!fwrite(&memory[0], MEM_SIZE, 1, file))
         return false;
 
-    cnt = fwrite(&isDmaActive, sizeof(isDmaActive), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&curRomBank, sizeof(curRomBank), 1, file))
         return false;
 
-    cnt = fwrite(&dmaOffset, sizeof(dmaOffset), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&curRamBank, sizeof(curRamBank), 1, file))
+        return false;
+
+    if (!fwrite(&ramEnabled, sizeof(ramEnabled), 1, file))
+        return false;
+
+    if (!fwrite(&isDmaActive, sizeof(isDmaActive), 1, file))
+        return false;
+
+    if (!fwrite(&dmaOffset, sizeof(dmaOffset), 1, file))
         return false;
 
     return mbc->SaveState(file);
@@ -292,18 +300,22 @@ bool Memory::SaveState(FILE *file)
 
 bool Memory::LoadState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fread(&memory[0], MEM_SIZE, 1, file);
-    if (cnt == 0)
+    if (!fread(&memory[0], MEM_SIZE, 1, file))
         return false;
 
-    cnt = fread(&isDmaActive, sizeof(isDmaActive), 1, file);
-    if (cnt == 0)
+    if (!fread(&curRomBank, sizeof(curRomBank), 1, file))
         return false;
 
-    cnt = fread(&dmaOffset, sizeof(dmaOffset), 1, file);
-    if (cnt == 0)
+    if (!fread(&curRamBank, sizeof(curRamBank), 1, file))
+        return false;
+
+    if (!fread(&ramEnabled, sizeof(ramEnabled), 1, file))
+        return false;
+
+    if (!fread(&isDmaActive, sizeof(isDmaActive), 1, file))
+        return false;
+
+    if (!fread(&dmaOffset, sizeof(dmaOffset), 1, file))
         return false;
 
     return mbc->LoadState(file);
@@ -405,7 +417,7 @@ void Memory::CheckRom()
 }
 
 
-void Memory::MapRomBank(uint bank)
+void Memory::MapRomBank(uint8_t bank)
 {
     if (bank >= romBankCount)
     {
@@ -427,7 +439,7 @@ void Memory::MapRomBank(uint bank)
 }
 
 
-void Memory::MapRamBank(uint bank)
+void Memory::MapRamBank(uint8_t bank)
 {
     // One of mooneye's tests does this.
     if (ramBankCount == 0)
