@@ -157,8 +157,12 @@ void EmulatorMgr::SaveState(int slot)
     bool success = true;
 
     // Write header.
-    size_t cnt = fwrite("ZLGB02", 6, 1, file);
-    if (cnt == 0)
+    if (!fwrite("ZLGB", 4, 1, file))
+        success = false;
+
+    // Write version.
+    const uint16_t version = 2;
+    if (!fwrite(&version, sizeof(version), 1, file))
         success = false;
 
     // Write data.
@@ -204,7 +208,7 @@ void EmulatorMgr::LoadState(int slot)
     }
 
     // Read header.
-    const int headerLen = 6;
+    const int headerLen = 4;
     char header[headerLen + 1] = {0};
     size_t cnt = fread(header, 1, headerLen, file);
     if (cnt != headerLen)
@@ -214,12 +218,27 @@ void EmulatorMgr::LoadState(int slot)
         fclose(file);
         return;
     }
-    if (strcmp(header, "ZLGB02"))
+    if (strcmp(header, "ZLGB"))
     {
         LogError("Save state header doesn't match expected value: %s", header);
         frameHandler->MessageBox("Save state header doesn't match expected value.");
         fclose(file);
         return;
+    }
+
+    // Get version.
+    uint16_t version = 0;
+    if (!fread(&version, 2, 1, file))
+    {
+        LogError("Error reading version from state file.");
+        frameHandler->MessageBox("Error reading version from state file.");
+        fclose(file);
+        return;
+    }
+    if (version == 0x3130)
+    {
+        // The first version of the save state format saved the version as ASCII "01".
+        version = 1;
     }
 
     // Create new objects so if there is an error loading, the current game doesn't get killed.
@@ -237,13 +256,13 @@ void EmulatorMgr::LoadState(int slot)
     bool success = true;
 
     // Load data.
-    success &= newMemory->LoadState(file);
-    success &= newInterrupts->LoadState(file);
-    success &= newTimer->LoadState(file);
-    success &= newDisplay->LoadState(file);
-    success &= newInput->LoadState(file);
-    success &= newSerial->LoadState(file);
-    success &= newCpu->LoadState(file);
+    success &= newMemory->LoadState(version, file);
+    success &= newInterrupts->LoadState(version, file);
+    success &= newTimer->LoadState(version, file);
+    success &= newDisplay->LoadState(version, file);
+    success &= newInput->LoadState(version, file);
+    success &= newSerial->LoadState(version, file);
+    success &= newCpu->LoadState(version, file);
 
     fclose(file);
 

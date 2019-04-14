@@ -119,7 +119,7 @@ public:
     }
 
     bool SaveState(FILE *file);
-    bool LoadState(FILE *file);
+    bool LoadState(uint16_t version, FILE *file);
 
     Registers reg;
 

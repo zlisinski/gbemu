@@ -58,22 +58,18 @@ void Input::SetButtons(const Buttons &buttons)
 
 bool Input::SaveState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fwrite(&buttonData.data, sizeof(buttonData.data), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&buttonData.data, sizeof(buttonData.data), 1, file))
         return false;
 
     return true;
 }
 
 
-bool Input::LoadState(FILE *file)
+bool Input::LoadState(uint16_t version, FILE *file)
 {
-    size_t cnt;
+    (void)version;
 
-    cnt = fread(&buttonData.data, sizeof(buttonData.data), 1, file);
-    if (cnt == 0)
+    if (!fread(&buttonData.data, sizeof(buttonData.data), 1, file))
         return false;
 
     return true;

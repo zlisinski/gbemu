@@ -92,30 +92,24 @@ Display::~Display()
 
 bool Display::SaveState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fwrite(&displayMode, sizeof(displayMode), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&displayMode, sizeof(displayMode), 1, file))
         return false;
 
-    cnt = fwrite(&counter, sizeof(counter), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&counter, sizeof(counter), 1, file))
         return false;
 
     return true;
 }
 
 
-bool Display::LoadState(FILE *file)
+bool Display::LoadState(uint16_t version, FILE *file)
 {
-    size_t cnt;
+    (void)version;
 
-    cnt = fread(&displayMode, sizeof(displayMode), 1, file);
-    if (cnt == 0)
+    if (!fread(&displayMode, sizeof(displayMode), 1, file))
         return false;
 
-    cnt = fread(&counter, sizeof(counter), 1, file);
-    if (cnt == 0)
+    if (!fread(&counter, sizeof(counter), 1, file))
         return false;
 
     // Update framebuffer so the first frame isn't garbage.

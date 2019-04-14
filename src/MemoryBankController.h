@@ -46,7 +46,7 @@ public:
     virtual void WriteByte(uint16_t addr, uint8_t byte) = 0;
 
     virtual bool SaveState(FILE *file) = 0;
-    virtual bool LoadState(FILE *file) = 0;
+    virtual bool LoadState(uint16_t version, FILE *file) = 0;
 
 protected:
     MemoryBankInterface *memory;
@@ -64,7 +64,7 @@ public:
     virtual void WriteByte(uint16_t addr, uint8_t byte);
 
     virtual bool SaveState(FILE *file);
-    virtual bool LoadState(FILE *file);
+    virtual bool LoadState(uint16_t version, FILE *file);
 };
 
 
@@ -79,7 +79,7 @@ public:
     virtual void WriteByte(uint16_t addr, uint8_t byte);
 
     virtual bool SaveState(FILE *file);
-    virtual bool LoadState(FILE *file);
+    virtual bool LoadState(uint16_t version, FILE *file);
 
 private:
     uint8_t regRamEnable;
@@ -100,7 +100,7 @@ public:
     virtual void WriteByte(uint16_t addr, uint8_t byte);
 
     virtual bool SaveState(FILE *file);
-    virtual bool LoadState(FILE *file);
+    virtual bool LoadState(uint16_t version, FILE *file);
 
 private:
     uint8_t regRamEnable;
@@ -119,7 +119,7 @@ public:
     virtual void WriteByte(uint16_t addr, uint8_t byte);
 
     virtual bool SaveState(FILE *file);
-    virtual bool LoadState(FILE *file);
+    virtual bool LoadState(uint16_t version, FILE *file);
 
 private:
     uint8_t regRamEnable;

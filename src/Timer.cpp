@@ -149,30 +149,24 @@ void Timer::PrintTimerData()
 
 bool Timer::SaveState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fwrite(&internalCounter, sizeof(internalCounter), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&internalCounter, sizeof(internalCounter), 1, file))
         return false;
 
-    cnt = fwrite(&regTIMAOverflowed, sizeof(regTIMAOverflowed), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&regTIMAOverflowed, sizeof(regTIMAOverflowed), 1, file))
         return false;
 
     return true;
 }
 
 
-bool Timer::LoadState(FILE *file)
+bool Timer::LoadState(uint16_t version, FILE *file)
 {
-    size_t cnt;
+    (void)version;
 
-    cnt = fread(&internalCounter, sizeof(internalCounter), 1, file);
-    if (cnt == 0)
+    if (!fread(&internalCounter, sizeof(internalCounter), 1, file))
         return false;
 
-    cnt = fread(&regTIMAOverflowed, sizeof(regTIMAOverflowed), 1, file);
-    if (cnt == 0)
+    if (!fread(&regTIMAOverflowed, sizeof(regTIMAOverflowed), 1, file))
         return false;
 
     return true;

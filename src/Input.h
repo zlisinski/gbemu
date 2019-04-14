@@ -15,7 +15,7 @@ public:
     void SetButtons(const Buttons &buttons);
 
     bool SaveState(FILE *file);
-    bool LoadState(FILE *file);
+    bool LoadState(uint16_t version, FILE *file);
 
     // Inherited from MemoryByteObserver.
     virtual void AttachToMemorySubject(MemoryByteSubject* subject);

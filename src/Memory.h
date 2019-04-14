@@ -125,7 +125,7 @@ public:
     void SaveRam(const std::string &filename);
 
     bool SaveState(FILE *file);
-    bool LoadState(FILE *file);
+    bool LoadState(uint16_t version, FILE *file);
 
     // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(TimerSubject* subject);

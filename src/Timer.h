@@ -30,7 +30,7 @@ public:
     uint16_t GetCounter() {return (*regDIV << 8) | internalCounter;}
 
     bool SaveState(FILE *file);
-    bool LoadState(FILE *file);
+    bool LoadState(uint16_t version, FILE *file);
 
 private:
     void ProcessCounterChange(uint16_t oldValue, uint16_t newValue);

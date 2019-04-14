@@ -279,6 +279,13 @@ bool Memory::SaveState(FILE *file)
     if (!fwrite(&memory[0], MEM_SIZE, 1, file))
         return false;
 
+    // If there is only a single RAM bank, it lives completely inside the main memory array.
+    if (ramBankCount > 1)
+    {
+        if (!fwrite(&ramBanks[0], ramBanks.size(), 1, file))
+            return false;
+    }
+
     if (!fwrite(&curRomBank, sizeof(curRomBank), 1, file))
         return false;
 
@@ -298,19 +305,37 @@ bool Memory::SaveState(FILE *file)
 }
 
 
-bool Memory::LoadState(FILE *file)
+bool Memory::LoadState(uint16_t version, FILE *file)
 {
     if (!fread(&memory[0], MEM_SIZE, 1, file))
         return false;
 
-    if (!fread(&curRomBank, sizeof(curRomBank), 1, file))
-        return false;
+    // If there is only a single RAM bank, it lives completely inside the main memory array.
+    if (ramBankCount > 1)
+    {
+        if (!fread(&ramBanks[0], ramBanks.size(), 1, file))
+            return false;
+    }
 
-    if (!fread(&curRamBank, sizeof(curRamBank), 1, file))
-        return false;
+    if (version == 1)
+    {
+        // Set defaults for values not in save version 1.
+        // Will this break things? I don't know.
+        curRomBank = 0;
+        curRamBank = 0;
+        ramEnabled = false;
+    }
+    else
+    {
+        if (!fread(&curRomBank, sizeof(curRomBank), 1, file))
+            return false;
 
-    if (!fread(&ramEnabled, sizeof(ramEnabled), 1, file))
-        return false;
+        if (!fread(&curRamBank, sizeof(curRamBank), 1, file))
+            return false;
+
+        if (!fread(&ramEnabled, sizeof(ramEnabled), 1, file))
+            return false;
+    }
 
     if (!fread(&isDmaActive, sizeof(isDmaActive), 1, file))
         return false;
@@ -318,7 +343,7 @@ bool Memory::LoadState(FILE *file)
     if (!fread(&dmaOffset, sizeof(dmaOffset), 1, file))
         return false;
 
-    return mbc->LoadState(file);
+    return mbc->LoadState(version, file);
 }
 
 

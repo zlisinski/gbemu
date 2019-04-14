@@ -29,30 +29,24 @@ Serial::~Serial()
 
 bool Serial::SaveState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fwrite(&counter, sizeof(counter), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&counter, sizeof(counter), 1, file))
         return false;
 
-    cnt = fwrite(&inProgress, sizeof(inProgress), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&inProgress, sizeof(inProgress), 1, file))
         return false;
 
     return true;
 }
 
 
-bool Serial::LoadState(FILE *file)
+bool Serial::LoadState(uint16_t version, FILE *file)
 {
-    size_t cnt;
+    (void)version;
 
-    cnt = fread(&counter, sizeof(counter), 1, file);
-    if (cnt == 0)
+    if (!fread(&counter, sizeof(counter), 1, file))
         return false;
 
-    cnt = fread(&inProgress, sizeof(inProgress), 1, file);
-    if (cnt == 0)
+    if (!fread(&inProgress, sizeof(inProgress), 1, file))
         return false;
 
     return true;

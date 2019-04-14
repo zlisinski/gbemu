@@ -57,9 +57,10 @@ bool MbcNone::SaveState(FILE *file)
 }
 
 
-bool MbcNone::LoadState(FILE *file)
+bool MbcNone::LoadState(uint16_t version, FILE *file)
 {
     (void)file; // Stop warnings about unused variables.
+    (void)version;
     return true;
 }
 
@@ -149,8 +150,10 @@ bool Mbc1::SaveState(FILE *file)
 }
 
 
-bool Mbc1::LoadState(FILE *file)
+bool Mbc1::LoadState(uint16_t version, FILE *file)
 {
+    (void)version;
+
     if (!fread(&regRamEnable, sizeof(regRamEnable), 1, file))
         return false;
 
@@ -188,6 +191,7 @@ void Mbc2::WriteByte(uint16_t addr, uint8_t byte)
             LogInstruction("Writing %02X(%02X) to %04X", byte, regRamEnable, addr);
             memory->EnableRam(regRamEnable == 0x0A);
             break;
+
         case 0x2100: // 0x2000 - 0x3FFF, except values where low bit of high byte is 0 (0x20nn, 0x22nn, 0x24nn, etc).
             regRomBank = byte & 0x0F;
             LogInstruction("Writing %02X(%02X) to %04X", byte, regRomBank, addr);
@@ -198,6 +202,7 @@ void Mbc2::WriteByte(uint16_t addr, uint8_t byte)
 
             memory->MapRomBank(regRomBank);
             break;
+
         default:
             LogError("Writing %02X to %04X ignored by MBC2", byte, addr);
             break;
@@ -217,13 +222,21 @@ bool Mbc2::SaveState(FILE *file)
 }
 
 
-bool Mbc2::LoadState(FILE *file)
+bool Mbc2::LoadState(uint16_t version, FILE *file)
 {
     if (!fread(&regRamEnable, sizeof(regRamEnable), 1, file))
         return false;
 
     if (!fread(&regRomBank, sizeof(regRomBank), 1, file))
         return false;
+
+    if (version == 1)
+    {
+        // Version 1 saved two extra bytes when all MBC types were in one class.
+        uint16_t dummy;
+        if (!fread(&dummy, sizeof(dummy), 1, file))
+            return false;
+    }
 
     return true;
 }
@@ -301,8 +314,10 @@ bool Mbc3::SaveState(FILE *file)
 }
 
 
-bool Mbc3::LoadState(FILE *file)
+bool Mbc3::LoadState(uint16_t version, FILE *file)
 {
+    (void)version;
+
     if (!fread(&regRamEnable, sizeof(regRamEnable), 1, file))
         return false;
 

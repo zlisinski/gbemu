@@ -84,22 +84,18 @@ void Interrupt::ClearInterrupt(eInterruptTypes type)
 
 bool Interrupt::SaveState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fwrite(&flagIME, sizeof(flagIME), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&flagIME, sizeof(flagIME), 1, file))
         return false;
 
     return true;
 }
 
 
-bool Interrupt::LoadState(FILE *file)
+bool Interrupt::LoadState(uint16_t version, FILE *file)
 {
-    size_t cnt;
+    (void)version;
 
-    cnt = fread(&flagIME, sizeof(flagIME), 1, file);
-    if (cnt == 0)
+    if (!fread(&flagIME, sizeof(flagIME), 1, file))
         return false;
 
     return true;

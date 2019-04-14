@@ -1583,46 +1583,36 @@ void Cpu::ProcessOpCode()
 
 bool Cpu::SaveState(FILE *file)
 {
-    size_t cnt;
-
-    cnt = fwrite(&reg, sizeof(reg), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&reg, sizeof(reg), 1, file))
         return false;
 
-    cnt = fwrite(&enableInterruptsDelay, sizeof(enableInterruptsDelay), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&enableInterruptsDelay, sizeof(enableInterruptsDelay), 1, file))
         return false;
 
-    cnt = fwrite(&halted, sizeof(halted), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&halted, sizeof(halted), 1, file))
         return false;
 
-    cnt = fwrite(&haltBug, sizeof(haltBug), 1, file);
-    if (cnt == 0)
+    if (!fwrite(&haltBug, sizeof(haltBug), 1, file))
         return false;
 
     return true;
 }
 
 
-bool Cpu::LoadState(FILE *file)
+bool Cpu::LoadState(uint16_t version, FILE *file)
 {
-    size_t cnt;
+    (void)version;
 
-    cnt = fread(&reg, sizeof(reg), 1, file);
-    if (cnt == 0)
+    if (!fread(&reg, sizeof(reg), 1, file))
         return false;
 
-    cnt = fread(&enableInterruptsDelay, sizeof(enableInterruptsDelay), 1, file);
-    if (cnt == 0)
+    if (!fread(&enableInterruptsDelay, sizeof(enableInterruptsDelay), 1, file))
         return false;
 
-    cnt = fread(&halted, sizeof(halted), 1, file);
-    if (cnt == 0)
+    if (!fread(&halted, sizeof(halted), 1, file))
         return false;
 
-    cnt = fread(&haltBug, sizeof(haltBug), 1, file);
-    if (cnt == 0)
+    if (!fread(&haltBug, sizeof(haltBug), 1, file))
         return false;
 
     return true;

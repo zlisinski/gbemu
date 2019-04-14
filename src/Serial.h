@@ -15,7 +15,7 @@ public:
     virtual ~Serial();
 
     bool SaveState(FILE *file);
-    bool LoadState(FILE *file);
+    bool LoadState(uint16_t version, FILE *file);
 
     virtual void AttachToMemorySubject(MemoryByteSubject* subject);
     virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
