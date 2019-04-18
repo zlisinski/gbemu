@@ -1,25 +1,26 @@
 #pragma once
 
 #include "gbemu.h"
+#include "IoRegisterProxy.h"
 #include "Interrupt.h"
-#include "MemoryByteObserver.h"
-#include "MemoryByteSubject.h"
 #include "TimerObserver.h"
 #include "TimerSubject.h"
 
 
-class Serial : public MemoryByteObserver, public TimerObserver
+class Serial : public IoRegisterProxy, public TimerObserver
 {
 public:
-    Serial(uint8_t *regSB, uint8_t *regSC, Interrupt* interrupts);
+    Serial(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts);
     virtual ~Serial();
 
     bool SaveState(FILE *file);
     bool LoadState(uint16_t version, FILE *file);
 
-    virtual void AttachToMemorySubject(MemoryByteSubject* subject);
-    virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
+    // Inherited from IoRegisterProxy.
+    virtual bool WriteByte(uint16_t address, uint8_t byte);
+    virtual uint8_t ReadByte(uint16_t address) const;
 
+    // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
 

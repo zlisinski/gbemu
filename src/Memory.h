@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "gbemu.h"
+#include "IoRegisterProxy.h"
 #include "MemoryBankController.h"
-#include "MemoryByteSubject.h"
 #include "TimerObserver.h"
 #include "TimerSubject.h"
 
@@ -97,7 +97,7 @@ const uint16_t OAM_RAM_START = 0xFE00; // OAM(sprite) RAM is 0xFE00-0xFE9F.
 const uint8_t OAM_RAM_LEN = 0xA0;
 
 
-class Memory : public MemoryBankInterface, public MemoryByteSubject, public TimerObserver
+class Memory : public MemoryBankInterface, public IoRegisterSubject, public TimerObserver
 {
 public:
     Memory(InfoInterface *infoInterface = NULL, DebuggerInterface *debuggerInterface = NULL);

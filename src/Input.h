@@ -3,13 +3,12 @@
 #include "gbemu.h"
 #include "Buttons.h"
 #include "Interrupt.h"
-#include "MemoryByteObserver.h"
-#include "MemoryByteSubject.h"
+#include "IoRegisterProxy.h"
 
-class Input : public MemoryByteObserver
+class Input : public IoRegisterProxy
 {
 public:
-    Input(uint8_t *regP1, Interrupt* interrupts);
+    Input(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts);
     virtual ~Input();
 
     void SetButtons(const Buttons &buttons);
@@ -17,9 +16,9 @@ public:
     bool SaveState(FILE *file);
     bool LoadState(uint16_t version, FILE *file);
 
-    // Inherited from MemoryByteObserver.
-    virtual void AttachToMemorySubject(MemoryByteSubject* subject);
-    virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
+    // Inherited from IoRegisterProxy.
+    virtual bool WriteByte(uint16_t address, uint8_t byte);
+    virtual uint8_t ReadByte(uint16_t address) const;
 
 private:
     void UpdateRegP1(uint8_t newP1);

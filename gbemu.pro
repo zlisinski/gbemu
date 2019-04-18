@@ -38,14 +38,13 @@ HEADERS += \
 	src/Exceptions.h \
 	src/gbemu.h \
 	src/Globals.h \
+	src/IoRegisterProxy.h \
 	src/InfoInterface.h \
 	src/Input.h \
 	src/Interrupt.h \
 	src/Logger.h \
 	src/MemoryBankController.h \
-	src/MemoryByteObserver.h \
 	src/MemoryByteProxy.h \
-	src/MemoryByteSubject.h \
 	src/Memory.h \
 	src/RegisterByteProxy.h \
 	src/Serial.h \

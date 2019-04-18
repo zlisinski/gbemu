@@ -1,4 +1,6 @@
+#include <iomanip>
 #include <memory>
+#include <sstream>
 
 #include "Interrupt.h"
 #include "Logger.h"
@@ -7,9 +9,9 @@
 const uint16_t interruptBaseAddr = 0x0040;
 const uint8_t interruptOffset = 0x08;
 
-Interrupt::Interrupt(uint8_t *regIE, uint8_t *regIF) :
-    regIE(regIE),
-    regIF(regIF),
+Interrupt::Interrupt(IoRegisterSubject *ioRegisterSubject) :
+    regIE(ioRegisterSubject->AttachIoRegister(eRegIE, this)),
+    regIF(ioRegisterSubject->AttachIoRegister(eRegIF, this)),
     flagIME(false)
 {
 
@@ -18,11 +20,7 @@ Interrupt::Interrupt(uint8_t *regIE, uint8_t *regIF) :
 
 Interrupt::~Interrupt()
 {
-    if (memorySubject)
-    {
-        memorySubject->DetachObserver(eRegIE, this);
-        memorySubject->DetachObserver(eRegIF, this);
-    }
+
 }
 
 
@@ -102,25 +100,41 @@ bool Interrupt::LoadState(uint16_t version, FILE *file)
 }
 
 
-void Interrupt::AttachToMemorySubject(MemoryByteSubject* subject)
+bool Interrupt::WriteByte(uint16_t address, uint8_t byte)
 {
-    this->memorySubject = subject;
+    LogInstruction("Interrupt::WriteByte %04X, %02X", address, byte);
 
-    subject->AttachObserver(eRegIE, this);
-    subject->AttachObserver(eRegIF, this);
+    switch (address)
+    {
+        case eRegIE:
+            // Mooneye's tests say unused bits are whatever they were set to.
+            *regIE = byte;
+            return true;
+        case eRegIF:
+            // Mooneye's tests say unused bits are set to 1.
+            *regIF = byte | 0xE0;
+            return true;
+        default:
+            return false;
+    }
 }
 
 
-void Interrupt::UpdateMemoryAddr(uint16_t addr, uint8_t value)
+uint8_t Interrupt::ReadByte(uint16_t address) const
 {
-    LogInstruction("UpdateMemoryAddr %04X, %02X", addr, value);
-    switch (addr)
+    LogInstruction("Interrupt::ReadByte %04X", address);
+
+    switch (address)
     {
         case eRegIE:
-            *regIE = value;
-            break;
+            // Mooneye's tests say unused bits are whatever they were set to.
+            return *regIE;
         case eRegIF:
-            *regIF = value;
-            break;
+            // Mooneye's tests say unused bits are set to 1.
+            return *regIF | 0xE0;
+        default:
+            std::stringstream ss;
+            ss << "Interrupt doesnt handle reads to 0x" << std::hex << std::setw(4) << std::setfill('0') << address;
+            throw std::range_error(ss.str());
     }
 }

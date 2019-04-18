@@ -1,4 +1,6 @@
+#include <iomanip>
 #include <memory>
+#include <sstream>
 
 #include "Input.h"
 #include "Logger.h"
@@ -15,8 +17,8 @@ enum ButtonMask
 };
 
 
-Input::Input(uint8_t *regP1, Interrupt* interrupts) :
-    regP1(regP1),
+Input::Input(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts) :
+    regP1(ioRegisterSubject->AttachIoRegister(eRegP1, this)),
     interrupts(interrupts),
     buttonData()
 {
@@ -27,25 +29,38 @@ Input::Input(uint8_t *regP1, Interrupt* interrupts) :
 
 Input::~Input()
 {
-    if (memorySubject)
+
+}
+
+
+bool Input::WriteByte(uint16_t address, uint8_t byte)
+{
+   LogInstruction("Input::WriteByte %04X, %02X", address, byte);
+
+    switch (address)
     {
-        memorySubject->DetachObserver(eRegP1, this);
+        case eRegP1:
+            UpdateRegP1(byte);
+            return true;
+        default:
+            return false;
     }
 }
 
 
-void Input::AttachToMemorySubject(MemoryByteSubject* subject)
+uint8_t Input::ReadByte(uint16_t address) const
 {
-    this->memorySubject = subject;
+    LogInstruction("Input::ReadByte %04X", address);
 
-    subject->AttachObserver(eRegP1, this);
-}
-
-
-void Input::UpdateMemoryAddr(uint16_t addr, uint8_t value)
-{
-    if (addr == eRegP1)
-        UpdateRegP1(value);
+    switch (address)
+    {
+        case eRegP1:
+            return *regP1;
+        default:
+            std::stringstream ss;
+            ss << "Input doesnt handle reads to 0x" << std::hex << std::setw(4) << std::setfill('0') << address;
+            throw std::range_error(ss.str());
+    }
 }
 
 

@@ -153,6 +153,9 @@ uint8_t Memory::ReadByte(uint16_t index) const
     if (index >= 0xA000 && index < 0xC000 && ramEnabled == false)
         return 0xFF;
 
+    if (HasIoRegisterProxy(index))
+        return ReadIoRegisterProxy(index);
+
     return memory[index];
 }
 
@@ -202,7 +205,7 @@ void Memory::WriteByte(uint16_t index, uint8_t byte)
         debuggerInterface->MemoryChanged(index, 1);
 
     // Let observers handle the update. If there are no observers for this address, update the value.
-    if (!NotifyObservers(index, byte))
+    if (!WriteIoRegisterProxy(index, byte))
     {
         memory[index] = byte;
     }

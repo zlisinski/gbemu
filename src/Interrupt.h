@@ -1,8 +1,7 @@
 #pragma once
 
 #include "gbemu.h"
-#include "MemoryByteObserver.h"
-#include "MemoryByteSubject.h"
+#include "IoRegisterProxy.h"
 
 
 enum eInterruptTypes
@@ -24,10 +23,10 @@ enum eInterruptBits
 };
 
 
-class Interrupt : public MemoryByteObserver
+class Interrupt : public IoRegisterProxy
 {
 public:
-    Interrupt(uint8_t *regIE, uint8_t *regIF);
+    Interrupt(IoRegisterSubject *ioRegisterSubject);
     virtual ~Interrupt();
 
     bool CheckInterrupts(eInterruptTypes &intType);
@@ -42,10 +41,10 @@ public:
 
     bool SaveState(FILE *file);
     bool LoadState(uint16_t version, FILE *file);
-    
-    // Inherited from MemoryByteObserver.
-    virtual void AttachToMemorySubject(MemoryByteSubject* subject);
-    virtual void UpdateMemoryAddr(uint16_t addr, uint8_t value);
+
+    // Inherited from IoRegisterProxy.
+    virtual bool WriteByte(uint16_t address, uint8_t byte);
+    virtual uint8_t ReadByte(uint16_t address) const;
 
 private:
     uint8_t *regIE;

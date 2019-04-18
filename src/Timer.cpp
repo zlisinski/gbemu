@@ -1,4 +1,6 @@
+#include <iomanip>
 #include <memory>
+#include <sstream>
 
 #include "Logger.h"
 #include "Timer.h"
@@ -16,11 +18,11 @@ const uint8_t timerEnabledMask = 0x04;
 const uint8_t clocksPerCycle = 4;
 
 
-Timer::Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV, Interrupt* interrupts) :
-    regTIMA(regTIMA),
-    regTMA(regTMA),
-    regTAC(regTAC),
-    regDIV(regDIV),
+Timer::Timer(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts) :
+    regTIMA(ioRegisterSubject->AttachIoRegister(eRegTIMA, this)),
+    regTMA(ioRegisterSubject->AttachIoRegister(eRegTMA, this)),
+    regTAC(ioRegisterSubject->AttachIoRegister(eRegTAC, this)),
+    regDIV(ioRegisterSubject->AttachIoRegister(eRegDIV, this)),
     internalCounter(0),
     regTIMAOverflowed(false),
     interrupts(interrupts)
@@ -31,24 +33,53 @@ Timer::Timer(uint8_t *regTIMA, uint8_t *regTMA, uint8_t *regTAC, uint8_t *regDIV
 
 Timer::~Timer()
 {
-    if (memorySubject)
+
+}
+
+
+bool Timer::WriteByte(uint16_t address, uint8_t byte)
+{
+   LogInstruction("Timer::WriteByte %04X, %02X", address, byte);
+
+    switch (address)
     {
-        //memorySubject->DetachObserver(eRegTIMA, this);
-        //memorySubject->DetachObserver(eRegTMA, this);
-        memorySubject->DetachObserver(eRegTAC, this);
-        memorySubject->DetachObserver(eRegDIV, this);
+        case eRegTIMA:
+            *regTIMA = byte;
+            return true;
+        case eRegTMA:
+            *regTMA = byte;
+            return true;
+        case eRegTAC:
+            WriteTAC(byte);
+            return true;
+        case eRegDIV:
+            WriteDIV();
+            return true;
+        default:
+            return false;
     }
 }
 
 
-// This has to be called after construction.
-void Timer::AttachToMemorySubject(MemoryByteSubject* subject)
+uint8_t Timer::ReadByte(uint16_t address) const
 {
-    this->memorySubject = subject;
-    //subject->AttachObserver(eRegTIMA, this);
-    //subject->AttachObserver(eRegTMA, this);
-    subject->AttachObserver(eRegTAC, this);
-    subject->AttachObserver(eRegDIV, this);
+    LogInstruction("Timer::ReadByte %04X", address);
+
+    switch (address)
+    {
+        case eRegTIMA:
+            return *regTIMA;
+        case eRegTMA:
+            return *regTMA;
+        case eRegTAC:
+            return *regTAC;
+        case eRegDIV:
+            return *regDIV;
+        default:
+            std::stringstream ss;
+            ss << "Timer doesnt handle reads to 0x" << std::hex << std::setw(4) << std::setfill('0') << address;
+            throw std::range_error(ss.str());
+    }
 }
 
 
@@ -119,25 +150,6 @@ void Timer::WriteTAC(uint8_t newValue)
 {
     // TODO: Check for frequency change, and bits associated with old freq and new freq.
     *regTAC = newValue;
-}
-
-
-void Timer::UpdateMemoryAddr(uint16_t addr, uint8_t value)
-{
-    //LogDebug("UpdateMemoryAddr %04X, %02X", addr, value);
-    switch (addr)
-    {
-        /*case eRegTIMA:
-            break;
-        case eRegTMA:
-            break;*/
-        case eRegTAC:
-            WriteTAC(value);
-            break;
-        case eRegDIV:
-            WriteDIV();
-            break;
-    }
 }
 
 

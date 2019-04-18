@@ -1,13 +1,16 @@
+#include <iomanip>
 #include <memory>
+#include <sstream>
+
 #include "Serial.h"
 #include "Logger.h"
 #include "Memory.h"
 
 const uint cyclesPerBit = 8;
 
-Serial::Serial(uint8_t *regSB, uint8_t *regSC, Interrupt* interrupts) :
-    regSB(regSB),
-    regSC(regSC),
+Serial::Serial(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts) :
+    regSB(ioRegisterSubject->AttachIoRegister(eRegSB, this)),
+    regSC(ioRegisterSubject->AttachIoRegister(eRegSC, this)),
     interrupts(interrupts),
     counter(0),
     inProgress(false)
@@ -19,9 +22,6 @@ Serial::Serial(uint8_t *regSB, uint8_t *regSC, Interrupt* interrupts) :
 
 Serial::~Serial()
 {
-    if (memorySubject)
-        memorySubject->DetachObserver(eRegSC, this);
-
     if (timerSubject)
         timerSubject->DetachObserver(this);
 }
@@ -53,26 +53,46 @@ bool Serial::LoadState(uint16_t version, FILE *file)
 }
 
 
-void Serial::AttachToMemorySubject(MemoryByteSubject* subject)
+bool Serial::WriteByte(uint16_t address, uint8_t byte)
 {
-   this->memorySubject = subject;
-    subject->AttachObserver(eRegSC, this);
+   LogInstruction("Serial::WriteByte %04X, %02X", address, byte);
+
+    switch (address)
+    {
+        case eRegSB:
+            *regSB = byte;
+            return true;
+        case eRegSC:
+            // Unused regSC bits are always 1.
+            *regSC = byte | 0x7E;
+
+            // Only start transfer if using internal clock source.
+            if (!inProgress && (byte & 0x81) == 0x81)
+            {
+                inProgress = true;
+                counter = 0;
+            }
+            return true;
+        default:
+            return false;
+    }
 }
 
 
-void Serial::UpdateMemoryAddr(uint16_t addr, uint8_t value)
+uint8_t Serial::ReadByte(uint16_t address) const
 {
-    if (addr != eRegSC)
-        return;
+    LogInstruction("Serial::ReadByte %04X", address);
 
-    // Unused regSC bits are always 1.
-    *regSC = value | 0x7E;
-
-    // Only start transfer if using internal clock source.
-    if (!inProgress && (value & 0x81) == 0x81) 
+    switch (address)
     {
-        inProgress = true;
-        counter = 0;
+        case eRegSB:
+            return *regSB;
+        case eRegSC:
+            return *regSC;
+        default:
+            std::stringstream ss;
+            ss << "Serial doesnt handle reads to 0x" << std::hex << std::setw(4) << std::setfill('0') << address;
+            throw std::range_error(ss.str());
     }
 }
 

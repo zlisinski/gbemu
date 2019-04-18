@@ -69,12 +69,11 @@ bool EmulatorMgr::LoadRom(const char *filename)
     quit = false;
 
     memory = new Memory(infoInterface, debuggerInterface);
-    interrupts = new Interrupt(memory->GetBytePtr(eRegIE), memory->GetBytePtr(eRegIF));
-    timer = new Timer(memory->GetBytePtr(eRegTIMA), memory->GetBytePtr(eRegTMA),
-                        memory->GetBytePtr(eRegTAC), memory->GetBytePtr(eRegDIV), interrupts);
+    interrupts = new Interrupt(memory);
+    timer = new Timer(memory, interrupts);
     display = new Display(memory, interrupts, frameHandler);
-    input = new Input(memory->GetBytePtr(eRegP1), interrupts);
-    serial = new Serial(memory->GetBytePtr(eRegSB), memory->GetBytePtr(eRegSC), interrupts);
+    input = new Input(memory, interrupts);
+    serial = new Serial(memory, interrupts);
     cpu = new Cpu(interrupts, memory, timer);
 
     /*if (runbootRom)
@@ -243,12 +242,11 @@ void EmulatorMgr::LoadState(int slot)
 
     // Create new objects so if there is an error loading, the current game doesn't get killed.
     Memory *newMemory = new Memory(infoInterface, debuggerInterface);
-    Interrupt *newInterrupts = new Interrupt(newMemory->GetBytePtr(eRegIE), newMemory->GetBytePtr(eRegIF));
-    Timer *newTimer = new Timer(newMemory->GetBytePtr(eRegTIMA), newMemory->GetBytePtr(eRegTMA),
-                                newMemory->GetBytePtr(eRegTAC), newMemory->GetBytePtr(eRegDIV), newInterrupts);
+    Interrupt *newInterrupts = new Interrupt(newMemory);
+    Timer *newTimer = new Timer(memory, newInterrupts);
     Display *newDisplay = new Display(newMemory, newInterrupts, frameHandler);
-    Input *newInput = new Input(newMemory->GetBytePtr(eRegP1), newInterrupts);
-    Serial *newSerial = new Serial(newMemory->GetBytePtr(eRegSB), newMemory->GetBytePtr(eRegSC), newInterrupts);
+    Input *newInput = new Input(newMemory, newInterrupts);
+    Serial *newSerial = new Serial(newMemory, newInterrupts);
     Cpu *newCpu = new Cpu(newInterrupts, newMemory, newTimer);
 
     newMemory->SetRomMemory(gameRomMemory);
@@ -298,12 +296,6 @@ void EmulatorMgr::ThreadFunc()
 {
     try
     {
-        // Setup Memory observers.
-        interrupts->AttachToMemorySubject(memory);
-        timer->AttachToMemorySubject(memory);
-        input->AttachToMemorySubject(memory);
-        serial->AttachToMemorySubject(memory);
-
         // Setup Timer observers.
         display->AttachToTimerSubject(timer);
         memory->AttachToTimerSubject(timer);
