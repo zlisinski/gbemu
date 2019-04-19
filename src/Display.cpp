@@ -6,6 +6,7 @@
 #include "AbsFrameHandler.h"
 #include "Display.h"
 #include "Globals.h"
+#include "Logger.h"
 #include "Memory.h"
 
 const uint TILE_DATA_SIZE = 16; // Tile is 16 bytes.
@@ -60,21 +61,21 @@ enum SpriteAttrBits
     eSpriteAttrBgPriority = 0x80
 };
 
-Display::Display(Memory* memory, Interrupt* interrupts, AbsFrameHandler *frameHandler) :
+
+Display::Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler) :
     memory(memory),
     interrupts(interrupts),
-    regLCDC(memory->GetBytePtr(eRegLCDC)),
-    regSTAT(memory->GetBytePtr(eRegSTAT)),
-    regSCY(memory->GetBytePtr(eRegSCY)),
-    regSCX(memory->GetBytePtr(eRegSCX)),
-    regLY(memory->GetBytePtr(eRegLY)),
-    regLYC(memory->GetBytePtr(eRegLYC)),
-    regDMA(memory->GetBytePtr(eRegDMA)),
-    regBGP(memory->GetBytePtr(eRegBGP)),
-    regOBP0(memory->GetBytePtr(eRegOBP0)),
-    regOBP1(memory->GetBytePtr(eRegOBP1)),
-    regWY(memory->GetBytePtr(eRegWY)),
-    regWX(memory->GetBytePtr(eRegWX)),
+    regLCDC(memory->AttachIoRegister(eRegLCDC, this)),
+    regSTAT(memory->AttachIoRegister(eRegSTAT, this)),
+    regSCY(memory->AttachIoRegister(eRegSCY, this)),
+    regSCX(memory->AttachIoRegister(eRegSCX, this)),
+    regLY(memory->AttachIoRegister(eRegLY, this)),
+    regLYC(memory->AttachIoRegister(eRegLYC, this)),
+    regBGP(memory->AttachIoRegister(eRegBGP, this)),
+    regOBP0(memory->AttachIoRegister(eRegOBP0, this)),
+    regOBP1(memory->AttachIoRegister(eRegOBP1, this)),
+    regWY(memory->AttachIoRegister(eRegWY, this)),
+    regWX(memory->AttachIoRegister(eRegWX, this)),
     displayMode(eMode0HBlank),
     counter(0),
     frameHandler(frameHandler)
@@ -117,6 +118,89 @@ bool Display::LoadState(uint16_t version, FILE *file)
         DrawScanline(i);
 
     return true;
+}
+
+
+bool Display::WriteByte(uint16_t address, uint8_t byte)
+{
+    LogInstruction("Display::WriteByte %04X, %02X", address, byte);
+
+    switch (address)
+    {
+        case eRegLCDC:
+            *regLCDC = byte;
+            return true;
+        case eRegSTAT:
+            // Preserve lower 3 read-only bits, top bit is always set.
+            *regSTAT = (byte & 0xFC) | (*regSTAT & 0x03) | 0x80;
+            return true;
+        case eRegSCY:
+            *regSCY = byte;
+            return true;
+        case eRegSCX:
+            *regSCX = byte;
+            return true;
+        case eRegLY:
+            //regLY is read-only.
+            return true;
+        case eRegLYC:
+            *regLYC = byte;
+            return true;
+        case eRegBGP:
+            *regBGP = byte;
+            return true;
+        case eRegOBP0:
+            *regOBP0 = byte;
+            return true;
+        case eRegOBP1:
+            *regOBP1 = byte;
+            return true;
+        case eRegWY:
+            *regWY = byte;
+            return true;
+        case eRegWX:
+            *regWX = byte;
+            return true;
+        default:
+            return false;
+    }
+}
+
+
+uint8_t Display::ReadByte(uint16_t address) const
+{
+    LogInstruction("Display::ReadByte %04X", address);
+
+    switch (address)
+    {
+        case eRegLCDC:
+            return *regLCDC;
+        case eRegSTAT:
+            // Unused bit is always 1.
+            return *regSTAT | 0x80;
+        case eRegSCY:
+            return *regSCY;
+        case eRegSCX:
+            return *regSCX;
+        case eRegLY:
+            return *regLY;
+        case eRegLYC:
+            return *regLYC;
+        case eRegBGP:
+            return *regBGP;
+        case eRegOBP0:
+            return *regOBP0;
+        case eRegOBP1:
+            return *regOBP1;
+        case eRegWY:
+            return *regWY;
+        case eRegWX:
+            return *regWX;
+        default:
+            std::stringstream ss;
+            ss << "Display doesnt handle reads to 0x" << std::hex << std::setw(4) << std::setfill('0') << address;
+            throw std::range_error(ss.str());
+    }
 }
 
 

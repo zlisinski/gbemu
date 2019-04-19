@@ -72,7 +72,8 @@ uint8_t Timer::ReadByte(uint16_t address) const
         case eRegTMA:
             return *regTMA;
         case eRegTAC:
-            return *regTAC;
+            // Unused bits are set to 1.
+            return *regTAC | 0xF8;
         case eRegDIV:
             return *regDIV;
         default:

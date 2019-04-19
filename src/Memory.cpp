@@ -137,6 +137,24 @@ void Memory::SetRomMemory(std::vector<uint8_t> &gameRomMemory)
 
 uint8_t Memory::ReadByte(uint16_t index) const
 {
+    // Unused IO registers return 0xFF.
+    switch (index)
+    {
+        case 0xFF03:
+        case 0xFF08: case 0xFF09: case 0xFF0A: case 0xFF0B: case 0xFF0C: case 0xFF0D: case 0xFF0E:
+        case 0xFF15:
+        case 0xFF1F:
+        case 0xFF27: case 0xFF28: case 0xFF29:
+        case 0xFF4C: case 0xFF4D: case 0xFF4E: case 0xFF4F:
+        case 0xFF50: case 0xFF51: case 0xFF52: case 0xFF53: case 0xFF54: case 0xFF55: case 0xFF56: case 0xFF57:
+        case 0xFF58: case 0xFF59: case 0xFF5A: case 0xFF5B: case 0xFF5C: case 0xFF5D: case 0xFF5E: case 0xFF5F:
+        case 0xFF60: case 0xFF61: case 0xFF62: case 0xFF63: case 0xFF64: case 0xFF65: case 0xFF66: case 0xFF67:
+        case 0xFF68: case 0xFF69: case 0xFF6A: case 0xFF6B: case 0xFF6C: case 0xFF6D: case 0xFF6E: case 0xFF6F:
+        case 0xFF70: case 0xFF71: case 0xFF72: case 0xFF73: case 0xFF74: case 0xFF75: case 0xFF76: case 0xFF77:
+        case 0xFF78: case 0xFF79: case 0xFF7A: case 0xFF7B: case 0xFF7C: case 0xFF7D: case 0xFF7E: case 0xFF7F:
+            return 0xFF;
+    }
+
     // Reads from 0xFEA0-0xFEFF return 0x00.
     if (index >= 0xFEA0 && index <= 0xFEFF)
         return 0x00;
@@ -144,10 +162,6 @@ uint8_t Memory::ReadByte(uint16_t index) const
     // Reads from 0xE000-0xFDFF mirror 0xC000-0xDDFF.
     if (index >= 0xE000 && index <= 0xFDFF)
         return memory[index - 0x2000];
-
-    // Unused regSC bits are always 1.
-    if (index == eRegSC)
-        return memory[index] | 0x7E;
 
     // Reads from SRAM return 0xFF when not enabled.
     if (index >= 0xA000 && index < 0xC000 && ramEnabled == false)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gbemu.h"
+#include "IoRegisterProxy.h"
 #include "Interrupt.h"
 #include "TimerObserver.h"
 #include "TimerSubject.h"
@@ -11,14 +12,18 @@ class Memory;
 const uint SCREEN_X = 160;
 const uint SCREEN_Y = 144;
 
-class Display : public TimerObserver
+class Display : public IoRegisterProxy, public TimerObserver
 {
 public:
-    Display(Memory* memory, Interrupt* interrupts, AbsFrameHandler *frameHandler);
+    Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler);
     virtual ~Display();
 
     bool SaveState(FILE *file);
     bool LoadState(uint16_t version, FILE *file);
+
+    // Inherited from IoRegisterProxy.
+    virtual bool WriteByte(uint16_t address, uint8_t byte);
+    virtual uint8_t ReadByte(uint16_t address) const;
 
     // Inherited from TimerObserver.
     virtual void AttachToTimerSubject(TimerSubject* subject);
@@ -63,7 +68,6 @@ private:
     uint8_t *regSCX;   // 0xFF43 Scroll X
     uint8_t *regLY;    // 0xFF44 LCDC Y coordinate
     uint8_t *regLYC;   // 0xFF45 LY compare
-    uint8_t *regDMA;   // 0xFF46 DMA transfer start address
     uint8_t *regBGP;   // 0xFF47 BG & window palette data
     uint8_t *regOBP0;  // 0xFF48 Object palette 0 data
     uint8_t *regOBP1;  // 0xFF49 Object palette 1 data
