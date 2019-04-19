@@ -9,3 +9,4 @@ gbemu
 serial.txt
 moc_*.h
 moc_*.cpp
+ui_*.h

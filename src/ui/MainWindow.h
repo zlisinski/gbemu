@@ -101,6 +101,7 @@ private slots:
     void SlotDebuggerWindowClosed();
     void SlotSaveState();
     void SlotLoadState();
+    void SlotOpenSettings();
 
 signals:
     void SignalFrameReady();

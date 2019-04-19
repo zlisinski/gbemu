@@ -60,7 +60,8 @@ HEADERS += \
 	src/ui/InfoWindow.h \
 	src/ui/LogWindow.h \
 	src/ui/MainWindow.h \
-	src/ui/QtFrameHandler.h
+	src/ui/QtFrameHandler.h \
+	src/ui/SettingsDialog.h
 
 SOURCES += \
 	src/Audio.cpp \
@@ -84,12 +85,14 @@ SOURCES += \
 	src/ui/Debugger/Opcode.cpp \
 	src/ui/InfoWindow.cpp \
 	src/ui/LogWindow.cpp \
-	src/ui/MainWindow.cpp
+	src/ui/MainWindow.cpp \
+	src/ui/SettingsDialog.cpp
 
 FORMS += \
 	src/ui/Debugger/AddressDialog.ui \
 	src/ui/Debugger/DebuggerWindow.ui \
 	src/ui/InfoWindow.ui \
-	src/ui/LogWindow.ui
+	src/ui/LogWindow.ui \
+	src/ui/SettingsDialog.ui
 
 

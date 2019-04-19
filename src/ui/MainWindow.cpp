@@ -7,6 +7,7 @@
 #include "LogWindow.h"
 #include "MainWindow.h"
 #include "QtFrameHandler.h"
+#include "SettingsDialog.h"
 #include "UiUtils.h"
 #include "../EmulatorMgr.h"
 #include "../Input.h"
@@ -169,6 +170,13 @@ void MainWindow::SetupMenuBar()
         connect(recentFilesActions[i], SIGNAL(triggered()), this, SLOT(SlotOpenRecentRom()));
     }
     UpdateRecentFilesActions();
+
+    fileMenu->addSeparator();
+
+    // File | Settings
+    QAction *fileSettingsAction = new QAction("&Settings...", this);
+    fileMenu->addAction(fileSettingsAction);
+    connect(fileSettingsAction, SIGNAL(triggered()), this, SLOT(SlotOpenSettings()));
 
     // File | Quit
     fileMenu->addSeparator();
@@ -585,4 +593,12 @@ void MainWindow::SlotSaveState()
 void MainWindow::SlotLoadState()
 {
     emulator->LoadState(1);
+}
+
+
+void MainWindow::SlotOpenSettings()
+{
+    SettingsDialog dialog(this);
+    dialog.setModal(true);
+    dialog.exec();
 }
