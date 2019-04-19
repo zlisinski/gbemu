@@ -8,13 +8,15 @@
 
 const uint cyclesPerBit = 8;
 
-Serial::Serial(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts) :
+Serial::Serial(IoRegisterSubject *ioRegisterSubject, Interrupt *interrupts, TimerSubject *timerSubject) :
     regSB(ioRegisterSubject->AttachIoRegister(eRegSB, this)),
     regSC(ioRegisterSubject->AttachIoRegister(eRegSC, this)),
     interrupts(interrupts),
     counter(0),
     inProgress(false)
 {
+    timerSubject->AttachObserver(this);
+
     *regSB = 0xFF;
     *regSC = 0x7F;
 }
@@ -22,8 +24,7 @@ Serial::Serial(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts) :
 
 Serial::~Serial()
 {
-    if (timerSubject)
-        timerSubject->DetachObserver(this);
+
 }
 
 
@@ -94,13 +95,6 @@ uint8_t Serial::ReadByte(uint16_t address) const
             ss << "Serial doesnt handle reads to 0x" << std::hex << std::setw(4) << std::setfill('0') << address;
             throw std::range_error(ss.str());
     }
-}
-
-
-void Serial::AttachToTimerSubject(TimerSubject* subject)
-{
-    this->timerSubject = subject;
-    subject->AttachObserver(this);
 }
 
 

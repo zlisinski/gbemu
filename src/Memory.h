@@ -8,7 +8,6 @@
 #include "IoRegisterProxy.h"
 #include "MemoryBankController.h"
 #include "TimerObserver.h"
-#include "TimerSubject.h"
 
 class DebuggerInterface;
 class InfoInterface;
@@ -128,7 +127,6 @@ public:
     bool LoadState(uint16_t version, FILE *file);
 
     // Inherited from TimerObserver.
-    virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
 
     virtual void MapRomBank(uint8_t bank);

@@ -85,9 +85,7 @@ Memory::Memory(InfoInterface *infoInterface, DebuggerInterface *debuggerInterfac
 
 Memory::~Memory()
 {
-    // Timer is already deleted when this runs. It doesn't hurt to comment this out for now. Figure out something better later.
-    /*if (timerSubject)
-        timerSubject->DetachObserver(this);*/
+
 }
 
 
@@ -361,13 +359,6 @@ bool Memory::LoadState(uint16_t version, FILE *file)
         return false;
 
     return mbc->LoadState(version, file);
-}
-
-
-void Memory::AttachToTimerSubject(TimerSubject* subject)
-{
-    this->timerSubject = subject;
-    subject->AttachObserver(this);
 }
 
 

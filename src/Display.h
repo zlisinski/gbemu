@@ -4,7 +4,6 @@
 #include "IoRegisterProxy.h"
 #include "Interrupt.h"
 #include "TimerObserver.h"
-#include "TimerSubject.h"
 
 class AbsFrameHandler;
 class Memory;
@@ -15,7 +14,7 @@ const uint SCREEN_Y = 144;
 class Display : public IoRegisterProxy, public TimerObserver
 {
 public:
-    Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler);
+    Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler, TimerSubject *timerSubject);
     virtual ~Display();
 
     bool SaveState(FILE *file);
@@ -26,7 +25,6 @@ public:
     virtual uint8_t ReadByte(uint16_t address) const;
 
     // Inherited from TimerObserver.
-    virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
 
 private:
@@ -59,8 +57,8 @@ private:
 
     static bool SpriteSort(const SpriteData &a, const SpriteData &b);
 
-    Memory* memory;
-    Interrupt* interrupts;
+    Memory *memory;
+    Interrupt *interrupts;
 
     uint8_t *regLCDC;  // 0xFF40 LCD control
     uint8_t *regSTAT;  // 0xFF41 LCDC status

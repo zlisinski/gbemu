@@ -8,7 +8,7 @@
 class Input : public IoRegisterProxy
 {
 public:
-    Input(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts);
+    Input(IoRegisterSubject *ioRegisterSubject, Interrupt *interrupts);
     virtual ~Input();
 
     void SetButtons(const Buttons &buttons);
@@ -24,7 +24,7 @@ private:
     void UpdateRegP1(uint8_t newP1);
 
     uint8_t *regP1;
-    Interrupt* interrupts;
+    Interrupt *interrupts;
 
     Buttons buttonData;
 };

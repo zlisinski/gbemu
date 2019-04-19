@@ -4,13 +4,12 @@
 #include "IoRegisterProxy.h"
 #include "Interrupt.h"
 #include "TimerObserver.h"
-#include "TimerSubject.h"
 
 
 class Serial : public IoRegisterProxy, public TimerObserver
 {
 public:
-    Serial(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts);
+    Serial(IoRegisterSubject *ioRegisterSubject, Interrupt *interrupts, TimerSubject *timerSubject);
     virtual ~Serial();
 
     bool SaveState(FILE *file);
@@ -21,13 +20,12 @@ public:
     virtual uint8_t ReadByte(uint16_t address) const;
 
     // Inherited from TimerObserver.
-    virtual void AttachToTimerSubject(TimerSubject* subject);
     virtual void UpdateTimer(uint value);
 
 private:
     uint8_t *regSB;
     uint8_t *regSC;
-    Interrupt* interrupts;
+    Interrupt *interrupts;
 
     uint counter;
     bool inProgress;

@@ -51,7 +51,6 @@ HEADERS += \
 	src/Serial.h \
 	src/Timer.h \
 	src/TimerObserver.h \
-	src/TimerSubject.h \
 	src/Utils.h \
 	src/ui/Debugger/AddressDialog.h \
 	src/ui/Debugger/DebuggerWindow.h \

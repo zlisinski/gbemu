@@ -17,7 +17,7 @@ enum ButtonMask
 };
 
 
-Input::Input(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts) :
+Input::Input(IoRegisterSubject *ioRegisterSubject, Interrupt *interrupts) :
     regP1(ioRegisterSubject->AttachIoRegister(eRegP1, this)),
     interrupts(interrupts),
     buttonData()

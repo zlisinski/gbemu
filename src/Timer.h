@@ -3,7 +3,7 @@
 #include "gbemu.h"
 #include "Interrupt.h"
 #include "Memory.h"
-#include "TimerSubject.h"
+#include "TimerObserver.h"
 
 // The memory for the timer registers belongs to the Memory class, but the Timer class 'owns' the access to the memory.
 // Because of this, we use direct pointers to the memory, and any writes that happen through the Memory class will get
@@ -11,7 +11,7 @@
 class Timer : public IoRegisterProxy, public TimerSubject
 {
 public:
-    Timer(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts);
+    Timer(IoRegisterSubject *ioRegisterSubject, Interrupt *interrupts);
     virtual ~Timer();
 
     void AddCycle();
@@ -42,5 +42,5 @@ private:
 
     bool regTIMAOverflowed;
 
-    Interrupt* interrupts;
+    Interrupt *interrupts;
 };

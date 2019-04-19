@@ -62,7 +62,7 @@ enum SpriteAttrBits
 };
 
 
-Display::Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler) :
+Display::Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler, TimerSubject *timerSubject) :
     memory(memory),
     interrupts(interrupts),
     regLCDC(memory->AttachIoRegister(eRegLCDC, this)),
@@ -80,14 +80,13 @@ Display::Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHa
     counter(0),
     frameHandler(frameHandler)
 {
-
+    timerSubject->AttachObserver(this);
 }
 
 
 Display::~Display()
 {
-    if (timerSubject)
-        timerSubject->DetachObserver(this);
+
 }
 
 
@@ -201,13 +200,6 @@ uint8_t Display::ReadByte(uint16_t address) const
             ss << "Display doesnt handle reads to 0x" << std::hex << std::setw(4) << std::setfill('0') << address;
             throw std::range_error(ss.str());
     }
-}
-
-
-void Display::AttachToTimerSubject(TimerSubject* subject)
-{
-    this->timerSubject = subject;
-    subject->AttachObserver(this);
 }
 
 

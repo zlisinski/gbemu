@@ -18,7 +18,7 @@ const uint8_t timerEnabledMask = 0x04;
 const uint8_t clocksPerCycle = 4;
 
 
-Timer::Timer(IoRegisterSubject *ioRegisterSubject, Interrupt* interrupts) :
+Timer::Timer(IoRegisterSubject *ioRegisterSubject, Interrupt *interrupts) :
     regTIMA(ioRegisterSubject->AttachIoRegister(eRegTIMA, this)),
     regTMA(ioRegisterSubject->AttachIoRegister(eRegTMA, this)),
     regTAC(ioRegisterSubject->AttachIoRegister(eRegTAC, this)),

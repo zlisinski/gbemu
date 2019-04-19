@@ -73,11 +73,14 @@ bool EmulatorMgr::LoadRom(const char *filename)
     memory = new Memory(infoInterface, debuggerInterface);
     interrupts = new Interrupt(memory);
     timer = new Timer(memory, interrupts);
-    display = new Display(memory, interrupts, frameHandler);
+    display = new Display(memory, interrupts, frameHandler, timer);
     input = new Input(memory, interrupts);
-    serial = new Serial(memory, interrupts);
+    serial = new Serial(memory, interrupts, timer);
     cpu = new Cpu(interrupts, memory, timer);
     audio = new Audio(memory);
+
+    // This can't be done in the Memory constructor since Timer doesn't exist yet.
+    timer->AttachObserver(memory);
 
     /*if (runbootRom)
         memory->SetRomMemory(bootRomMemory, *gameRomMemory);
@@ -247,11 +250,14 @@ void EmulatorMgr::LoadState(int slot)
     Memory *newMemory = new Memory(infoInterface, debuggerInterface);
     Interrupt *newInterrupts = new Interrupt(newMemory);
     Timer *newTimer = new Timer(memory, newInterrupts);
-    Display *newDisplay = new Display(newMemory, newInterrupts, frameHandler);
+    Display *newDisplay = new Display(newMemory, newInterrupts, frameHandler, newTimer);
     Input *newInput = new Input(newMemory, newInterrupts);
-    Serial *newSerial = new Serial(newMemory, newInterrupts);
+    Serial *newSerial = new Serial(newMemory, newInterrupts, newTimer);
     Cpu *newCpu = new Cpu(newInterrupts, newMemory, newTimer);
     Audio *newAudio = new Audio(newMemory);
+
+    // This can't be done in the memory constructor since Timer doesn't exist yet.
+    newTimer->AttachObserver(newMemory);
 
     newMemory->SetRomMemory(gameRomMemory);
 
@@ -301,11 +307,6 @@ void EmulatorMgr::ThreadFunc()
 {
     try
     {
-        // Setup Timer observers.
-        display->AttachToTimerSubject(timer);
-        memory->AttachToTimerSubject(timer);
-        serial->AttachToTimerSubject(timer);
-
         if (infoInterface)
             infoInterface->SetMemory(memory->GetBytePtr(0));
 
