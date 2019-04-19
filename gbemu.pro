@@ -30,6 +30,7 @@ CONFIG += debug
 HEADERS += \
 	src/AbsByteProxy.h \
 	src/AbsFrameHandler.h \
+	src/Audio.h \
 	src/Buttons.h \
 	src/Cpu.h \
 	src/DebuggerInterface.h \
@@ -63,6 +64,7 @@ HEADERS += \
 	src/ui/QtFrameHandler.h
 
 SOURCES += \
+	src/Audio.cpp \
 	src/Buttons.cpp \
 	src/Cpu.cpp \
 	src/Display.cpp \

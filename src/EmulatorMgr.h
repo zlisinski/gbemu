@@ -6,6 +6,7 @@
 #include "Buttons.h"
 
 class AbsFrameHandler;
+class Audio;
 class Cpu;
 class DebuggerInterface;
 class Display;
@@ -52,6 +53,7 @@ private:
     InfoInterface *infoInterface;
     DebuggerInterface *debuggerInterface;
 
+    Audio *audio;
     Buttons buttons;
     Cpu *cpu;
     Display *display;

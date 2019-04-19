@@ -2,6 +2,7 @@
 
 #include "gbemu.h"
 #include "AbsFrameHandler.h"
+#include "Audio.h"
 #include "Cpu.h"
 #include "DebuggerInterface.h"
 #include "Display.h"
@@ -19,6 +20,7 @@ EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInter
     frameHandler(frameHandler),
     infoInterface(infoInterface),
     debuggerInterface(debuggerInterface),
+    audio(NULL),
     buttons(),
     cpu(NULL),
     display(NULL),
@@ -75,6 +77,7 @@ bool EmulatorMgr::LoadRom(const char *filename)
     input = new Input(memory, interrupts);
     serial = new Serial(memory, interrupts);
     cpu = new Cpu(interrupts, memory, timer);
+    audio = new Audio(memory);
 
     /*if (runbootRom)
         memory->SetRomMemory(bootRomMemory, *gameRomMemory);
@@ -248,6 +251,7 @@ void EmulatorMgr::LoadState(int slot)
     Input *newInput = new Input(newMemory, newInterrupts);
     Serial *newSerial = new Serial(newMemory, newInterrupts);
     Cpu *newCpu = new Cpu(newInterrupts, newMemory, newTimer);
+    Audio *newAudio = new Audio(newMemory);
 
     newMemory->SetRomMemory(gameRomMemory);
 
@@ -282,6 +286,7 @@ void EmulatorMgr::LoadState(int slot)
     input = newInput;
     serial = newSerial;
     cpu = newCpu;
+    audio = newAudio;
 
     // Start emulation.
     paused = false;
@@ -343,6 +348,8 @@ void EmulatorMgr::ThreadFunc()
     if (debuggerInterface)
         debuggerInterface->SetEmulatorObjects(NULL, NULL, NULL);
 
+    delete audio;
+    audio = NULL;
     delete cpu;
     cpu = NULL;
     delete display;
