@@ -23,9 +23,8 @@ const uint16_t SP_VALUE = 0xFFFE;
 CpuTest::CpuTest()
 {
     memory_ = new Memory;
-    interrupts = new Interrupt(memory_->GetBytePtr(eRegIE), memory_->GetBytePtr(eRegIF));
-    timer = new Timer(memory_->GetBytePtr(eRegTIMA), memory_->GetBytePtr(eRegTMA),
-                      memory_->GetBytePtr(eRegTAC), memory_->GetBytePtr(eRegDIV), interrupts);
+    interrupts = new Interrupt(memory_);
+    timer = new Timer(memory_, interrupts);
     cpu = new Cpu(interrupts, memory_, timer);
 }
 
@@ -676,13 +675,15 @@ TEST_F(CpuTest, Test_LD_A_0xFF00_PLUS_C)
 
     // LD A, (0xFF00+C)
     ResetState();
+    cpu->reg.c = 0x40; // Pick a register that use all bits.
     memory[0] = 0xF2;
-    memory[0xFF00 + C_VALUE] = 1;
+    memory[0xFF40] = 1;
     cpu->ProcessOpCode();
     cycles = timer->GetCounter();
     ASSERT_EQ(cpu->reg.a, 1);
     ASSERT_EQ(cpu->reg.f, F_VALUE);
-    ASSERT_EQ(cpu->reg.bc, BC_VALUE);
+    ASSERT_EQ(cpu->reg.b, B_VALUE);
+    ASSERT_EQ(cpu->reg.c, 0x40);
     ASSERT_EQ(cpu->reg.de, DE_VALUE);
     ASSERT_EQ(cpu->reg.hl, HL_VALUE);
     ASSERT_EQ(cpu->reg.sp, SP_VALUE);
