@@ -354,6 +354,9 @@ void MainWindow::OpenRom(const QString &filename)
 
         UpdateRecentFile(filename);
 
+        // TODO: Add ability to configure this.
+        emulator->LoadBootRom("data/BIOS.gb");
+
         emulator->LoadRom(filename.toLatin1().data());
 
         setWindowTitle("GBEmu - " + filename);

@@ -89,7 +89,7 @@ Memory::~Memory()
 }
 
 
-void Memory::SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory)
+void Memory::SetRomMemory(std::vector<uint8_t> &bootRomMemory, std::vector<uint8_t> &gameRomMemory)
 {
     // Makes a copy. Should I do this?
     this->bootRomMemory = bootRomMemory;

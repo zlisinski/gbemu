@@ -1,3 +1,5 @@
+#include <iterator>
+#include <fstream>
 #include <unistd.h>
 
 #include "gbemu.h"
@@ -17,6 +19,7 @@
 EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface) :
     paused(false),
     quit(false),
+    runBootRom(false),
     frameHandler(frameHandler),
     infoInterface(infoInterface),
     debuggerInterface(debuggerInterface),
@@ -40,30 +43,23 @@ EmulatorMgr::~EmulatorMgr()
 }
 
 
+void EmulatorMgr::LoadBootRom(const char *filename)
+{
+    std::ifstream file(filename, std::ios::out | std::ios::binary);
+    std::istreambuf_iterator<char> start(file), end;
+    bootRomMemory = std::vector<uint8_t>(start, end);
+
+    runBootRom = true;
+}
+
+
 bool EmulatorMgr::LoadRom(const char *filename)
 {
     EndEmulation();
 
-    FILE *file = fopen(filename, "r");
-    if (file == NULL)
-    {
-        printf("Error opening %s\n", filename);
-        return false;
-    }
-
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    gameRomMemory.clear();
-    gameRomMemory.resize(size);
-
-    size_t cnt = fread(&gameRomMemory[0], 1, size, file);
-    if (cnt != (size_t)size)
-    {
-        printf("Only read %lu bytes of %ld from %s", cnt, size, filename);
-        return false;
-    }
+    std::ifstream file(filename, std::ios::out | std::ios::binary);
+    std::istreambuf_iterator<char> start(file), end;
+    gameRomMemory = std::vector<uint8_t>(start, end);
 
     romFilename = filename;
     ramFilename = romFilename + ".ram";
@@ -82,14 +78,17 @@ bool EmulatorMgr::LoadRom(const char *filename)
     // This can't be done in the Memory constructor since Timer doesn't exist yet.
     timer->AttachObserver(memory);
 
-    /*if (runbootRom)
-        memory->SetRomMemory(bootRomMemory, *gameRomMemory);
-    else*/
+    if (runBootRom)
+    {
+        memory->SetRomMemory(bootRomMemory, gameRomMemory);
+    }
+    else
     {
         memory->SetRomMemory(gameRomMemory);
-        memory->LoadRam(ramFilename);
         SetBootState(memory, cpu);
     }
+    memory->LoadRam(ramFilename);
+
     workThread = std::thread(&EmulatorMgr::ThreadFunc, this);
 
     return true;

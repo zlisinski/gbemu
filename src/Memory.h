@@ -102,7 +102,7 @@ public:
     Memory(InfoInterface *infoInterface = NULL, DebuggerInterface *debuggerInterface = NULL);
     virtual ~Memory();
 
-    void SetRomMemory(std::array<uint8_t, BOOT_ROM_SIZE> &bootRomMemory, std::vector<uint8_t> &gameRomMemory);
+    void SetRomMemory(std::vector<uint8_t> &bootRomMemory, std::vector<uint8_t> &gameRomMemory);
     void SetRomMemory(std::vector<uint8_t> &gameRomMemory);
 
     uint8_t ReadByte(uint16_t index) const;
@@ -139,7 +139,7 @@ private:
 
     std::array<uint8_t, MEM_SIZE> memory;
 
-    std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
+    std::vector<uint8_t> bootRomMemory;
     std::vector<uint8_t> gameRomMemory;
     std::vector<uint8_t> ramBanks;
 

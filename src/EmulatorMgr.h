@@ -23,6 +23,7 @@ public:
     EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
     ~EmulatorMgr();
 
+    void LoadBootRom(const char *filename);
     bool LoadRom(const char *filename);
     void ResetEmulation();
     void PauseEmulation(bool pause);
@@ -41,6 +42,8 @@ private:
     bool paused;
     bool quit;
 
+    bool runBootRom;
+    std::vector<uint8_t> bootRomMemory;
     std::vector<uint8_t> gameRomMemory;
 
     std::string romFilename;
