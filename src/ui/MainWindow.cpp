@@ -362,8 +362,11 @@ void MainWindow::OpenRom(const QString &filename)
 
         UpdateRecentFile(filename);
 
-        // TODO: Add ability to configure this.
-        emulator->LoadBootRom("data/BIOS.gb");
+        QSettings settings;
+        if (settings.value("BootRom/Enabled", false).toBool() && settings.value("BootRom/Path").toString() != "")
+            emulator->LoadBootRom(settings.value("BootRom/Path").toString().toStdString());
+        else
+            emulator->LoadBootRom("");
 
         emulator->LoadRom(filename.toLatin1().data());
 

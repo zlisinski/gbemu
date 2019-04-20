@@ -23,8 +23,8 @@ public:
     EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
     ~EmulatorMgr();
 
-    void LoadBootRom(const char *filename);
-    bool LoadRom(const char *filename);
+    void LoadBootRom(const std::string &filename);
+    bool LoadRom(const std::string &filename);
     void ResetEmulation();
     void PauseEmulation(bool pause);
     void EndEmulation();

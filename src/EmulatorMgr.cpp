@@ -43,21 +43,27 @@ EmulatorMgr::~EmulatorMgr()
 }
 
 
-void EmulatorMgr::LoadBootRom(const char *filename)
+void EmulatorMgr::LoadBootRom(const std::string &filename)
 {
-    std::ifstream file(filename, std::ios::out | std::ios::binary);
-    std::istreambuf_iterator<char> start(file), end;
-    bootRomMemory = std::vector<uint8_t>(start, end);
-
-    runBootRom = true;
+    if (filename != "")
+    {
+        std::ifstream file(filename, std::ios::binary);
+        std::istreambuf_iterator<char> start(file), end;
+        bootRomMemory = std::vector<uint8_t>(start, end);
+        runBootRom = true;
+    }
+    else
+    {
+        runBootRom = false;
+    }
 }
 
 
-bool EmulatorMgr::LoadRom(const char *filename)
+bool EmulatorMgr::LoadRom(const std::string &filename)
 {
     EndEmulation();
 
-    std::ifstream file(filename, std::ios::out | std::ios::binary);
+    std::ifstream file(filename, std::ios::binary);
     std::istreambuf_iterator<char> start(file), end;
     gameRomMemory = std::vector<uint8_t>(start, end);
 
