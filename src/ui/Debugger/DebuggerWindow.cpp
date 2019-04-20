@@ -4,6 +4,7 @@
 #include "../../Cpu.h"
 #include "../../Interrupt.h"
 #include "../../Memory.h"
+#include "../SettingsConstants.h"
 #include "../UiUtils.h"
 #include "AddressDialog.h"
 #include "DebuggerWindow.h"
@@ -37,8 +38,8 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     qRegisterMetaType<uint16_t>("uint16_t");
 
     QSettings settings;
-    restoreGeometry(settings.value("DebuggerWindowGeometry").toByteArray());
-    restoreState(settings.value("DebuggerWindowState").toByteArray());
+    restoreGeometry(settings.value(SETTINGS_DEBUGGERWINDOW_GEOMETRY).toByteArray());
+    restoreState(settings.value(SETTINGS_DEBUGGERWINDOW_STATE).toByteArray());
 
     ui->disassemblyView->setModel(disassemblyModel);
     ui->memoryView->setModel(memoryModel);
@@ -63,8 +64,8 @@ DebuggerWindow::~DebuggerWindow()
 void DebuggerWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
-    settings.setValue("DebuggerWindowGeometry", saveGeometry());
-    settings.setValue("DebuggerWindowState", saveState());
+    settings.setValue(SETTINGS_DEBUGGERWINDOW_GEOMETRY, saveGeometry());
+    settings.setValue(SETTINGS_DEBUGGERWINDOW_STATE, saveState());
 
     emit SignalDebuggerWindowClosed();
 

@@ -4,6 +4,7 @@
 #include <QtWidgets/QtWidgets>
 
 #include "LogWindow.h"
+#include "SettingsConstants.h"
 #include "ui_LogWindow.h"
 #include "UiUtils.h"
 
@@ -14,7 +15,7 @@ LogWindow::LogWindow(QWidget *parent) :
     ui->setupUi(this);
 
     QSettings settings;
-    restoreGeometry(settings.value("LogWindowGeometry").toByteArray());
+    restoreGeometry(settings.value(SETTINGS_LOGWINDOW_GEOMETRY).toByteArray());
 
     switch (Logger::GetLogLevel())
     {
@@ -58,7 +59,7 @@ LogWindow::~LogWindow()
 void LogWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
-    settings.setValue("LogWindowGeometry", saveGeometry());
+    settings.setValue(SETTINGS_LOGWINDOW_GEOMETRY, saveGeometry());
 
     emit SignalLogWindowClosed();
 
@@ -101,7 +102,7 @@ void LogWindow::SlotOutputMessage()
 void LogWindow::SlotErrorClicked()
 {
     QSettings settings;
-    settings.setValue("LogLevel", static_cast<int>(LogLevel::eError));
+    settings.setValue(SETTINGS_LOGGER_LEVEL, static_cast<int>(LogLevel::eError));
     Logger::SetLogLevel(LogLevel::eError);
 }
 
@@ -109,7 +110,7 @@ void LogWindow::SlotErrorClicked()
 void LogWindow::SlotWarningClicked()
 {
     QSettings settings;
-    settings.setValue("LogLevel", static_cast<int>(LogLevel::eWarning));
+    settings.setValue(SETTINGS_LOGGER_LEVEL, static_cast<int>(LogLevel::eWarning));
     Logger::SetLogLevel(LogLevel::eWarning);
 }
 
@@ -117,7 +118,7 @@ void LogWindow::SlotWarningClicked()
 void LogWindow::SlotInfoClicked()
 {
     QSettings settings;
-    settings.setValue("LogLevel", static_cast<int>(LogLevel::eInfo));
+    settings.setValue(SETTINGS_LOGGER_LEVEL, static_cast<int>(LogLevel::eInfo));
     Logger::SetLogLevel(LogLevel::eInfo);
 }
 
@@ -125,7 +126,7 @@ void LogWindow::SlotInfoClicked()
 void LogWindow::SlotDebugClicked()
 {
     QSettings settings;
-    settings.setValue("LogLevel", static_cast<int>(LogLevel::eDebug));
+    settings.setValue(SETTINGS_LOGGER_LEVEL, static_cast<int>(LogLevel::eDebug));
     Logger::SetLogLevel(LogLevel::eDebug);
 }
 
@@ -133,7 +134,7 @@ void LogWindow::SlotDebugClicked()
 void LogWindow::SlotInstructionClicked()
 {
     QSettings settings;
-    settings.setValue("LogLevel", static_cast<int>(LogLevel::eInstruction));
+    settings.setValue(SETTINGS_LOGGER_LEVEL, static_cast<int>(LogLevel::eInstruction));
     Logger::SetLogLevel(LogLevel::eInstruction);
 }
 

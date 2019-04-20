@@ -20,6 +20,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+#QMAKE_CXX = clang++
+#QMAKE_LINK = clang++
+
 QMAKE_CXXFLAGS += -Wpedantic
 #QMAKE_CXXFLAGS += -O3
 #QMAKE_CXXFLAGS += -pg
@@ -61,6 +64,7 @@ HEADERS += \
 	src/ui/LogWindow.h \
 	src/ui/MainWindow.h \
 	src/ui/QtFrameHandler.h \
+	src/ui/SettingsConstants.h \
 	src/ui/SettingsDialog.h
 
 SOURCES += \
@@ -86,6 +90,7 @@ SOURCES += \
 	src/ui/InfoWindow.cpp \
 	src/ui/LogWindow.cpp \
 	src/ui/MainWindow.cpp \
+	src/ui/SettingsConstants.cpp \
 	src/ui/SettingsDialog.cpp
 
 FORMS += \

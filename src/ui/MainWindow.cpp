@@ -7,6 +7,7 @@
 #include "LogWindow.h"
 #include "MainWindow.h"
 #include "QtFrameHandler.h"
+#include "SettingsConstants.h"
 #include "SettingsDialog.h"
 #include "UiUtils.h"
 #include "../EmulatorMgr.h"
@@ -49,13 +50,13 @@ MainWindow::MainWindow(QWidget *parent) :
     emuLoadStateAction(NULL)
 {
     QSettings settings;
-    displayScale = settings.value("DisplayScale", 5).toInt();
+    displayScale = settings.value(SETTINGS_VIDEO_SCALE, 5).toInt();
 
     // Setup logger before anything else.
-    Logger::SetLogLevel(static_cast<LogLevel>(settings.value("LogLevel", 0).toInt()));
+    Logger::SetLogLevel(static_cast<LogLevel>(settings.value(SETTINGS_LOGGER_LEVEL, 0).toInt()));
     logWindow = new LogWindow(this);
     Logger::SetOutput(logWindow);
-    if (settings.value("DisplayLogWindow", true).toBool())
+    if (settings.value(SETTINGS_LOGWINDOW_DISPLAY, false).toBool())
         logWindow->show();
 
     SetupMenuBar();
@@ -70,11 +71,11 @@ MainWindow::MainWindow(QWidget *parent) :
     graphicsView->setScene(scene);
 
     infoWindow = new InfoWindow(this);
-    if (settings.value("DisplayInfoWindow", true).toBool())
+    if (settings.value(SETTINGS_INFOWINDOW_DISPLAY, false).toBool())
         infoWindow->show();
 
     debuggerWindow = new DebuggerWindow(this);
-    if (settings.value("DisplayDebuggerWindow", true).toBool())
+    if (settings.value(SETTINGS_DEBUGGERWINDOW_DISPLAY, false).toBool())
         debuggerWindow->show();
 
     fpsTimer.start();
@@ -89,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent) :
         OpenRom(filename);
     }
 
-    restoreGeometry(settings.value("MainWindowGeometry").toByteArray());
+    restoreGeometry(settings.value(SETTINGS_MAINWINDOW_GEOMETRY).toByteArray());
     SetDisplayScale(displayScale);
 
     connect(this, SIGNAL(SignalFrameReady()), this, SLOT(SlotDrawFrame()));
@@ -141,7 +142,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     debuggerWindow->close();
 
     QSettings settings;
-    settings.setValue("MainWindowGeometry", saveGeometry());
+    settings.setValue(SETTINGS_MAINWINDOW_GEOMETRY, saveGeometry());
     QWidget::closeEvent(event);
 }
 
@@ -261,19 +262,19 @@ void MainWindow::SetupMenuBar()
     // Display | Info Window
     displayInfoWindowAction = displayMenu->addAction("&Info Window");
     displayInfoWindowAction->setCheckable(true);
-    displayInfoWindowAction->setChecked(settings.value("DisplayInfoWindow", true).toBool());
+    displayInfoWindowAction->setChecked(settings.value(SETTINGS_INFOWINDOW_DISPLAY, false).toBool());
     connect(displayInfoWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayInfoWindow(bool)));
 
     // Display | Log Window
     displayLogWindowAction = displayMenu->addAction("&Log Window");
     displayLogWindowAction->setCheckable(true);
-    displayLogWindowAction->setChecked(settings.value("DisplayLogWindow", true).toBool());
+    displayLogWindowAction->setChecked(settings.value(SETTINGS_LOGWINDOW_DISPLAY, false).toBool());
     connect(displayLogWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayLogWindow(bool)));
 
     // Display | Debugger Window
     displayDebuggerWindowAction = displayMenu->addAction("&Debugger Window");
     displayDebuggerWindowAction->setCheckable(true);
-    displayDebuggerWindowAction->setChecked(settings.value("DisplayDebuggerWindow", true).toBool());
+    displayDebuggerWindowAction->setChecked(settings.value(SETTINGS_DEBUGGERWINDOW_DISPLAY, false).toBool());
     connect(displayDebuggerWindowAction, SIGNAL(triggered(bool)), this, SLOT(SlotSetDisplayDebuggerWindow(bool)));
 }
 
@@ -313,14 +314,14 @@ void MainWindow::SetupGamepad()
 void MainWindow::UpdateRecentFile(const QString &filename)
 {
     QSettings settings;
-    QStringList files = settings.value("RecentFileList").toStringList();
+    QStringList files = settings.value(SETTINGS_FILES_RECENTFILELIST).toStringList();
 
     files.removeAll(filename);
     files.prepend(filename);
     while (files.size() > MAX_RECENT_FILES)
         files.removeLast();
 
-    settings.setValue("RecentFileList", files);
+    settings.setValue(SETTINGS_FILES_RECENTFILELIST, files);
 
     UpdateRecentFilesActions();
 }
@@ -329,7 +330,7 @@ void MainWindow::UpdateRecentFile(const QString &filename)
 void MainWindow::UpdateRecentFilesActions()
 {
     QSettings settings;
-    QStringList files = settings.value("RecentFileList").toStringList();
+    QStringList files = settings.value(SETTINGS_FILES_RECENTFILELIST).toStringList();
 
     int numRecentFiles = qMin(files.size(), MAX_RECENT_FILES);
 
@@ -363,8 +364,8 @@ void MainWindow::OpenRom(const QString &filename)
         UpdateRecentFile(filename);
 
         QSettings settings;
-        if (settings.value("BootRom/Enabled", false).toBool() && settings.value("BootRom/Path").toString() != "")
-            emulator->LoadBootRom(settings.value("BootRom/Path").toString().toStdString());
+        if (settings.value(SETTINGS_BOOTROM_ENABLED, false).toBool() && settings.value(SETTINGS_BOOTROM_PATH).toString() != "")
+            emulator->LoadBootRom(settings.value(SETTINGS_BOOTROM_PATH).toString().toStdString());
         else
             emulator->LoadBootRom("");
 
@@ -416,14 +417,14 @@ void MainWindow::RequestMessageBox(const std::string &message)
 void MainWindow::SlotOpenRom()
 {
     QSettings settings;
-    QString dir = settings.value("OpenRomDir").toString();
+    QString dir = settings.value(SETTINGS_FILES_OPENROMDIR).toString();
 
     QString filename = QFileDialog::getOpenFileName(this, "Open ROM File", dir, "*.gb");
 
     if (filename != "")
     {
         QFileInfo info(filename);
-        settings.setValue("OpenRomDir", info.absoluteDir().path());
+        settings.setValue(SETTINGS_FILES_OPENROMDIR, info.absoluteDir().path());
     }
 
     OpenRom(filename);
@@ -528,7 +529,7 @@ void MainWindow::SlotSetDisplayScale()
             SignalFrameReady();
 
         QSettings settings;
-        settings.setValue("DisplayScale", scale);
+        settings.setValue(SETTINGS_VIDEO_SCALE, scale);
     }
 }
 
@@ -536,7 +537,7 @@ void MainWindow::SlotSetDisplayScale()
 void MainWindow::SlotSetDisplayInfoWindow(bool checked)
 {
     QSettings settings;
-    settings.setValue("DisplayInfoWindow", checked);
+    settings.setValue(SETTINGS_INFOWINDOW_DISPLAY, checked);
 
     if (checked)
         infoWindow->show();
@@ -554,7 +555,7 @@ void MainWindow::SlotInfoWindowClosed()
 void MainWindow::SlotSetDisplayLogWindow(bool checked)
 {
     QSettings settings;
-    settings.setValue("DisplayLogWindow", checked);
+    settings.setValue(SETTINGS_LOGWINDOW_DISPLAY, checked);
 
     if (checked)
         logWindow->show();
@@ -572,7 +573,7 @@ void MainWindow::SlotLogWindowClosed()
 void MainWindow::SlotSetDisplayDebuggerWindow(bool checked)
 {
     QSettings settings;
-    settings.setValue("DisplayDebuggerWindow", checked);
+    settings.setValue(SETTINGS_DEBUGGERWINDOW_DISPLAY, checked);
 
     if (checked)
         debuggerWindow->show();

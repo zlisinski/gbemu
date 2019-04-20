@@ -2,6 +2,7 @@
 #include <QtCore/QSettings>
 #include <QtWidgets/QGraphicsPixmapItem>
 #include "InfoWindow.h"
+#include "SettingsConstants.h"
 #include "ui_InfoWindow.h"
 #include "UiUtils.h"
 
@@ -34,7 +35,7 @@ InfoWindow::InfoWindow(QWidget *parent) :
     ui->gvTiles->setScene(scene);
 
     QSettings settings;
-    restoreGeometry(settings.value("InfoWindowGeometry").toByteArray());
+    restoreGeometry(settings.value(SETTINGS_INFOWINDOW_GEOMETRY).toByteArray());
 
     connect(this, SIGNAL(SignalInfoWindowClosed()), parent, SLOT(SlotInfoWindowClosed()));
 
@@ -58,7 +59,7 @@ void InfoWindow::DrawFrame()
 void InfoWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
-    settings.setValue("InfoWindowGeometry", saveGeometry());
+    settings.setValue(SETTINGS_INFOWINDOW_GEOMETRY, saveGeometry());
 
     emit SignalInfoWindowClosed();
 

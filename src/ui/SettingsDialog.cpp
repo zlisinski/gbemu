@@ -1,6 +1,7 @@
 #include <QtCore/QSettings>
 #include <QtWidgets/QtWidgets>
 
+#include "SettingsConstants.h"
 #include "SettingsDialog.h"
 #include "ui_SettingsDialog.h"
 
@@ -13,8 +14,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui->setupUi(this);
 
     QSettings settings;
-    ui->chkEnableBootRom->setChecked(settings.value("BootRom/Enabled", false).toBool());
-    ui->txtBootRomFilename->setText(settings.value("BootRom/Path").toString());
+    ui->chkEnableBootRom->setChecked(settings.value(SETTINGS_BOOTROM_ENABLED, false).toBool());
+    ui->txtBootRomFilename->setText(settings.value(SETTINGS_BOOTROM_PATH).toString());
 
     ui->btnBrowseBootRom->setEnabled(ui->chkEnableBootRom->isChecked());
     ui->txtBootRomFilename->setEnabled(ui->chkEnableBootRom->isChecked());
@@ -57,8 +58,8 @@ void SettingsDialog::closeEvent(QCloseEvent *event)
 void SettingsDialog::SaveSettings()
 {
     QSettings settings;
-    settings.setValue("BootRom/Enabled", ui->chkEnableBootRom->isChecked());
-    settings.setValue("BootRom/Path", ui->txtBootRomFilename->text());
+    settings.setValue(SETTINGS_BOOTROM_ENABLED, ui->chkEnableBootRom->isChecked());
+    settings.setValue(SETTINGS_BOOTROM_PATH, ui->txtBootRomFilename->text());
 }
 
 
