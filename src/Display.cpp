@@ -14,17 +14,9 @@ const uint TILE_PIXEL_SIZE = 8; // Tile is 8x8 pixels.
 
 const uint REAL_SCREEN_SIZE = 256;
 const uint REAL_TILES_PER_SCREEN = REAL_SCREEN_SIZE / TILE_PIXEL_SIZE;
-const uint TILES_PER_X = SCREEN_X / TILE_PIXEL_SIZE;
-const uint TILES_PER_Y = SCREEN_Y / TILE_PIXEL_SIZE;
-const uint BG_SIZE = 256;
-const uint8_t SCREEN_SCALE = 6;
 
 const uint16_t BG_TILE_MAP[] = {0x9800, 0x9C00};
-const uint16_t BG_TILE_MAP_LEN = 0x03FF;
 const uint16_t BG_DATA_OFFSET[] = {0x8800, 0x8000};
-const uint16_t BG_DATA_LEN = 0x0FFF;
-const uint16_t WIN_TILE_MAP[] = {0x9800, 0x9C00};
-const uint16_t WIN_TILE_MAP_LEN = 0x03FF;
 const uint16_t OAM_RAM = 0xFE00;
 const uint16_t OAM_LEN = 0x00A0;
 const uint16_t ClockPerScanline = 456;

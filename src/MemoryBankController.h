@@ -42,6 +42,7 @@ class AbsMbc
 {
 public:
     AbsMbc(MemoryBankInterface *memory);
+    virtual ~AbsMbc() {}
 
     virtual void WriteByte(uint16_t addr, uint8_t byte) = 0;
 
