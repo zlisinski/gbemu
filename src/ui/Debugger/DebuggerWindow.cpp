@@ -52,6 +52,7 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     connect(ui->actionDisassemble, SIGNAL(triggered()), this, SLOT(SlotDisassembleAddress()));
     connect(this, SIGNAL(SignalDebuggerWindowClosed()), parent, SLOT(SlotDebuggerWindowClosed()));
     connect(this, SIGNAL(SignalUpdateReady(uint16_t)), this, SLOT(SlotProcessUpdate(uint16_t)));
+    connect(this, SIGNAL(SignalReenableActions()), this, SLOT(SlotReenableActions()));
 }
 
 
@@ -111,7 +112,12 @@ void DebuggerWindow::SetCurrentOp(uint16_t pc)
     // If we've hit the run-to address, reset the variable.
     // 0xFFFF is a data register, so it's safe to use for an invalid address value.
     if (runToAddress == pc)
+    {
         runToAddress = 0xFFFF;
+
+        // Re-Enable controls. Emit a signal, since we are running in a non-main thread.
+        emit SignalReenableActions();
+    }
 
     emit SignalUpdateReady(pc);
 }
@@ -186,23 +192,23 @@ void DebuggerWindow::UpdateWidgets(uint16_t pc)
 
     if (memory != NULL)
     {
-        ui->txtRegP1->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegP1)));
-        ui->txtRegIE->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegIE)));
-        ui->txtRegIF->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegIF)));
-        ui->txtRegDIV->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegDIV)));
-        ui->txtRegTIMA->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegTIMA)));
-        ui->txtRegTMA->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegTMA)));
-        ui->txtRegTAC->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegTAC)));
-        ui->txtRegLCDC->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegLCDC)));
-        ui->txtRegSTAT->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegSTAT)));
-        ui->txtRegSCX->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegSCX)));
-        ui->txtRegSCY->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegSCY)));
-        ui->txtRegWX->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegWX)));
-        ui->txtRegWY->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegWY)));
-        ui->txtRegLY->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegLY)));
-        ui->txtRegLYC->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegLYC)));
-        ui->txtRegDMA->setText(UiUtils::FormatHexWord(memory->ReadByte(eRegDMA)));
-        ui->txtRegCurDMA->setText(UiUtils::FormatHexWord(OAM_RAM_START + memory->GetDmaOffset()));
+        ui->txtRegP1->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegP1)));
+        ui->txtRegIE->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegIE)));
+        ui->txtRegIF->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegIF)));
+        ui->txtRegDIV->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegDIV)));
+        ui->txtRegTIMA->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegTIMA)));
+        ui->txtRegTMA->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegTMA)));
+        ui->txtRegTAC->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegTAC)));
+        ui->txtRegLCDC->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegLCDC)));
+        ui->txtRegSTAT->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegSTAT)));
+        ui->txtRegSCX->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegSCX)));
+        ui->txtRegSCY->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegSCY)));
+        ui->txtRegWX->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegWX)));
+        ui->txtRegWY->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegWY)));
+        ui->txtRegLY->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegLY)));
+        ui->txtRegLYC->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegLYC)));
+        ui->txtRegDMA->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegDMA)));
+        ui->txtRegCurDMA->setText(UiUtils::FormatHexByte(OAM_RAM_START + memory->GetDmaOffset()));
     }
 
     if (interrupt != NULL)
@@ -274,6 +280,11 @@ void DebuggerWindow::SlotRunToLine()
 
     runToAddress = disassemblyModel->GetAddressOfRow(selection->selectedRows()[0].row());
 
+    // Disable controls while running.
+    ui->actionRunToLine->setEnabled(false);
+    ui->actionStep->setEnabled(false);
+    ui->actionDisassemble->setEnabled(false);
+
     // Clear selection so we can see when the line has been reached. TODO: Add "wait" dialog while running.
     ui->disassemblyView->clearSelection();
 }
@@ -295,4 +306,12 @@ void DebuggerWindow::SlotDisassembleAddress()
     {
         disassemblyModel->AddRow(dialog.address, memory->GetBytePtr(0));
     }
+}
+
+
+void DebuggerWindow::SlotReenableActions()
+{
+    ui->actionRunToLine->setEnabled(true);
+    ui->actionStep->setEnabled(true);
+    ui->actionDisassemble->setEnabled(true);
 }

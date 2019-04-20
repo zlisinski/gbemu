@@ -59,8 +59,10 @@ private slots:
     void SlotStep();
     void SlotRunToLine();
     void SlotDisassembleAddress();
+    void SlotReenableActions();
 
 signals:
     void SignalDebuggerWindowClosed();
     void SignalUpdateReady(uint16_t pc);
+    void SignalReenableActions();
 };
