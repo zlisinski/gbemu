@@ -107,6 +107,8 @@ public:
 
     uint8_t ReadByte(uint16_t index) const;
     uint8_t operator[](uint16_t index) const {return ReadByte(index);}
+    // Bypasses special read code. Only use for Debugger.
+    uint8_t ReadRawByte(uint16_t index) const {return memory[index];}
 
     // Bypasses checking of reads/writes from/to special addresses. Don't use unless you know what you are doing.
     const uint8_t *GetBytePtr(uint16_t index) const {return &memory[index];}

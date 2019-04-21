@@ -107,6 +107,11 @@ void DebuggerWindow::SetCurrentOp(uint16_t pc)
     //This function runs in the thread context of the Emulator worker thread.
 
     // Stop single step mode.
+    if (singleStep == true)
+    {
+        // Re-Enable controls. Emit a signal, since we are running in a non-main thread.
+        emit SignalReenableActions();
+    }
     singleStep = false;
 
     // If we've hit the run-to address, reset the variable.
@@ -154,7 +159,7 @@ void DebuggerWindow::UpdateStack()
         QTableWidgetItem *item = new QTableWidgetItem(UiUtils::FormatHexWord(address));
         ui->stackView->setItem(i, 0, item);
 
-        uint16_t value = memory->ReadByte(address) | (memory->ReadByte(address + 1) << 8);
+        uint16_t value = memory->ReadRawByte(address) | (memory->ReadRawByte(address + 1) << 8);
         item = new QTableWidgetItem(UiUtils::FormatHexWord(value));
         ui->stackView->setItem(i, 1, item);
     }
@@ -192,22 +197,22 @@ void DebuggerWindow::UpdateWidgets(uint16_t pc)
 
     if (memory != NULL)
     {
-        ui->txtRegP1->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegP1)));
-        ui->txtRegIE->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegIE)));
-        ui->txtRegIF->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegIF)));
-        ui->txtRegDIV->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegDIV)));
-        ui->txtRegTIMA->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegTIMA)));
-        ui->txtRegTMA->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegTMA)));
-        ui->txtRegTAC->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegTAC)));
-        ui->txtRegLCDC->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegLCDC)));
-        ui->txtRegSTAT->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegSTAT)));
-        ui->txtRegSCX->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegSCX)));
-        ui->txtRegSCY->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegSCY)));
-        ui->txtRegWX->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegWX)));
-        ui->txtRegWY->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegWY)));
-        ui->txtRegLY->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegLY)));
-        ui->txtRegLYC->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegLYC)));
-        ui->txtRegDMA->setText(UiUtils::FormatHexByte(memory->ReadByte(eRegDMA)));
+        ui->txtRegP1->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegP1)));
+        ui->txtRegIE->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegIE)));
+        ui->txtRegIF->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegIF)));
+        ui->txtRegDIV->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegDIV)));
+        ui->txtRegTIMA->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegTIMA)));
+        ui->txtRegTMA->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegTMA)));
+        ui->txtRegTAC->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegTAC)));
+        ui->txtRegLCDC->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegLCDC)));
+        ui->txtRegSTAT->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegSTAT)));
+        ui->txtRegSCX->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegSCX)));
+        ui->txtRegSCY->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegSCY)));
+        ui->txtRegWX->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegWX)));
+        ui->txtRegWY->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegWY)));
+        ui->txtRegLY->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegLY)));
+        ui->txtRegLYC->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegLYC)));
+        ui->txtRegDMA->setText(UiUtils::FormatHexByte(memory->ReadRawByte(eRegDMA)));
         ui->txtRegCurDMA->setText(UiUtils::FormatHexByte(OAM_RAM_START + memory->GetDmaOffset()));
     }
 
@@ -265,6 +270,11 @@ void DebuggerWindow::SlotToggleDebugging(bool checked)
 void DebuggerWindow::SlotStep()
 {
     singleStep = true;
+
+    // Disable controls while running.
+    ui->actionRunToLine->setEnabled(false);
+    ui->actionStep->setEnabled(false);
+    ui->actionDisassemble->setEnabled(false);
 }
 
 

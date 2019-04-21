@@ -95,7 +95,7 @@ QVariant MemoryModel::data(const QModelIndex &index, int role /*= Qt::DisplayRol
         }
         else
         {
-            uint8_t byte = memory->ReadByte((index.row() * 16) + (index.column() - 1));
+            uint8_t byte = memory->ReadRawByte((index.row() * 16) + (index.column() - 1));
             return UiUtils::FormatHexByte(byte);
         }
     }
