@@ -47,7 +47,10 @@ MainWindow::MainWindow(QWidget *parent) :
     debuggerWindow(NULL),
     displayDebuggerWindowAction(NULL),
     emuSaveStateAction(NULL),
-    emuLoadStateAction(NULL)
+    emuLoadStateAction(NULL),
+    audioOutput(NULL),
+    audioBuffer(NULL),
+    audioSampleRate(48000)
 {
     QSettings settings;
     displayScale = settings.value(SETTINGS_VIDEO_SCALE, 5).toInt();
@@ -62,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
     SetupMenuBar();
     SetupStatusBar();
     SetupGamepad();
+    SetupAudio();
 
     graphicsView = new QGraphicsView(this);
     graphicsView->setFrameStyle(QFrame::NoFrame);
@@ -82,7 +86,7 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapTimer.start();
 
     frameHandler = new QtFrameHandler(this);
-    emulator = new EmulatorMgr(frameHandler, infoWindow, debuggerWindow);
+    emulator = new EmulatorMgr(frameHandler, this, infoWindow, debuggerWindow);
 
     if (qApp->arguments().size() >= 2)
     {
@@ -311,6 +315,32 @@ void MainWindow::SetupGamepad()
 }
 
 
+void MainWindow::SetupAudio()
+{
+    QAudioFormat format;
+    format.setSampleRate(audioSampleRate);
+    format.setChannelCount(2);
+    format.setSampleSize(8);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format))
+    {
+        UiUtils::MessageBox("Audio format not supported");
+        return;
+    }
+
+    audioOutput = new QAudioOutput(format, this);
+    audioOutput->setBufferSize(0x4000);
+    //audioOutput->setVolume(0.4); // This is broken with pulseaudio
+    connect(audioOutput, SIGNAL(stateChanged(QAudio::State)), this, SLOT(SlotAudioStateChanged(QAudio::State)));
+
+    audioBuffer = audioOutput->start();
+}
+
+
 void MainWindow::UpdateRecentFile(const QString &filename)
 {
     QSettings settings;
@@ -375,6 +405,8 @@ void MainWindow::OpenRom(const QString &filename)
 
         emuSaveStateAction->setEnabled(true);
         emuLoadStateAction->setEnabled(true);
+
+        infoWindow->DrawFrame();
     }
 }
 
@@ -411,6 +443,22 @@ void MainWindow::RequestMessageBox(const std::string &message)
     // This function runs in the thread context of the Emulator worker thread.
     // Signal the main thread to show a message box.
     emit SignalShowMessageBox(QString::fromStdString(message));
+}
+
+
+void MainWindow::AudioDataReady(const std::array<uint8_t, AudioInterface::BUFFER_LEN> &data)
+{
+    // This function runs in the thread context of the Emulator worker thread.
+
+    if (audioBuffer != NULL)
+    {
+        qint64 written = 0;
+        //do {
+            written += audioBuffer->write(reinterpret_cast<const char *>(&data[written]), data.size() - written);
+            if (written != AudioInterface::BUFFER_LEN)
+                LogDebug("Only wrote %lld bytes of audio data", written);
+        //} while (written < AudioInterface::BUFFER_LEN);
+    }
 }
 
 
@@ -605,4 +653,30 @@ void MainWindow::SlotOpenSettings()
     SettingsDialog dialog(this);
     dialog.setModal(true);
     dialog.exec();
+}
+
+
+void MainWindow::SlotAudioStateChanged(QAudio::State state)
+{
+    switch (state)
+    {
+        case QAudio::ActiveState:
+            LogError("Audio active");
+            break;
+        case QAudio::IdleState:
+            LogError("Audio idle");
+            break;
+        case QAudio::InterruptedState:
+            LogError("Audio interrupted");
+            break;
+        case QAudio::StoppedState:
+            if (audioOutput->error() != QAudio::NoError)
+                LogError("Audio error %d", audioOutput->error());
+            else
+                LogError("Audio Stopped");
+            break;
+        case QAudio::SuspendedState:
+            LogError("Audio suspended");
+            break;
+    }
 }

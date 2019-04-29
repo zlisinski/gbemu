@@ -7,6 +7,7 @@
 
 class AbsFrameHandler;
 class Audio;
+class AudioInterface;
 class Cpu;
 class DebuggerInterface;
 class Display;
@@ -20,7 +21,7 @@ class Timer;
 class EmulatorMgr
 {
 public:
-    EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
+    EmulatorMgr(AbsFrameHandler *frameHandler, AudioInterface *audioInterface, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
     ~EmulatorMgr();
 
     void LoadBootRom(const std::string &filename);
@@ -53,6 +54,7 @@ private:
     std::mutex saveStateMutex;
 
     AbsFrameHandler *frameHandler;
+    AudioInterface *audioInterface;
     InfoInterface *infoInterface;
     DebuggerInterface *debuggerInterface;
 

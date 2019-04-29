@@ -1,21 +1,43 @@
 #pragma once
 
 #include "gbemu.h"
+#include "AudioInterface.h"
 #include "Memory.h"
 #include "IoRegisterProxy.h"
+#include "SquareWaveChannel.h"
+#include "TimerObserver.h"
 
 
-class Audio : public IoRegisterProxy
+class Audio : public IoRegisterProxy, public TimerObserver
 {
 public:
-    Audio(IoRegisterSubject *ioRegisterSubject);
+    Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, AudioInterface *audioInterface);
     virtual ~Audio();
 
     // Inherited from IoRegisterProxy.
     virtual bool WriteByte(uint16_t address, uint8_t byte);
     virtual uint8_t ReadByte(uint16_t address) const;
 
+    // Inherited from TimerObserver.
+    virtual void UpdateTimer(uint value);
+
+    void SetMasterVolume(uint32_t volume) {masterVolume = volume;}
+
 private:
+    AudioInterface *audioInterface;
+
+    SquareWaveChannel channel1;
+    SquareWaveChannel channel2;
+
+    uint32_t sampleCounter;
+
+    std::array<uint8_t, AudioInterface::BUFFER_LEN> soundBuffer;
+    uint16_t bufferSize;
+
+    uint32_t clocksPerSample;
+
+    uint32_t masterVolume;
+
     uint8_t *regNR10; // Sound mode 1, sweep
     uint8_t *regNR11; // Sound mode 1, length/wave pattern duty
     uint8_t *regNR12; // Sound mode 1, envelope

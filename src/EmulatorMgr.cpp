@@ -16,11 +16,12 @@
 #include "Timer.h"
 
 
-EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface) :
+EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, AudioInterface *audioInterface, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface) :
     paused(false),
     quit(false),
     runBootRom(false),
     frameHandler(frameHandler),
+    audioInterface(audioInterface),
     infoInterface(infoInterface),
     debuggerInterface(debuggerInterface),
     audio(NULL),
@@ -79,7 +80,7 @@ bool EmulatorMgr::LoadRom(const std::string &filename)
     input = new Input(memory, interrupts);
     serial = new Serial(memory, interrupts, timer);
     cpu = new Cpu(interrupts, memory, timer);
-    audio = new Audio(memory);
+    audio = new Audio(memory, timer, audioInterface);
 
     // This can't be done in the Memory constructor since Timer doesn't exist yet.
     timer->AttachObserver(memory);
@@ -259,7 +260,7 @@ void EmulatorMgr::LoadState(int slot)
     Input *newInput = new Input(newMemory, newInterrupts);
     Serial *newSerial = new Serial(newMemory, newInterrupts, newTimer);
     Cpu *newCpu = new Cpu(newInterrupts, newMemory, newTimer);
-    Audio *newAudio = new Audio(newMemory);
+    Audio *newAudio = new Audio(newMemory, newTimer, audioInterface);
 
     // This can't be done in the memory constructor since Timer doesn't exist yet.
     newTimer->AttachObserver(newMemory);

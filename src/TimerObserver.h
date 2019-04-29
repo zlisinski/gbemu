@@ -51,7 +51,7 @@ protected:
     ~TimerSubject() {}
 
 private:
-    static const int timerObserversMax = 3;
+    static const int timerObserversMax = 4;
     int timerObserverCount;
     TimerObserver *timerObservers[timerObserversMax];
 };

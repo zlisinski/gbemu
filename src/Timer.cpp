@@ -15,7 +15,6 @@
 // 3 = 256 clocks, bit 7 of internalCounter overflows.
 const uint16_t frequencyMapMask[] = {0x0200, 0x0008, 0x0020, 0x0080};
 const uint8_t timerEnabledMask = 0x04;
-const uint8_t clocksPerCycle = 4;
 
 
 Timer::Timer(IoRegisterSubject *ioRegisterSubject, Interrupt *interrupts) :
@@ -98,14 +97,14 @@ void Timer::AddCycle()
     }
 
     uint16_t currentCounter = (*regDIV << 8) | internalCounter;
-    uint16_t newCounter = currentCounter + clocksPerCycle;
+    uint16_t newCounter = currentCounter + CLOCKS_PER_CYCLE;
 
     ProcessCounterChange(currentCounter, newCounter);
 
     *regDIV = newCounter >> 8;
     internalCounter = newCounter & 0xFF;
 
-    NotifyObservers(clocksPerCycle);
+    NotifyObservers(CLOCKS_PER_CYCLE);
 }
 
 

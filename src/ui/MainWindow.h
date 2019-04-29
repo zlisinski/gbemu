@@ -1,11 +1,14 @@
 #pragma once
 
+#include <array>
 #include <QtCore/QElapsedTimer>
 #include <QtGamepad/QtGamepad>
+#include <QtMultimedia/QAudioOutput>
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
 
+#include "../AudioInterface.h"
 #include "../Display.h"
 
 class DebuggerWindow;
@@ -16,7 +19,7 @@ class QtFrameHandler;
 
 const int MAX_RECENT_FILES = 10;
 
-class MainWindow : public QMainWindow
+class MainWindow : public QMainWindow, public AudioInterface
 {
     Q_OBJECT
 
@@ -28,6 +31,10 @@ public:
     void FrameReady(uint32_t *displayFrameBuffer);
     // Callback for Emulator to show message box.
     void RequestMessageBox(const std::string &message);
+
+    // AudioInterface functions.
+    virtual void AudioDataReady(const std::array<uint8_t, AudioInterface::BUFFER_LEN> &data);
+    virtual int GetAudioSampleRate() {return audioSampleRate;}
 
     // Don't allow copy and assignment.
     MainWindow(const MainWindow&) = delete;
@@ -42,6 +49,7 @@ private:
     void SetupMenuBar();
     void SetupStatusBar();
     void SetupGamepad();
+    void SetupAudio();
     void UpdateRecentFile(const QString &filename);
     void UpdateRecentFilesActions();
     void SetDisplayScale(int scale);
@@ -82,6 +90,10 @@ private:
 
     QAction *recentFilesActions[MAX_RECENT_FILES];
 
+    QAudioOutput *audioOutput;
+    QIODevice *audioBuffer;
+    int audioSampleRate;
+
 private slots:
     void SlotOpenRom();
     void SlotOpenRecentRom();
@@ -102,6 +114,7 @@ private slots:
     void SlotSaveState();
     void SlotLoadState();
     void SlotOpenSettings();
+    void SlotAudioStateChanged(QAudio::State state);
 
 signals:
     void SignalFrameReady();
