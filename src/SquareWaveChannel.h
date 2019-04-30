@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gbemu.h"
-#include "Logger.h"
 
 enum DutyCycle
 {
@@ -37,6 +36,7 @@ public:
 
 private:
     void ReloadFrequencyCounter();
+    void ReloadLengthCounter();
     void ReloadEnvelopeCounter();
     void ReloadSweepCounter();
     uint32_t GetFrequency() const;
@@ -50,6 +50,7 @@ private:
     uint16_t frequencyCounter;
     bool continuous;
     
+    uint8_t soundLength;
     uint8_t lengthCounter;
     DutyCycle dutyCycle;
     uint8_t dutySequence;

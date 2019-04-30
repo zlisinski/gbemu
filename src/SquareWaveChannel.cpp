@@ -57,6 +57,7 @@ void SquareWaveChannel::Tick(uint value)
             lengthCounter--;
             if (lengthCounter == 0)
             {
+                // This is supposed to also clear NR52 Channel X On bit.
                 LogDebug("Channel %s disabled", name);
                 active = false;
             }
@@ -96,7 +97,7 @@ void SquareWaveChannel::Tick(uint value)
                     uint newFreq = frequency + (frequency >> sweepShift);
                     if (newFreq > 0x7FF)
                     {
-                        // This is supposed to also clear NR52 Ch1On bit.
+                        // This is supposed to also clear NR52 Channel 1 On bit.
                         active = false;
                         frequency = 0x7FF;
                     }
@@ -118,7 +119,7 @@ void SquareWaveChannel::Tick(uint value)
         frequencyCounter--;
         if (frequencyCounter == 0)
         {
-            dutySequence = (dutySequence + 1) % 8;
+            dutySequence = (dutySequence + 1) & 0x07;
 
             ReloadFrequencyCounter();
         }
@@ -141,6 +142,7 @@ void SquareWaveChannel::SetInitialize(bool init)
     {
         dutySequence = 0;
         ReloadFrequencyCounter();
+        ReloadLengthCounter();
         ReloadEnvelopeCounter();
         ReloadSweepCounter();
         volume = masterVolume;
@@ -188,6 +190,7 @@ void SquareWaveChannel::SetDutyCycle(DutyCycle duty)
 
 void SquareWaveChannel::SetLengthCounter(uint8_t length)
 {
+    soundLength = length;
     lengthCounter = length;
     //LogDebug("Channel %s length=%u", name, lengthCounter);
 }
@@ -235,6 +238,12 @@ void SquareWaveChannel::SetSweepShift(uint8_t shift)
 void SquareWaveChannel::ReloadFrequencyCounter()
 {
     frequencyCounter = 2048 - frequency;
+}
+
+
+void SquareWaveChannel::ReloadLengthCounter()
+{
+    lengthCounter = soundLength;
 }
 
 

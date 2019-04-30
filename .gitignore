@@ -10,3 +10,5 @@ serial.txt
 moc_*.h
 moc_*.cpp
 ui_*.h
+test-roms/*.gb
+test-roms/*.sym
