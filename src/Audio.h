@@ -4,6 +4,7 @@
 #include "AudioInterface.h"
 #include "Memory.h"
 #include "IoRegisterProxy.h"
+#include "NoiseChannel.h"
 #include "SquareWaveChannel.h"
 #include "TimerObserver.h"
 #include "WaveformChannel.h"
@@ -30,6 +31,7 @@ private:
     SquareWaveChannel channel1;
     SquareWaveChannel channel2;
     WaveformChannel channel3;
+    NoiseChannel channel4;
 
     uint32_t sampleCounter;
 

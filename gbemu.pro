@@ -50,6 +50,7 @@ HEADERS += \
 	src/MemoryBankController.h \
 	src/MemoryByteProxy.h \
 	src/Memory.h \
+	src/NoiseChannel.cpp \
 	src/RegisterByteProxy.h \
 	src/Serial.h \
 	src/SquareWaveChannel.h \
@@ -81,6 +82,7 @@ SOURCES += \
 	src/MemoryBankController.cpp \
 	src/Memory.cpp \
 	src/main.cpp \
+	src/NoiseChannel.cpp \
 	src/Serial.cpp \
 	src/SquareWaveChannel.cpp \
 	src/Timer.cpp \

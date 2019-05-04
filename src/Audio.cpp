@@ -48,21 +48,21 @@ enum NR32Mask
 // NR41
 enum NR41Mask
 {
-    eNR41Length = 0x3F
+    eNR41SoundLength = 0x3F
 };
 
 // NR43
 enum NR43Mask
 {
     eNR43DivRatio = 0x07,
-    eNR43Steps = 0x08,
+    eNR43CounterSteps = 0x08,
     eNR43ShiftClock = 0xf0
 };
 
 // NR44
 enum NR44Mask
 {
-    eNR44Counter = 0x40,
+    eNR44Continuous = 0x40,
     eNR44Initialize = 0x80
 };
 
@@ -104,6 +104,7 @@ Audio::Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, A
     channel1("1"),
     channel2("2"),
     channel3(),
+    channel4(),
     sampleCounter(0),
     bufferSize(0),
     clocksPerSample(CLOCKS_PER_SECOND / audioInterface->GetAudioSampleRate()),
@@ -244,16 +245,25 @@ bool Audio::WriteByte(uint16_t address, uint8_t byte)
         case eRegNR41:
             // Top 2 bits are unused.
             *regNR41 = byte | 0xC0;
+            channel4.SetSoundLength(byte & eNR41SoundLength);
             return true;
         case eRegNR42:
             *regNR42 = byte;
+            channel4.SetVolume(byte >> 4);
+            channel4.SetEnvelopeUp(byte & eNRx2EnvelopeUpDown);
+            channel4.SetEnvelopeLength(byte & eNRx2EnvelopeLength);
             return true;
         case eRegNR43:
             *regNR43 = byte;
+            channel4.SetDivRatio(byte & eNR43DivRatio);
+            channel4.SetByteWidth(byte & eNR43CounterSteps);
+            channel4.SetShiftFrequency(byte >> 4);
             return true;
         case eRegNR44:
             // Only top 2 bits are used.
             *regNR44 = byte | 0x3F;
+            channel4.SetContinuous(~byte & eNR44Continuous);
+            channel4.SetInitialize(byte & eNR44Initialize);
             return true;
         case eRegNR50:
             *regNR50 = byte;
@@ -433,6 +443,7 @@ void Audio::UpdateTimer(uint value)
         channel1.Tick(sampleCounter);
         channel2.Tick(sampleCounter);
         channel3.Tick(sampleCounter);
+        channel4.Tick(sampleCounter);
 
         sampleCounter = 0;
 
@@ -442,6 +453,7 @@ void Audio::UpdateTimer(uint value)
         const uint8_t ch1Value = channel1.GetSample();
         const uint8_t ch2Value = channel2.GetSample();
         const uint8_t ch3Value = channel3.GetSample();
+        const uint8_t ch4Value = channel4.GetSample();
 
         uint8_t leftSample = 0;
         uint8_t rightSample = 0;
@@ -453,6 +465,8 @@ void Audio::UpdateTimer(uint value)
             leftSample += ch2Value * leftVolume / 4;
         if (*regNR51 & eNR51Ch3SO2)
             leftSample += ch3Value * leftVolume / 4;
+        if (*regNR51 & eNR51Ch4SO2)
+            leftSample += ch4Value * leftVolume / 4;
         soundBuffer[bufferSize] = leftSample;
         bufferSize++;
 
@@ -463,6 +477,8 @@ void Audio::UpdateTimer(uint value)
             rightSample += ch2Value * rightVolume / 4;
         if (*regNR51 & eNR51Ch3SO1)
             rightSample += ch3Value * rightVolume / 4;
+        if (*regNR51 & eNR51Ch4SO1)
+            rightSample += ch4Value * rightVolume / 4;
         soundBuffer[bufferSize] = rightSample;
         bufferSize++;
 
