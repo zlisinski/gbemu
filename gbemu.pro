@@ -56,6 +56,7 @@ HEADERS += \
 	src/Timer.h \
 	src/TimerObserver.h \
 	src/Utils.h \
+	src/WaveformChannel.h \
 	src/ui/Debugger/AddressDialog.h \
 	src/ui/Debugger/DebuggerWindow.h \
 	src/ui/Debugger/DisassemblyModel.h \
@@ -84,6 +85,7 @@ SOURCES += \
 	src/SquareWaveChannel.cpp \
 	src/Timer.cpp \
 	src/Utils.cpp \
+	src/WaveformChannel.cpp \
 	src/ui/Debugger/AddressDialog.cpp \
 	src/ui/Debugger/DebuggerWindow.cpp \
 	src/ui/Debugger/DisassemblyModel.cpp \

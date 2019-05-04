@@ -155,9 +155,9 @@ void SquareWaveChannel::SetInitialize(bool init)
         }
 
         if (active == true)
-            LogDebug("Channel %s enabled while already enabled %uhz counter=%u", name, GetFrequency(), lengthCounter);
+            LogDebug("Channel %s enabled while already enabled %uHz counter=%u", name, GetFrequency(), lengthCounter);
         else
-            LogDebug("Channel %s enabled %uhz", name, GetFrequency());
+            LogDebug("Channel %s enabled %uHz", name, GetFrequency());
 
         active = true;
     }
@@ -188,10 +188,10 @@ void SquareWaveChannel::SetDutyCycle(DutyCycle duty)
 }
 
 
-void SquareWaveChannel::SetLengthCounter(uint8_t length)
+void SquareWaveChannel::SetSoundLength(uint8_t length)
 {
-    soundLength = length;
-    lengthCounter = length;
+    soundLength = 64 - length;
+    lengthCounter = soundLength;
     //LogDebug("Channel %s length=%u", name, lengthCounter);
 }
 

@@ -24,7 +24,7 @@ public:
     void SetFrequency(uint16_t freq);
     
     void SetDutyCycle(DutyCycle duty);
-    void SetLengthCounter(uint8_t length);
+    void SetSoundLength(uint8_t length);
     
     void SetVolume(uint8_t vol);
     void SetEnvelopeUp(bool up);

@@ -103,6 +103,7 @@ Audio::Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, A
     audioInterface(audioInterface),
     channel1("1"),
     channel2("2"),
+    channel3(),
     sampleCounter(0),
     bufferSize(0),
     clocksPerSample(CLOCKS_PER_SECOND / audioInterface->GetAudioSampleRate()),
@@ -147,6 +148,7 @@ Audio::Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, A
 {
     timerSubject->AttachObserver(this);
     soundBuffer.fill(0);
+    channel3.SetWaveTable(regWave0);
 }
 
 
@@ -172,7 +174,7 @@ bool Audio::WriteByte(uint16_t address, uint8_t byte)
             return true;
         case eRegNR11:
             *regNR11 = byte;
-            channel1.SetLengthCounter(64 - (byte & eNRx1SoundLength));
+            channel1.SetSoundLength(byte & eNRx1SoundLength);
             channel1.SetDutyCycle(static_cast<DutyCycle>(byte >> 6));
             return true;
         case eRegNR12:
@@ -194,7 +196,7 @@ bool Audio::WriteByte(uint16_t address, uint8_t byte)
             return true;
         case eRegNR21:
             *regNR21 = byte;
-            channel2.SetLengthCounter(64 - (byte & eNRx1SoundLength));
+            channel2.SetSoundLength(byte & eNRx1SoundLength);
             channel2.SetDutyCycle(static_cast<DutyCycle>(byte >> 6));
             return true;
         case eRegNR22:
@@ -211,26 +213,33 @@ bool Audio::WriteByte(uint16_t address, uint8_t byte)
             // Bits 3-5 are unused.
             *regNR24 = byte | 0x38;
             channel2.SetFrequency(((*regNR24 & eNRx4Frequency) << 8) | *regNR23);
-            channel2.SetContinuous(byte & eNRx4Continuous);
+            channel2.SetContinuous(~byte & eNRx4Continuous);
             channel2.SetInitialize(byte & eNRx4Initialize);
             return true;
         case eRegNR30:
             // Only bit 7 is used.
             *regNR30 = byte | 0x7F;
+            channel3.SetEnabled(byte & eNR30SoundOff);
             return true;
         case eRegNR31:
             *regNR31 = byte;
+            channel3.SetSoundLength(byte);
             return true;
         case eRegNR32:
             // Only bits 5 and 6 are used.
             *regNR32 = byte | 0x9F;
+            channel3.SetVolume((byte & eNR32Level) >> 5);
             return true;
         case eRegNR33:
             *regNR33 = byte;
+            channel3.SetFrequency(((*regNR34 & eNRx4Frequency) << 8) | *regNR33);
             return true;
         case eRegNR34:
             // Bits 3-5 are unused.
             *regNR34 = byte | 0x38;
+            channel3.SetFrequency(((*regNR34 & eNRx4Frequency) << 8) | *regNR33);
+            channel3.SetContinuous(~byte & eNRx4Continuous);
+            channel3.SetInitialize(byte & eNRx4Initialize);
             return true;
         case eRegNR41:
             // Top 2 bits are unused.
@@ -423,6 +432,7 @@ void Audio::UpdateTimer(uint value)
     {
         channel1.Tick(sampleCounter);
         channel2.Tick(sampleCounter);
+        channel3.Tick(sampleCounter);
 
         sampleCounter = 0;
 
@@ -431,6 +441,7 @@ void Audio::UpdateTimer(uint value)
 
         const uint8_t ch1Value = channel1.GetSample();
         const uint8_t ch2Value = channel2.GetSample();
+        const uint8_t ch3Value = channel3.GetSample();
 
         uint8_t leftSample = 0;
         uint8_t rightSample = 0;
@@ -440,6 +451,8 @@ void Audio::UpdateTimer(uint value)
             leftSample += ch1Value * leftVolume / 4;
         if (*regNR51 & eNR51Ch2SO2)
             leftSample += ch2Value * leftVolume / 4;
+        if (*regNR51 & eNR51Ch3SO2)
+            leftSample += ch3Value * leftVolume / 4;
         soundBuffer[bufferSize] = leftSample;
         bufferSize++;
 
@@ -448,6 +461,8 @@ void Audio::UpdateTimer(uint value)
             rightSample += ch1Value * rightVolume / 4;
         if (*regNR51 & eNR51Ch2SO1)
             rightSample += ch2Value * rightVolume / 4;
+        if (*regNR51 & eNR51Ch3SO1)
+            rightSample += ch3Value * rightVolume / 4;
         soundBuffer[bufferSize] = rightSample;
         bufferSize++;
 

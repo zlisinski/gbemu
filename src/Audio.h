@@ -6,6 +6,7 @@
 #include "IoRegisterProxy.h"
 #include "SquareWaveChannel.h"
 #include "TimerObserver.h"
+#include "WaveformChannel.h"
 
 
 class Audio : public IoRegisterProxy, public TimerObserver
@@ -28,6 +29,7 @@ private:
 
     SquareWaveChannel channel1;
     SquareWaveChannel channel2;
+    WaveformChannel channel3;
 
     uint32_t sampleCounter;
 
