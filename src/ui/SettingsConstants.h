@@ -1,5 +1,12 @@
 #pragma once
 
+extern const char *SETTINGS_AUDIO_ENABLED;
+extern const char *SETTINGS_AUDIO_VOLUME;
+extern const char *SETTINGS_AUDIO_CHANNEL1;
+extern const char *SETTINGS_AUDIO_CHANNEL2;
+extern const char *SETTINGS_AUDIO_CHANNEL3;
+extern const char *SETTINGS_AUDIO_CHANNEL4;
+
 extern const char *SETTINGS_BOOTROM_ENABLED;
 extern const char *SETTINGS_BOOTROM_PATH;
 

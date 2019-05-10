@@ -435,7 +435,7 @@ void Audio::UpdateTimer(uint value)
 {
     sampleCounter += value;
 
-    if (!(*regNR52 & eNR52AllSoundOn))
+    if ((*regNR52 & eNR52AllSoundOn) == 0 || audioInterface->GetAudioEnabled() == false)
         return;
 
     if (sampleCounter >= clocksPerSample)
@@ -458,26 +458,28 @@ void Audio::UpdateTimer(uint value)
         uint8_t leftSample = 0;
         uint8_t rightSample = 0;
 
+        AudioInterface::Channels enabledChannels = audioInterface->GetEnabledAudioChannels();
+
         // Mix left channel.
-        if (*regNR51 & eNR51Ch1SO2)
+        if ((*regNR51 & eNR51Ch1SO2) && enabledChannels.channel1)
             leftSample += ch1Value * leftVolume / 4;
-        if (*regNR51 & eNR51Ch2SO2)
+        if ((*regNR51 & eNR51Ch2SO2) && enabledChannels.channel2)
             leftSample += ch2Value * leftVolume / 4;
-        if (*regNR51 & eNR51Ch3SO2)
+        if ((*regNR51 & eNR51Ch3SO2) && enabledChannels.channel3)
             leftSample += ch3Value * leftVolume / 4;
-        if (*regNR51 & eNR51Ch4SO2)
+        if ((*regNR51 & eNR51Ch4SO2) && enabledChannels.channel4)
             leftSample += ch4Value * leftVolume / 4;
         soundBuffer[bufferSize] = leftSample;
         bufferSize++;
 
         // Mix right channel.
-        if (*regNR51 & eNR51Ch1SO1)
+        if ((*regNR51 & eNR51Ch1SO1) && enabledChannels.channel1)
             rightSample += ch1Value * rightVolume / 4;
-        if (*regNR51 & eNR51Ch2SO1)
+        if ((*regNR51 & eNR51Ch2SO1) && enabledChannels.channel2)
             rightSample += ch2Value * rightVolume / 4;
-        if (*regNR51 & eNR51Ch3SO1)
+        if ((*regNR51 & eNR51Ch3SO1) && enabledChannels.channel3)
             rightSample += ch3Value * rightVolume / 4;
-        if (*regNR51 & eNR51Ch4SO1)
+        if ((*regNR51 & eNR51Ch4SO1) && enabledChannels.channel4)
             rightSample += ch4Value * rightVolume / 4;
         soundBuffer[bufferSize] = rightSample;
         bufferSize++;

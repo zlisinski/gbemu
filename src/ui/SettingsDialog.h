@@ -29,4 +29,6 @@ private:
 private slots:
     void SlotToggleEnableBootRom(bool checked);
     void SlotClickBrowseBootRom();
+    void SlotToggleEnableAudio(bool checked);
+    void SlotAudioVolumeChanged(int value);
 };

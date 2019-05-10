@@ -16,12 +16,27 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     QSettings settings;
     ui->chkEnableBootRom->setChecked(settings.value(SETTINGS_BOOTROM_ENABLED, false).toBool());
     ui->txtBootRomFilename->setText(settings.value(SETTINGS_BOOTROM_PATH).toString());
+    ui->chkAudioEnabled->setChecked(settings.value(SETTINGS_AUDIO_ENABLED, true).toBool());
+    ui->sldAudioVolume->setValue(settings.value(SETTINGS_AUDIO_VOLUME, 50).toInt());
+    ui->chkAudioChannel1->setChecked(settings.value(SETTINGS_AUDIO_CHANNEL1, true).toBool());
+    ui->chkAudioChannel2->setChecked(settings.value(SETTINGS_AUDIO_CHANNEL2, true).toBool());
+    ui->chkAudioChannel3->setChecked(settings.value(SETTINGS_AUDIO_CHANNEL3, true).toBool());
+    ui->chkAudioChannel4->setChecked(settings.value(SETTINGS_AUDIO_CHANNEL4, true).toBool());
 
-    ui->btnBrowseBootRom->setEnabled(ui->chkEnableBootRom->isChecked());
-    ui->txtBootRomFilename->setEnabled(ui->chkEnableBootRom->isChecked());
+    // Use existing functions to enable/disable controls, and set dirty to false, since it is set in functions.
+    SlotToggleEnableBootRom(ui->chkEnableBootRom->isChecked());
+    SlotToggleEnableAudio(ui->chkAudioEnabled->isChecked());
+    SlotAudioVolumeChanged(ui->sldAudioVolume->value());
+    dirty = false;
 
-    connect(ui->chkEnableBootRom, SIGNAL(toggled(bool)), this, SLOT(SlotToggleEnableBootRom(bool)));
-    connect(ui->btnBrowseBootRom, SIGNAL(clicked()), this, SLOT(SlotClickBrowseBootRom()));
+    connect(ui->chkEnableBootRom, &QCheckBox::toggled, this, &SettingsDialog::SlotToggleEnableBootRom);
+    connect(ui->btnBrowseBootRom, &QPushButton::clicked, this, &SettingsDialog::SlotClickBrowseBootRom);
+    connect(ui->chkAudioEnabled, &QCheckBox::toggled, this, &SettingsDialog::SlotToggleEnableAudio);
+    connect(ui->sldAudioVolume, &QSlider::valueChanged, this, &SettingsDialog::SlotAudioVolumeChanged);
+    connect(ui->chkAudioChannel1, &QCheckBox::toggled, [&](){dirty = true;});
+    connect(ui->chkAudioChannel2, &QCheckBox::toggled, [&](){dirty = true;});
+    connect(ui->chkAudioChannel3, &QCheckBox::toggled, [&](){dirty = true;});
+    connect(ui->chkAudioChannel4, &QCheckBox::toggled, [&](){dirty = true;});
 }
 
 
@@ -60,6 +75,13 @@ void SettingsDialog::SaveSettings()
     QSettings settings;
     settings.setValue(SETTINGS_BOOTROM_ENABLED, ui->chkEnableBootRom->isChecked());
     settings.setValue(SETTINGS_BOOTROM_PATH, ui->txtBootRomFilename->text());
+
+    settings.setValue(SETTINGS_AUDIO_ENABLED, ui->chkAudioEnabled->isChecked());
+    settings.setValue(SETTINGS_AUDIO_VOLUME, ui->sldAudioVolume->value());
+    settings.setValue(SETTINGS_AUDIO_CHANNEL1, ui->chkAudioChannel1->isChecked());
+    settings.setValue(SETTINGS_AUDIO_CHANNEL2, ui->chkAudioChannel2->isChecked());
+    settings.setValue(SETTINGS_AUDIO_CHANNEL3, ui->chkAudioChannel3->isChecked());
+    settings.setValue(SETTINGS_AUDIO_CHANNEL4, ui->chkAudioChannel4->isChecked());
 }
 
 
@@ -81,4 +103,24 @@ void SettingsDialog::SlotClickBrowseBootRom()
         ui->txtBootRomFilename->setText(filename);
         dirty = true;
     }
+}
+
+
+void SettingsDialog::SlotToggleEnableAudio(bool checked)
+{
+    ui->sldAudioVolume->setEnabled(checked);
+    ui->chkAudioChannel1->setEnabled(checked);
+    ui->chkAudioChannel2->setEnabled(checked);
+    ui->chkAudioChannel3->setEnabled(checked);
+    ui->chkAudioChannel4->setEnabled(checked);
+    ui->lblAudioVolume->setEnabled(checked);
+
+    dirty = true;
+}
+
+
+void SettingsDialog::SlotAudioVolumeChanged(int value)
+{
+    ui->lblAudioVolume->setText("Volume     " + QString::number(value));
+    dirty = true;
 }

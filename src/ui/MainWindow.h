@@ -35,6 +35,9 @@ public:
     // AudioInterface functions.
     virtual void AudioDataReady(const std::array<uint8_t, AudioInterface::BUFFER_LEN> &data);
     virtual int GetAudioSampleRate() {return audioSampleRate;}
+    virtual bool GetAudioEnabled() {return audioEnabled;}
+    virtual AudioInterface::Channels GetEnabledAudioChannels() {return enabledAudioChannels;}
+    virtual uint8_t GetAudioVolume() {return audioVolume;}
 
     // Don't allow copy and assignment.
     MainWindow(const MainWindow&) = delete;
@@ -50,6 +53,7 @@ private:
     void SetupStatusBar();
     void SetupGamepad();
     void SetupAudio();
+    void LoadAudioSettings();
     void UpdateRecentFile(const QString &filename);
     void UpdateRecentFilesActions();
     void SetDisplayScale(int scale);
@@ -90,9 +94,12 @@ private:
 
     QAction *recentFilesActions[MAX_RECENT_FILES];
 
+    bool audioEnabled;
     QAudioOutput *audioOutput;
     QIODevice *audioBuffer;
     int audioSampleRate;
+    AudioInterface::Channels enabledAudioChannels;
+    uint8_t audioVolume;
 
 private slots:
     void SlotOpenRom();

@@ -48,9 +48,12 @@ MainWindow::MainWindow(QWidget *parent) :
     displayDebuggerWindowAction(NULL),
     emuSaveStateAction(NULL),
     emuLoadStateAction(NULL),
+    audioEnabled(true),
     audioOutput(NULL),
     audioBuffer(NULL),
-    audioSampleRate(48000)
+    audioSampleRate(48000),
+    enabledAudioChannels({true, true, true, true}),
+    audioVolume(50)
 {
     QSettings settings;
     displayScale = settings.value(SETTINGS_VIDEO_SCALE, 5).toInt();
@@ -317,6 +320,8 @@ void MainWindow::SetupGamepad()
 
 void MainWindow::SetupAudio()
 {
+    LoadAudioSettings();
+
     QAudioFormat format;
     format.setSampleRate(audioSampleRate);
     format.setChannelCount(2);
@@ -338,6 +343,18 @@ void MainWindow::SetupAudio()
     connect(audioOutput, SIGNAL(stateChanged(QAudio::State)), this, SLOT(SlotAudioStateChanged(QAudio::State)));
 
     audioBuffer = audioOutput->start();
+}
+
+
+void MainWindow::LoadAudioSettings()
+{
+    QSettings settings;
+    audioEnabled = settings.value(SETTINGS_AUDIO_ENABLED, true).toBool();
+    audioVolume = settings.value(SETTINGS_AUDIO_VOLUME, 50).toInt();
+    enabledAudioChannels.channel1 = settings.value(SETTINGS_AUDIO_CHANNEL1, true).toBool();
+    enabledAudioChannels.channel2 = settings.value(SETTINGS_AUDIO_CHANNEL2, true).toBool();
+    enabledAudioChannels.channel3 = settings.value(SETTINGS_AUDIO_CHANNEL3, true).toBool();
+    enabledAudioChannels.channel4 = settings.value(SETTINGS_AUDIO_CHANNEL4, true).toBool();
 }
 
 
@@ -653,6 +670,8 @@ void MainWindow::SlotOpenSettings()
     SettingsDialog dialog(this);
     dialog.setModal(true);
     dialog.exec();
+
+    LoadAudioSettings();
 }
 
 
