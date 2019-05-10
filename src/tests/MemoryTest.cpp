@@ -36,7 +36,7 @@ void MemoryTest::TearDown()
 
 TEST_F(MemoryTest, TEST_SetRomMemory_memcpy)
 {
-    std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
+    std::vector<uint8_t> bootRomMemory(BOOT_ROM_SIZE);
     std::vector<uint8_t> gameRomMemory(ROM_BANK_SIZE * 2);
     memset(bootRomMemory.data(), 0x11, BOOT_ROM_SIZE);
     memset(gameRomMemory.data(), 0x22, gameRomMemory.size());
@@ -78,7 +78,7 @@ TEST_F(MemoryTest, TEST_SetRomMemory_memcpy2)
 
 TEST_F(MemoryTest, TEST_DisableBootRom)
 {
-    std::array<uint8_t, BOOT_ROM_SIZE> bootRomMemory;
+    std::vector<uint8_t> bootRomMemory(BOOT_ROM_SIZE);
     std::vector<uint8_t> gameRomMemory(ROM_BANK_SIZE * 2);
     memset(bootRomMemory.data(), 0x11, BOOT_ROM_SIZE);
     memset(gameRomMemory.data(), 0x22, gameRomMemory.size());
