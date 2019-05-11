@@ -53,12 +53,11 @@ void SquareWaveChannel::Tick(uint value)
         // Every 256Hz check the length counter and deactivate channel if it reaches zero.
         if ((counter & 0x3FFF) == 0 && continuous == false && lengthCounter != 0)
         {
-            //LogDebug("%08X, counter=%u", counter, ch1LengthCounter);
             lengthCounter--;
             if (lengthCounter == 0)
             {
                 // This is supposed to also clear NR52 Channel X On bit.
-                LogDebug("Channel %s disabled", name);
+                LogAudio("Channel %s disabled", name);
                 active = false;
             }
         }
@@ -150,14 +149,14 @@ void SquareWaveChannel::SetInitialize(bool init)
         // Channel is disabled if the volume is 0, and the envelope is not set to amplify.
         if (volume == 0 && envelopeUp == false)
         {
-            LogDebug("Init of channel %s, but volume is 0", name);
+            LogAudio("Init of channel %s, but volume is 0", name);
             return;
         }
 
         if (active == true)
-            LogDebug("Channel %s enabled while already enabled %uHz counter=%u", name, GetFrequency(), lengthCounter);
+            LogAudio("Channel %s enabled while already enabled %uHz counter=%u", name, GetFrequency(), lengthCounter);
         else
-            LogDebug("Channel %s enabled %uHz", name, GetFrequency());
+            LogAudio("Channel %s enabled %uHz", name, GetFrequency());
 
         active = true;
     }
@@ -171,7 +170,7 @@ void SquareWaveChannel::SetInitialize(bool init)
 void SquareWaveChannel::SetContinuous(bool cont)
 {
     continuous = cont;
-    //LogDebug("Channel %s continuous=%d", name, cont);
+    //LogAudio("Channel %s continuous=%d", name, cont);
 }
 
 
@@ -192,7 +191,7 @@ void SquareWaveChannel::SetSoundLength(uint8_t length)
 {
     soundLength = 64 - length;
     lengthCounter = soundLength;
-    //LogDebug("Channel %s length=%u", name, lengthCounter);
+    //LogAudio("Channel %s length=%u", name, lengthCounter);
 }
 
 

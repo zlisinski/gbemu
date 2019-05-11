@@ -170,14 +170,13 @@ Audio::~Audio()
 
 bool Audio::WriteByte(uint16_t address, uint8_t byte)
 {
-    LogInstruction("Audio::WriteByte %04X, %02X", address, byte);
+    LogAudio("Audio::WriteByte %04X, %02X", address, byte);
 
     switch (address)
     {
         case eRegNR10:
             // Bit 7 is unused.
             *regNR10 = byte | 0x80;
-            LogDebug("Sweep write %02X", byte);
             channel1.SetSweepTime((byte & eNR10SweepTime) >> 4);
             channel1.SetSweepUp(~byte & eNR10SweepIncrease);
             channel1.SetSweepShift(byte & eNR10SweepShift);
@@ -340,7 +339,7 @@ bool Audio::WriteByte(uint16_t address, uint8_t byte)
 
 uint8_t Audio::ReadByte(uint16_t address) const
 {
-    LogInstruction("Audio::ReadByte %04X", address);
+    LogAudio("Audio::ReadByte %04X", address);
 
     switch (address)
     {

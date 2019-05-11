@@ -474,7 +474,7 @@ void MainWindow::AudioDataReady(const std::array<int16_t, AudioInterface::BUFFER
             size_t dataSize = data.size() * sizeof(data[0]);
             written += audioBuffer->write(reinterpret_cast<const char *>(&data[written]), dataSize - written);
             if (written != AudioInterface::BUFFER_LEN)
-                LogDebug("Only wrote %lld bytes of audio data", written);
+                LogAudio("Only wrote %lld bytes of audio data", written);
         //} while (written < AudioInterface::BUFFER_LEN);
     }
 }
@@ -682,10 +682,10 @@ void MainWindow::SlotAudioStateChanged(QAudio::State state)
     switch (state)
     {
         case QAudio::ActiveState:
-            LogError("Audio active");
+            LogAudio("Audio active");
             break;
         case QAudio::IdleState:
-            LogError("Audio idle");
+            LogAudio("Audio idle");
             break;
         case QAudio::InterruptedState:
             LogError("Audio interrupted");

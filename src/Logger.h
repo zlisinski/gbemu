@@ -75,3 +75,4 @@ private:
 #define LogInfo(...) do {Logger::Log(LogLevel::eInfo, __VA_ARGS__);} while (0)
 #define LogDebug(...) do {Logger::Log(LogLevel::eDebug, __VA_ARGS__);} while (0)
 #define LogInstruction(...) do {Logger::Log(LogLevel::eInstruction, __VA_ARGS__);} while (0)
+#define LogAudio(...) do {} while (0)

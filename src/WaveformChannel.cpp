@@ -41,7 +41,7 @@ void WaveformChannel::Tick(uint value)
             if (lengthCounter == 0)
             {
                 // This is supposed to also clear NR52 Channel 3 On bit.
-                LogDebug("Channel 3 disabled");
+                LogAudio("Channel 3 disabled");
                 active = false;
             }
         }
@@ -97,9 +97,9 @@ void WaveformChannel::SetInitialize(bool init)
         ReloadLengthCounter();
 
         if (active == true)
-            LogDebug("Channel 3 enabled while already enabled %uHz counter=%u", GetFrequency(), lengthCounter);
+            LogAudio("Channel 3 enabled while already enabled %uHz counter=%u", GetFrequency(), lengthCounter);
         else
-            LogDebug("Channel 3 enabled %uHz", GetFrequency());
+            LogAudio("Channel 3 enabled %uHz", GetFrequency());
 
         active = true;
     }
@@ -113,7 +113,7 @@ void WaveformChannel::SetInitialize(bool init)
 void WaveformChannel::SetContinuous(bool cont)
 {
     continuous = cont;
-    //LogDebug("Channel 3 continuous=%d", cont);
+    //LogAudio("Channel 3 continuous=%d", cont);
 }
 
 
@@ -127,7 +127,7 @@ void WaveformChannel::SetFrequency(uint16_t freq)
 void WaveformChannel::SetEnabled(bool enable)
 {
     enabled = enable;
-    //LogDebug("Channel 3 enabled=%d", enable);
+    //LogAudio("Channel 3 enabled=%d", enable);
 }
 
 
@@ -135,7 +135,7 @@ void WaveformChannel::SetSoundLength(uint8_t length)
 {
     soundLength = 256 - length;
     lengthCounter = soundLength;
-    //LogDebug("Channel 3 length=%u", lengthCounter);
+    //LogAudio("Channel 3 length=%u", lengthCounter);
 }
 
 

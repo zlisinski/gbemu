@@ -44,12 +44,11 @@ void NoiseChannel::Tick(uint value)
         // Every 256Hz check the length counter and deactivate channel if it reaches zero.
         if ((counter & 0x3FFF) == 0 && continuous == false && lengthCounter != 0)
         {
-            //LogDebug("%08X, counter=%u", counter, ch1LengthCounter);
             lengthCounter--;
             if (lengthCounter == 0)
             {
                 // This is supposed to also clear NR52 Channel X On bit.
-                LogDebug("Channel 4 disabled");
+                LogAudio("Channel 4 disabled");
                 active = false;
             }
         }
@@ -122,11 +121,11 @@ void NoiseChannel::SetInitialize(bool init)
         // Channel is disabled if the volume is 0, and the envelope is not set to amplify.
         if (volume == 0 && envelopeUp == false)
         {
-            LogDebug("Init of channel 4, but volume is 0");
+            LogAudio("Init of channel 4, but volume is 0");
             return;
         }
 
-        LogDebug("Channel 4 enabled");
+        LogAudio("Channel 4 enabled");
 
         active = true;
     }
@@ -140,7 +139,7 @@ void NoiseChannel::SetInitialize(bool init)
 void NoiseChannel::SetContinuous(bool cont)
 {
     continuous = cont;
-    //LogDebug("Channel 4 continuous=%d", cont);
+    //LogAudio("Channel 4 continuous=%d", cont);
 }
 
 
@@ -148,7 +147,7 @@ void NoiseChannel::SetSoundLength(uint8_t length)
 {
     soundLength = 64 - length;
     lengthCounter = soundLength;
-    //LogDebug("Channel 4 length=%u", lengthCounter);
+    //LogAudio("Channel 4 length=%u", lengthCounter);
 }
 
 
