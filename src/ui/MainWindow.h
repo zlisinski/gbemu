@@ -10,6 +10,7 @@
 
 #include "../AudioInterface.h"
 #include "../Display.h"
+#include "../GameSpeedObserver.h"
 
 class DebuggerWindow;
 class InfoWindow;
@@ -19,7 +20,7 @@ class QtFrameHandler;
 
 const int MAX_RECENT_FILES = 10;
 
-class MainWindow : public QMainWindow, public AudioInterface
+class MainWindow : public QMainWindow, public AudioInterface, public GameSpeedSubject
 {
     Q_OBJECT
 
@@ -38,6 +39,7 @@ public:
     virtual bool GetAudioEnabled() {return audioEnabled;}
     virtual AudioInterface::Channels GetEnabledAudioChannels() {return enabledAudioChannels;}
     virtual uint8_t GetAudioVolume() {return audioVolume;}
+    virtual int GetGameSpeed() {return frameCapSetting;}
 
     // Don't allow copy and assignment.
     MainWindow(const MainWindow&) = delete;

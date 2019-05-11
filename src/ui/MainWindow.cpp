@@ -89,7 +89,7 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapTimer.start();
 
     frameHandler = new QtFrameHandler(this);
-    emulator = new EmulatorMgr(frameHandler, this, infoWindow, debuggerWindow);
+    emulator = new EmulatorMgr(frameHandler, this, infoWindow, debuggerWindow, this);
 
     if (qApp->arguments().size() >= 2)
     {
@@ -538,6 +538,7 @@ void MainWindow::SlotSetFpsCap()
     if (action)
     {
         frameCapSetting = action->data().toInt();
+        NotifyGameSpeedObservers(frameCapSetting);
     }
 }
 

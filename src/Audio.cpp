@@ -1,6 +1,7 @@
 #include "Audio.h"
 #include "AudioInterface.h"
 #include "Logger.h"
+#include "Memory.h"
 
 // NR10
 enum NR10Mask
@@ -99,7 +100,9 @@ enum NR52Mask
 };
 
 
-Audio::Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, AudioInterface *audioInterface) :
+Audio::Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject,
+             AudioInterface *audioInterface, GameSpeedSubject *gameSpeedSubject) :
+    GameSpeedObserver(gameSpeedSubject),
     audioInterface(audioInterface),
     channel1("1"),
     channel2("2"),
@@ -107,7 +110,6 @@ Audio::Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, A
     channel4(),
     sampleCounter(0),
     bufferSize(0),
-    clocksPerSample(CLOCKS_PER_SECOND / audioInterface->GetAudioSampleRate()),
     masterVolume(0),
     regNR10(ioRegisterSubject->AttachIoRegister(eRegNR10, this)),
     regNR11(ioRegisterSubject->AttachIoRegister(eRegNR11, this)),
@@ -147,15 +149,22 @@ Audio::Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, A
     regWaveE(ioRegisterSubject->AttachIoRegister(eRegWaveE, this)),
     regWaveF(ioRegisterSubject->AttachIoRegister(eRegWaveF, this))
 {
-    timerSubject->AttachObserver(this);
+    if (timerSubject)
+        timerSubject->AttachObserver(this);
+    if (gameSpeedSubject)
+        gameSpeedSubject->AttachGameSpeedObserver(this);
+
     soundBuffer.fill(0);
     channel3.SetWaveTable(regWave0);
+
+    UpdateGameSpeed(audioInterface->GetGameSpeed());
 }
 
 
 Audio::~Audio()
 {
-
+    if (gameSpeedSubject)
+        gameSpeedSubject->DetachObserver(this);
 }
 
 
@@ -493,4 +502,11 @@ void Audio::UpdateTimer(uint value)
             bufferSize = 0;
         }
     }
+}
+
+
+void Audio::UpdateGameSpeed(int value)
+{
+    // Scale clocksPerSample by the frame rate. 120fps = 2x, 60fps = 1x, 30fps = 0.5x
+    clocksPerSample = (CLOCKS_PER_SECOND / audioInterface->GetAudioSampleRate()) * (value / 60.0);
 }

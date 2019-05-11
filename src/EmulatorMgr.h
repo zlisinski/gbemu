@@ -11,6 +11,7 @@ class AudioInterface;
 class Cpu;
 class DebuggerInterface;
 class Display;
+class GameSpeedSubject;
 class InfoInterface;
 class Input;
 class Interrupt;
@@ -21,7 +22,8 @@ class Timer;
 class EmulatorMgr
 {
 public:
-    EmulatorMgr(AbsFrameHandler *frameHandler, AudioInterface *audioInterface, InfoInterface *infoInterface, DebuggerInterface *debuggerInterface);
+    EmulatorMgr(AbsFrameHandler *frameHandler, AudioInterface *audioInterface, InfoInterface *infoInterface,
+                DebuggerInterface *debuggerInterface, GameSpeedSubject *gameSpeedSubject);
     ~EmulatorMgr();
 
     void LoadBootRom(const std::string &filename);
@@ -57,6 +59,7 @@ private:
     AudioInterface *audioInterface;
     InfoInterface *infoInterface;
     DebuggerInterface *debuggerInterface;
+    GameSpeedSubject *gameSpeedSubject;
 
     Audio *audio;
     Buttons buttons;

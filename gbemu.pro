@@ -40,6 +40,7 @@ HEADERS += \
 	src/Display.h \
 	src/EmulatorMgr.h \
 	src/Exceptions.h \
+	src/GameSpeedObserver.h \
 	src/gbemu.h \
 	src/Globals.h \
 	src/IoRegisterProxy.h \

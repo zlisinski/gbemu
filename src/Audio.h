@@ -2,7 +2,7 @@
 
 #include "gbemu.h"
 #include "AudioInterface.h"
-#include "Memory.h"
+#include "GameSpeedObserver.h"
 #include "IoRegisterProxy.h"
 #include "NoiseChannel.h"
 #include "SquareWaveChannel.h"
@@ -10,10 +10,11 @@
 #include "WaveformChannel.h"
 
 
-class Audio : public IoRegisterProxy, public TimerObserver
+class Audio : public IoRegisterProxy, public TimerObserver, public GameSpeedObserver
 {
 public:
-    Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject, AudioInterface *audioInterface);
+    Audio(IoRegisterSubject *ioRegisterSubject, TimerSubject *timerSubject,
+          AudioInterface *audioInterface, GameSpeedSubject *gameSpeedSubject);
     virtual ~Audio();
 
     // Inherited from IoRegisterProxy.
@@ -23,7 +24,8 @@ public:
     // Inherited from TimerObserver.
     virtual void UpdateTimer(uint value);
 
-    void SetMasterVolume(uint32_t volume) {masterVolume = volume;}
+    // Inherited from GameSpeedObserver.
+    virtual void UpdateGameSpeed(int value);
 
 private:
     AudioInterface *audioInterface;

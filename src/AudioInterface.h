@@ -21,6 +21,7 @@ public:
     virtual bool GetAudioEnabled() = 0;
     virtual Channels GetEnabledAudioChannels() = 0;
     virtual uint8_t GetAudioVolume() = 0;
+    virtual int GetGameSpeed() = 0;
 
 protected:
     ~AudioInterface() {}
