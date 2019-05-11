@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     audioBuffer(NULL),
     audioSampleRate(48000),
     enabledAudioChannels({true, true, true, true}),
-    audioVolume(50)
+    audioVolume(128)
 {
     QSettings settings;
     displayScale = settings.value(SETTINGS_VIDEO_SCALE, 5).toInt();
@@ -350,7 +350,7 @@ void MainWindow::LoadAudioSettings()
 {
     QSettings settings;
     audioEnabled = settings.value(SETTINGS_AUDIO_ENABLED, true).toBool();
-    audioVolume = settings.value(SETTINGS_AUDIO_VOLUME, 50).toInt();
+    audioVolume = settings.value(SETTINGS_AUDIO_VOLUME, 128).toInt();
     enabledAudioChannels.channel1 = settings.value(SETTINGS_AUDIO_CHANNEL1, true).toBool();
     enabledAudioChannels.channel2 = settings.value(SETTINGS_AUDIO_CHANNEL2, true).toBool();
     enabledAudioChannels.channel3 = settings.value(SETTINGS_AUDIO_CHANNEL3, true).toBool();

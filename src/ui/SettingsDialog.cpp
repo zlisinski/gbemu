@@ -17,7 +17,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui->chkEnableBootRom->setChecked(settings.value(SETTINGS_BOOTROM_ENABLED, false).toBool());
     ui->txtBootRomFilename->setText(settings.value(SETTINGS_BOOTROM_PATH).toString());
     ui->chkAudioEnabled->setChecked(settings.value(SETTINGS_AUDIO_ENABLED, true).toBool());
-    ui->sldAudioVolume->setValue(settings.value(SETTINGS_AUDIO_VOLUME, 50).toInt());
+    ui->sldAudioVolume->setValue(settings.value(SETTINGS_AUDIO_VOLUME, 128).toInt());
     ui->chkAudioChannel1->setChecked(settings.value(SETTINGS_AUDIO_CHANNEL1, true).toBool());
     ui->chkAudioChannel2->setChecked(settings.value(SETTINGS_AUDIO_CHANNEL2, true).toBool());
     ui->chkAudioChannel3->setChecked(settings.value(SETTINGS_AUDIO_CHANNEL3, true).toBool());
