@@ -325,10 +325,10 @@ void MainWindow::SetupAudio()
     QAudioFormat format;
     format.setSampleRate(audioSampleRate);
     format.setChannelCount(2);
-    format.setSampleSize(8);
+    format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::UnSignedInt);
+    format.setSampleType(QAudioFormat::SignedInt);
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(format))
@@ -463,7 +463,7 @@ void MainWindow::RequestMessageBox(const std::string &message)
 }
 
 
-void MainWindow::AudioDataReady(const std::array<uint8_t, AudioInterface::BUFFER_LEN> &data)
+void MainWindow::AudioDataReady(const std::array<int16_t, AudioInterface::BUFFER_LEN> &data)
 {
     // This function runs in the thread context of the Emulator worker thread.
 
@@ -471,7 +471,8 @@ void MainWindow::AudioDataReady(const std::array<uint8_t, AudioInterface::BUFFER
     {
         qint64 written = 0;
         //do {
-            written += audioBuffer->write(reinterpret_cast<const char *>(&data[written]), data.size() - written);
+            size_t dataSize = data.size() * sizeof(data[0]);
+            written += audioBuffer->write(reinterpret_cast<const char *>(&data[written]), dataSize - written);
             if (written != AudioInterface::BUFFER_LEN)
                 LogDebug("Only wrote %lld bytes of audio data", written);
         //} while (written < AudioInterface::BUFFER_LEN);

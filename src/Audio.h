@@ -35,12 +35,12 @@ private:
 
     uint32_t sampleCounter;
 
-    std::array<uint8_t, AudioInterface::BUFFER_LEN> soundBuffer;
+    std::array<int16_t, AudioInterface::BUFFER_LEN> soundBuffer;
     uint16_t bufferSize;
 
     uint32_t clocksPerSample;
 
-    uint32_t masterVolume;
+    uint8_t masterVolume;
 
     uint8_t *regNR10; // Sound mode 1, sweep
     uint8_t *regNR11; // Sound mode 1, length/wave pattern duty

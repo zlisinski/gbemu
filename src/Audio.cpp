@@ -447,16 +447,18 @@ void Audio::UpdateTimer(uint value)
 
         sampleCounter = 0;
 
+        masterVolume = audioInterface->GetAudioVolume();
+
         const uint8_t leftVolume = (*regNR50 & eNR50SO2Level) >> 4;
         const uint8_t rightVolume = (*regNR50 & eNR50SO1Level);
 
-        const uint8_t ch1Value = channel1.GetSample();
-        const uint8_t ch2Value = channel2.GetSample();
-        const uint8_t ch3Value = channel3.GetSample();
-        const uint8_t ch4Value = channel4.GetSample();
+        const int8_t ch1Value = channel1.GetSample();
+        const int8_t ch2Value = channel2.GetSample();
+        const int8_t ch3Value = channel3.GetSample();
+        const int8_t ch4Value = channel4.GetSample();
 
-        uint8_t leftSample = 0;
-        uint8_t rightSample = 0;
+        int16_t leftSample = 0;
+        int16_t rightSample = 0;
 
         AudioInterface::Channels enabledChannels = audioInterface->GetEnabledAudioChannels();
 
@@ -469,7 +471,7 @@ void Audio::UpdateTimer(uint value)
             leftSample += ch3Value * leftVolume / 4;
         if ((*regNR51 & eNR51Ch4SO2) && enabledChannels.channel4)
             leftSample += ch4Value * leftVolume / 4;
-        soundBuffer[bufferSize] = leftSample;
+        soundBuffer[bufferSize] = leftSample * masterVolume;
         bufferSize++;
 
         // Mix right channel.
@@ -481,7 +483,7 @@ void Audio::UpdateTimer(uint value)
             rightSample += ch3Value * rightVolume / 4;
         if ((*regNR51 & eNR51Ch4SO1) && enabledChannels.channel4)
             rightSample += ch4Value * rightVolume / 4;
-        soundBuffer[bufferSize] = rightSample;
+        soundBuffer[bufferSize] = rightSample * masterVolume;
         bufferSize++;
 
         if (bufferSize >= AudioInterface::BUFFER_LEN)

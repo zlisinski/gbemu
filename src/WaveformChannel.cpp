@@ -58,9 +58,13 @@ void WaveformChannel::Tick(uint value)
 }
 
 
-uint8_t WaveformChannel::GetSample()
+int8_t WaveformChannel::GetSample()
 {
     if (!active || !enabled)
+        return 0;
+
+    // No need to do anything if muted.
+    if (volume == 4)
         return 0;
 
     // Select the byte in the wave table using index/2.
@@ -72,7 +76,15 @@ uint8_t WaveformChannel::GetSample()
     // Decrease value by volume, possibly muting.
     byte >>= volume;
 
-    return byte;
+    // Change unsigned to signed. This depends on how many bits are shifted away when changing the volume.
+    // [0,15] -> [-15,15]
+    // [0,7] -> [-7,7]
+    // [0,3] -> [-3,3]
+    // [0,1] -> [-1,1]
+    // This seems too complicated, is there a way to simplify this?
+    int8_t signedByte = (byte * 2) - ((1 << (4 - volume)) - 1);
+
+    return signedByte;
 }
 
 

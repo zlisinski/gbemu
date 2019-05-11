@@ -10,7 +10,7 @@ public:
     ~WaveformChannel();
 
     void Tick(uint value);
-    uint8_t GetSample();
+    int8_t GetSample();
 
     void SetInitialize(bool init);
     void SetContinuous(bool cont);

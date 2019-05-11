@@ -3,11 +3,11 @@
 #include "SquareWaveChannel.h"
 
 
-const uint8_t WAVEFORM[4][8] = {
-    {0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1, 1, 1},
-    {0, 1, 1, 1, 1, 1, 1, 0}
+const int8_t WAVEFORM[4][8] = {
+    {-1, -1, -1, -1, -1, -1, -1,  1},
+    { 1, -1, -1, -1, -1, -1, -1,  1},
+    { 1, -1, -1, -1, -1,  1,  1,  1},
+    {-1,  1,  1,  1,  1,  1,  1, -1}
 };
 
 
@@ -127,7 +127,7 @@ void SquareWaveChannel::Tick(uint value)
 }
 
 
-uint8_t SquareWaveChannel::GetSample()
+int8_t SquareWaveChannel::GetSample()
 {
     if (!active)
         return 0;

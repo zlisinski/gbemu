@@ -33,7 +33,7 @@ public:
     void RequestMessageBox(const std::string &message);
 
     // AudioInterface functions.
-    virtual void AudioDataReady(const std::array<uint8_t, AudioInterface::BUFFER_LEN> &data);
+    virtual void AudioDataReady(const std::array<int16_t, AudioInterface::BUFFER_LEN> &data);
     virtual int GetAudioSampleRate() {return audioSampleRate;}
     virtual bool GetAudioEnabled() {return audioEnabled;}
     virtual AudioInterface::Channels GetEnabledAudioChannels() {return enabledAudioChannels;}

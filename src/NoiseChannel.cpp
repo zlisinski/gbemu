@@ -97,13 +97,15 @@ void NoiseChannel::Tick(uint value)
 }
 
 
-uint8_t NoiseChannel::GetSample()
+int8_t NoiseChannel::GetSample()
 {
     if (!active)
         return 0;
 
-    // Low bit of shift register is the output value.
-    return (~shiftRegister & 0x0001) * volume;
+    // Low bit of shift register is the output value. Convert [0,1] to [-1,1].
+    int8_t value = ((~shiftRegister & 0x0001) * 2) - 1;
+
+    return value * volume;
 }
 
 
