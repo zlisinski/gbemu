@@ -506,6 +506,22 @@ void Audio::UpdateTimer(uint value)
 
 void Audio::UpdateGameSpeed(int value)
 {
+    if (value == 0)
+    {
+        // Figure out what to do with this.
+        LogError("Game Speed is 0ms");
+        value = 1;
+    }
+
+    // Normal speed is 16ms per frame.
+    float scale = 16.0 / value;
+
+    // Hack to avoid choppy sound. Don't bother with the faster speeds, since it's harder to notice the choppiness.
+    if (scale >= 0.9 && scale <= 1.1)
+        scale = 1;
+    else if (scale >= 0.4 && scale <= 0.6)
+        scale = 0.5;
+
     // Scale clocksPerSample by the frame rate. 120fps = 2x, 60fps = 1x, 30fps = 0.5x
-    clocksPerSample = (CLOCKS_PER_SECOND / audioInterface->GetAudioSampleRate()) * (value / 60.0);
+    clocksPerSample = (CLOCKS_PER_SECOND / audioInterface->GetAudioSampleRate()) * scale;
 }

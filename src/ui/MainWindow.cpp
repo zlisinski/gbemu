@@ -438,7 +438,7 @@ void MainWindow::FrameReady(uint32_t *displayFrameBuffer)
     // Signal the main thread to draw the screen.
     emit SignalFrameReady();
 
-    uint64_t elapsedTime = frameCapTimer.elapsed();
+    int64_t elapsedTime = frameCapTimer.elapsed();
 
     if (frameCapSetting > 0)
     {
@@ -450,6 +450,8 @@ void MainWindow::FrameReady(uint32_t *displayFrameBuffer)
             std::this_thread::sleep_for(std::chrono::milliseconds((int)(frameMillis - elapsedTime)));
         }
     }
+
+    NotifyGameSpeedObservers(frameCapTimer.elapsed());
 
     frameCapTimer.restart();
 }
@@ -538,7 +540,6 @@ void MainWindow::SlotSetFpsCap()
     if (action)
     {
         frameCapSetting = action->data().toInt();
-        NotifyGameSpeedObservers(frameCapSetting);
     }
 }
 
