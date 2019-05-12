@@ -10,9 +10,19 @@ This project is primarily written to work on Ubuntu 18.04, using g++ 7.3.0 and g
 
 ## Setup on Kubuntu 18.04
 
-Ubuntu 18.04 doesn't include the libqt5gamepad5 package, so you'll need to build your own custom Qt build. The gamepad library is included in Ubuntu 18.10. I build this on Kubuntu, so instructions assume there is already Qt installed. If you are using Ubuntu/Xubuntu/Mint/etc, instructions may differ slightly. These instructions only build enough Qt features to run the emulator, so features of Qt that are not used by the emulator are not built.
+Ubuntu 18.04 doesn't include the libqt5gamepad5 package. You'll need to either build your own custom Qt build, or go without gamepad support. There are #ifdefs in the code so it will build if the gamepad library is missing.
 
-### Building Qt
+### Setup without Gamepad support
+
+    sudo apt-get install build-essential qt5-qmake qtbase5-dev libqt5gamepad5-dev qtmultimedia5-dev
+    echo "export QT_SELECT=5" >> ~/.bashrc
+    export QT_SELECT=5
+
+### Adding Gamepad support
+
+I build this on Kubuntu, so instructions assume there is already Qt installed. If you are using Ubuntu/Xubuntu/Mint/etc, instructions may differ slightly. These instructions only build enough Qt features to run the emulator, so features of Qt that are not used by the emulator are not built.
+
+#### Building Qt
 
     sudo apt-get install build-essential libsdl2-dev libfontconfig1-dev
     wget http://download.qt.io/official_releases/qt/5.12/5.12.1/single/qt-everywhere-src-5.12.1.tar.xz
@@ -22,7 +32,7 @@ Ubuntu 18.04 doesn't include the libqt5gamepad5 package, so you'll need to build
     make -j$(nproc)
     sudo make install
 
-### Setting up qtchooser
+#### Setting up qtchooser
 
 If you aren't using Kubuntu or don't already have qtchooser installed, you'll have to figure out yourself how to get the Qt binaries and libs in your path. I'm sure google can help you.
 
@@ -38,7 +48,7 @@ If you aren't using Kubuntu or don't already have qtchooser installed, you'll ha
 
 Since 18.10 has the libqt5gamepad5 package, you won't need to build your own Qt version. Note that I've only compiled this in a VM, and haven't tested if the gamepad actually works.
 
-    sudo apt-get install build-essential libsdl2-dev qt5-qmake qtbase5-dev libqt5gamepad5-dev
+    sudo apt-get install build-essential libsdl2-dev qt5-qmake qtbase5-dev libqt5gamepad5-dev qtmultimedia5-dev
     echo "export QT_SELECT=5" >> ~/.bashrc
     export QT_SELECT=5
 

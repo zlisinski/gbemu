@@ -2,7 +2,9 @@
 
 #include <array>
 #include <QtCore/QElapsedTimer>
+#ifdef QT_GAMEPAD_LIB
 #include <QtGamepad/QtGamepad>
+#endif
 #include <QtMultimedia/QAudioOutput>
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QLabel>
@@ -78,8 +80,10 @@ private:
     QElapsedTimer frameCapTimer;
     int frameCapSetting;
 
+#ifdef QT_GAMEPAD_LIB
     QGamepad *gamepad;
     QGamepadKeyNavigation *gamepadKeyNavigation;
+#endif
 
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
     int displayScale;

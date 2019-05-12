@@ -36,8 +36,10 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCount(0),
     frameCapTimer(),
     frameCapSetting(60),
+#ifdef QT_GAMEPAD_LIB
     gamepad(NULL),
     gamepadKeyNavigation(NULL),
+#endif
     infoWindow(NULL),
     displayInfoWindowAction(NULL),
     logWindow(NULL),
@@ -53,6 +55,8 @@ MainWindow::MainWindow(QWidget *parent) :
     enabledAudioChannels({true, true, true, true}),
     audioVolume(128)
 {
+    qRegisterMetaType<QVector<int>>("QVector<int>");
+
     QSettings settings;
     displayScale = settings.value(SETTINGS_VIDEO_SCALE, 5).toInt();
 
@@ -293,6 +297,7 @@ void MainWindow::SetupStatusBar()
 
 void MainWindow::SetupGamepad()
 {
+#ifdef QT_GAMEPAD_LIB
     QList<int> gamepads = QGamepadManager::instance()->connectedGamepads();
     if (gamepads.isEmpty())
     {
@@ -311,6 +316,7 @@ void MainWindow::SetupGamepad()
     gamepadKeyNavigation->setButtonStartKey(Qt::Key_J);
     gamepadKeyNavigation->setButtonXKey(Qt::Key_K);
     gamepadKeyNavigation->setButtonAKey(Qt::Key_L);
+#endif
 }
 
 
@@ -684,9 +690,12 @@ void MainWindow::SlotAudioStateChanged(QAudio::State state)
         case QAudio::IdleState:
             LogAudio("Audio idle");
             break;
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+        // This doesn't exist in older Qt versions.
         case QAudio::InterruptedState:
             LogError("Audio interrupted");
             break;
+#endif
         case QAudio::StoppedState:
             if (audioOutput->error() != QAudio::NoError)
                 LogError("Audio error %d", audioOutput->error());
