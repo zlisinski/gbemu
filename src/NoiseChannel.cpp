@@ -88,7 +88,7 @@ void NoiseChannel::Tick(uint value)
 
             // If using 7-bit shift register, also set bit 6.
             if (byteWidth)
-                shiftRegister |= newBit << 6;
+                shiftRegister = (shiftRegister & 0xFFBF) | (newBit << 6);
 
             ReloadFrequencyCounter();
         }
