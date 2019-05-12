@@ -14,7 +14,7 @@ Ubuntu 18.04 doesn't include the libqt5gamepad5 package. You'll need to either b
 
 ### Setup without Gamepad support
 
-    sudo apt-get install build-essential qt5-qmake qtbase5-dev libqt5gamepad5-dev qtmultimedia5-dev
+    sudo apt-get install build-essential qt5-qmake qtbase5-dev qtmultimedia5-dev
     echo "export QT_SELECT=5" >> ~/.bashrc
     export QT_SELECT=5
 
