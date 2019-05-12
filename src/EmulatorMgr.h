@@ -5,12 +5,12 @@
 #include <vector>
 #include "Buttons.h"
 
-class AbsFrameHandler;
 class Audio;
 class AudioInterface;
 class Cpu;
 class DebuggerInterface;
 class Display;
+class DisplayInterface;
 class GameSpeedSubject;
 class InfoInterface;
 class Input;
@@ -22,7 +22,7 @@ class Timer;
 class EmulatorMgr
 {
 public:
-    EmulatorMgr(AbsFrameHandler *frameHandler, AudioInterface *audioInterface, InfoInterface *infoInterface,
+    EmulatorMgr(DisplayInterface *displayInterface, AudioInterface *audioInterface, InfoInterface *infoInterface,
                 DebuggerInterface *debuggerInterface, GameSpeedSubject *gameSpeedSubject);
     ~EmulatorMgr();
 
@@ -55,7 +55,7 @@ private:
     std::thread workThread;
     std::mutex saveStateMutex;
 
-    AbsFrameHandler *frameHandler;
+    DisplayInterface *displayInterface;
     AudioInterface *audioInterface;
     InfoInterface *infoInterface;
     DebuggerInterface *debuggerInterface;

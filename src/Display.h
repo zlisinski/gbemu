@@ -5,7 +5,7 @@
 #include "Interrupt.h"
 #include "TimerObserver.h"
 
-class AbsFrameHandler;
+class DisplayInterface;
 class Memory;
 
 const uint SCREEN_X = 160;
@@ -14,7 +14,7 @@ const uint SCREEN_Y = 144;
 class Display : public IoRegisterProxy, public TimerObserver
 {
 public:
-    Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler, TimerSubject *timerSubject);
+    Display(Memory *memory, Interrupt *interrupts, DisplayInterface *displayInterface, TimerSubject *timerSubject);
     virtual ~Display();
 
     bool SaveState(FILE *file);
@@ -79,5 +79,5 @@ private:
 
     uint16_t counter;
 
-    AbsFrameHandler *frameHandler;
+    DisplayInterface *displayInterface;
 };

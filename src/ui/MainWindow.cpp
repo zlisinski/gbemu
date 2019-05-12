@@ -6,7 +6,6 @@
 #include "InfoWindow.h"
 #include "LogWindow.h"
 #include "MainWindow.h"
-#include "QtFrameHandler.h"
 #include "SettingsConstants.h"
 #include "SettingsDialog.h"
 #include "UiUtils.h"
@@ -32,7 +31,6 @@ MainWindow::MainWindow(QWidget *parent) :
     labelFps(NULL),
     labelPause(NULL),
     paused(false),
-    frameHandler(NULL),
     emulator(NULL),
     fpsTimer(),
     frameCount(0),
@@ -88,8 +86,7 @@ MainWindow::MainWindow(QWidget *parent) :
     fpsTimer.start();
     frameCapTimer.start();
 
-    frameHandler = new QtFrameHandler(this);
-    emulator = new EmulatorMgr(frameHandler, this, infoWindow, debuggerWindow, this);
+    emulator = new EmulatorMgr(this, this, infoWindow, debuggerWindow, this);
 
     if (qApp->arguments().size() >= 2)
     {
@@ -108,7 +105,6 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete emulator;
-    delete frameHandler;
 
     Logger::SetOutput(NULL);
 }

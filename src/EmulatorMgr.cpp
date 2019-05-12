@@ -3,11 +3,11 @@
 #include <unistd.h>
 
 #include "gbemu.h"
-#include "AbsFrameHandler.h"
 #include "Audio.h"
 #include "Cpu.h"
 #include "DebuggerInterface.h"
 #include "Display.h"
+#include "DisplayInterface.h"
 #include "EmulatorMgr.h"
 #include "InfoInterface.h"
 #include "Input.h"
@@ -16,12 +16,12 @@
 #include "Timer.h"
 
 
-EmulatorMgr::EmulatorMgr(AbsFrameHandler *frameHandler, AudioInterface *audioInterface, InfoInterface *infoInterface,
+EmulatorMgr::EmulatorMgr(DisplayInterface *displayInterface, AudioInterface *audioInterface, InfoInterface *infoInterface,
                          DebuggerInterface *debuggerInterface, GameSpeedSubject *gameSpeedSubject) :
     paused(false),
     quit(false),
     runBootRom(false),
-    frameHandler(frameHandler),
+    displayInterface(displayInterface),
     audioInterface(audioInterface),
     infoInterface(infoInterface),
     debuggerInterface(debuggerInterface),
@@ -78,7 +78,7 @@ bool EmulatorMgr::LoadRom(const std::string &filename)
     memory = new Memory(infoInterface, debuggerInterface);
     interrupts = new Interrupt(memory);
     timer = new Timer(memory, interrupts);
-    display = new Display(memory, interrupts, frameHandler, timer);
+    display = new Display(memory, interrupts, displayInterface, timer);
     input = new Input(memory, interrupts);
     serial = new Serial(memory, interrupts, timer);
     cpu = new Cpu(interrupts, memory, timer);
@@ -163,7 +163,7 @@ void EmulatorMgr::SaveState(int slot)
     if (file == NULL)
     {
         LogError("Error opening save state file %s: %s", tempFilename, strerror(errno));
-        frameHandler->MessageBox("Error opening save state file");
+        displayInterface->RequestMessageBox("Error opening save state file");
         return;
     }
 
@@ -192,7 +192,7 @@ void EmulatorMgr::SaveState(int slot)
     if (success == false)
     {
         LogError("Error saving state");
-        frameHandler->MessageBox("Error saving state");
+        displayInterface->RequestMessageBox("Error saving state");
         //unlink(tempFilename);
         return;
     }
@@ -201,7 +201,7 @@ void EmulatorMgr::SaveState(int slot)
     if (rename(tempFilename, saveFilename.c_str()))
     {
         LogError("Error renaming temp save state file %s to %s: %s", tempFilename, saveFilename.c_str(), strerror(errno));
-        frameHandler->MessageBox("Error renaming temp save state file");
+        displayInterface->RequestMessageBox("Error renaming temp save state file");
         return;
     }
 
@@ -216,7 +216,7 @@ void EmulatorMgr::LoadState(int slot)
     if (file == NULL)
     {
         LogError("Error opening save state file %s: %s", loadFilename.c_str(), strerror(errno));
-        frameHandler->MessageBox("Error opening save state file");
+        displayInterface->RequestMessageBox("Error opening save state file");
         return;
     }
 
@@ -227,14 +227,14 @@ void EmulatorMgr::LoadState(int slot)
     if (cnt != headerLen)
     {
         LogError("Error reading header from save state file. Only read %u bytes.", cnt);
-        frameHandler->MessageBox("Error reading header from save state file.");
+        displayInterface->RequestMessageBox("Error reading header from save state file.");
         fclose(file);
         return;
     }
     if (strcmp(header, "ZLGB"))
     {
         LogError("Save state header doesn't match expected value: %s", header);
-        frameHandler->MessageBox("Save state header doesn't match expected value.");
+        displayInterface->RequestMessageBox("Save state header doesn't match expected value.");
         fclose(file);
         return;
     }
@@ -244,7 +244,7 @@ void EmulatorMgr::LoadState(int slot)
     if (!fread(&version, 2, 1, file))
     {
         LogError("Error reading version from state file.");
-        frameHandler->MessageBox("Error reading version from state file.");
+        displayInterface->RequestMessageBox("Error reading version from state file.");
         fclose(file);
         return;
     }
@@ -258,7 +258,7 @@ void EmulatorMgr::LoadState(int slot)
     Memory *newMemory = new Memory(infoInterface, debuggerInterface);
     Interrupt *newInterrupts = new Interrupt(newMemory);
     Timer *newTimer = new Timer(memory, newInterrupts);
-    Display *newDisplay = new Display(newMemory, newInterrupts, frameHandler, newTimer);
+    Display *newDisplay = new Display(newMemory, newInterrupts, displayInterface, newTimer);
     Input *newInput = new Input(newMemory, newInterrupts);
     Serial *newSerial = new Serial(newMemory, newInterrupts, newTimer);
     Cpu *newCpu = new Cpu(newInterrupts, newMemory, newTimer);
@@ -285,7 +285,7 @@ void EmulatorMgr::LoadState(int slot)
     if (success == false)
     {
         LogError("Error loading state");
-        frameHandler->MessageBox("Error loading state");
+        displayInterface->RequestMessageBox("Error loading state");
         return;
     }
 
@@ -349,7 +349,7 @@ void EmulatorMgr::ThreadFunc()
     }
     catch(const std::exception& e)
     {
-        frameHandler->MessageBox(e.what());
+        displayInterface->RequestMessageBox(e.what());
     }
 
     if (infoInterface)

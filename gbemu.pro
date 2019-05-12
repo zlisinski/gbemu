@@ -32,7 +32,6 @@ CONFIG += debug
 # Input
 HEADERS += \
 	src/AbsByteProxy.h \
-	src/AbsFrameHandler.h \
 	src/Audio.h \
 	src/Buttons.h \
 	src/Cpu.h \
@@ -67,7 +66,6 @@ HEADERS += \
 	src/ui/InfoWindow.h \
 	src/ui/LogWindow.h \
 	src/ui/MainWindow.h \
-	src/ui/QtFrameHandler.h \
 	src/ui/SettingsConstants.h \
 	src/ui/SettingsDialog.h
 

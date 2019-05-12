@@ -3,8 +3,8 @@
 #include <sstream>
 #include <unistd.h>
 
-#include "AbsFrameHandler.h"
 #include "Display.h"
+#include "DisplayInterface.h"
 #include "Globals.h"
 #include "Logger.h"
 #include "Memory.h"
@@ -54,7 +54,7 @@ enum SpriteAttrBits
 };
 
 
-Display::Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHandler, TimerSubject *timerSubject) :
+Display::Display(Memory *memory, Interrupt *interrupts, DisplayInterface *displayInterface, TimerSubject *timerSubject) :
     memory(memory),
     interrupts(interrupts),
     regLCDC(memory->AttachIoRegister(eRegLCDC, this)),
@@ -70,7 +70,7 @@ Display::Display(Memory *memory, Interrupt *interrupts, AbsFrameHandler *frameHa
     regWX(memory->AttachIoRegister(eRegWX, this)),
     displayMode(eMode0HBlank),
     counter(0),
-    frameHandler(frameHandler)
+    displayInterface(displayInterface)
 {
     timerSubject->AttachObserver(this);
 }
@@ -491,7 +491,7 @@ void Display::DrawSprites(uint8_t scanline)
 
 void Display::DrawScreen()
 {
-    frameHandler->DrawFrame(frameBuffer);
+    displayInterface->FrameReady(frameBuffer);
 }
 
 

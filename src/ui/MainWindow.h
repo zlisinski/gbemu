@@ -10,17 +10,17 @@
 
 #include "../AudioInterface.h"
 #include "../Display.h"
+#include "../DisplayInterface.h"
 #include "../GameSpeedObserver.h"
 
 class DebuggerWindow;
 class InfoWindow;
 class EmulatorMgr;
 class LogWindow;
-class QtFrameHandler;
 
 const int MAX_RECENT_FILES = 10;
 
-class MainWindow : public QMainWindow, public AudioInterface, public GameSpeedSubject
+class MainWindow : public QMainWindow, public DisplayInterface, public AudioInterface, public GameSpeedSubject
 {
     Q_OBJECT
 
@@ -28,10 +28,11 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    // DisplayInterface functions.
     // Callback for Emulator to signal a frame is ready to be drawn.
-    void FrameReady(uint32_t *displayFrameBuffer);
+    virtual void FrameReady(uint32_t *displayFrameBuffer);
     // Callback for Emulator to show message box.
-    void RequestMessageBox(const std::string &message);
+    virtual void RequestMessageBox(const std::string &message);
 
     // AudioInterface functions.
     virtual void AudioDataReady(const std::array<int16_t, AudioInterface::BUFFER_LEN> &data);
@@ -67,7 +68,6 @@ private:
 
     bool paused;
 
-    QtFrameHandler *frameHandler;
     EmulatorMgr *emulator;
 
     // FPS variables.
