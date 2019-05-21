@@ -68,6 +68,7 @@ HEADERS += \
 	src/ui/Debugger/MemoryModel.h \
 	src/ui/Debugger/Opcode.h \
 	src/ui/InfoWindow.h \
+	src/ui/KeyBindingDialog.h \
 	src/ui/LogWindow.h \
 	src/ui/MainWindow.h \
 	src/ui/SettingsConstants.h \
@@ -97,6 +98,7 @@ SOURCES += \
 	src/ui/Debugger/MemoryModel.cpp \
 	src/ui/Debugger/Opcode.cpp \
 	src/ui/InfoWindow.cpp \
+	src/ui/KeyBindingDialog.cpp \
 	src/ui/LogWindow.cpp \
 	src/ui/MainWindow.cpp \
 	src/ui/SettingsConstants.cpp \
@@ -106,6 +108,7 @@ FORMS += \
 	src/ui/Debugger/AddressDialog.ui \
 	src/ui/Debugger/DebuggerWindow.ui \
 	src/ui/InfoWindow.ui \
+	src/ui/KeyBindingDialog.ui \
 	src/ui/LogWindow.ui \
 	src/ui/SettingsDialog.ui
 

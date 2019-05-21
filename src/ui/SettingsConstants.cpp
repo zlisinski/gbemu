@@ -20,6 +20,23 @@ const char *SETTINGS_FILES_RECENTFILELIST = "Files/RecentFileList";
 const char *SETTINGS_INFOWINDOW_GEOMETRY = "InfoWindow/Geometry";
 const char *SETTINGS_INFOWINDOW_DISPLAY = "InfoWindow/Display";
 
+const char *SETTINGS_INPUT_KEY_UP = "Input/Key_Up";
+const char *SETTINGS_INPUT_KEY_DOWN = "Input/Key_Down";
+const char *SETTINGS_INPUT_KEY_LEFT = "Input/Key_Left";
+const char *SETTINGS_INPUT_KEY_RIGHT = "Input/Key_Right";
+const char *SETTINGS_INPUT_KEY_B = "Input/Key_B";
+const char *SETTINGS_INPUT_KEY_A = "Input/Key_A";
+const char *SETTINGS_INPUT_KEY_START = "Input/Key_Start";
+const char *SETTINGS_INPUT_KEY_SELECT = "Input/Key_Select";
+const char *SETTINGS_INPUT_PAD_UP = "Input/Pad_Up";
+const char *SETTINGS_INPUT_PAD_DOWN = "Input/Pad_Down";
+const char *SETTINGS_INPUT_PAD_LEFT = "Input/Pad_Left";
+const char *SETTINGS_INPUT_PAD_RIGHT = "Input/Pad_Right";
+const char *SETTINGS_INPUT_PAD_B = "Input/Pad_B";
+const char *SETTINGS_INPUT_PAD_A = "Input/Pad_A";
+const char *SETTINGS_INPUT_PAD_START = "Input/Pad_Start";
+const char *SETTINGS_INPUT_PAD_SELECT = "Input/Pad_Select";
+
 const char *SETTINGS_LOGGER_LEVEL = "Logger/Level";
 
 const char *SETTINGS_LOGWINDOW_GEOMETRY = "LogWindow/Geometry";

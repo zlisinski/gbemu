@@ -11,6 +11,7 @@
 #include <QtWidgets/QMainWindow>
 
 #include "../AudioInterface.h"
+#include "../Buttons.h"
 #include "../Display.h"
 #include "../DisplayInterface.h"
 #include "../GameSpeedObserver.h"
@@ -59,6 +60,7 @@ private:
     void SetupGamepad();
     void SetupAudio();
     void LoadAudioSettings();
+    void LoadKeyBindings();
     void UpdateRecentFile(const QString &filename);
     void UpdateRecentFilesActions();
     void SetDisplayScale(int scale);
@@ -80,9 +82,10 @@ private:
     QElapsedTimer frameCapTimer;
     int frameCapSetting;
 
+    QHash<Qt::Key, Buttons::Button> keyboardBindings;
 #ifdef QT_GAMEPAD_LIB
+    QHash<QGamepadManager::GamepadButton, Buttons::Button> gamepadBindings;
     QGamepad *gamepad;
-    QGamepadKeyNavigation *gamepadKeyNavigation;
 #endif
 
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
@@ -128,6 +131,10 @@ private slots:
     void SlotLoadState();
     void SlotOpenSettings();
     void SlotAudioStateChanged(QAudio::State state);
+#ifdef QT_GAMEPAD_LIB
+    void SlotGamepadPressed(int deviceId, QGamepadManager::GamepadButton gamepadButton, double value);
+    void SlotGamepadReleased(int deviceId, QGamepadManager::GamepadButton gamepadButton);
+#endif
 
 signals:
     void SignalFrameReady();

@@ -1,6 +1,11 @@
 #pragma once
 
+#ifdef QT_GAMEPAD_LIB
+#include <QtGamepad/QGamepadManager>
+#endif
 #include <QtWidgets/QDialog>
+
+#include "../Buttons.h"
 
 namespace Ui {
 class SettingsDialog;
@@ -21,8 +26,17 @@ protected:
 
 private:
     void SaveSettings();
+    QString GetKeyString(Qt::Key keycode);
+    void UpdateKeyBindingButtonText();
 
     Ui::SettingsDialog *ui;
+
+    QVector<QPushButton*> keyButtons;
+    QVector<QPushButton*> padButtons;
+    QHash<Buttons::Button, Qt::Key> keyBindings;
+#ifdef QT_GAMEPAD_LIB
+    QHash<Buttons::Button, QGamepadManager::GamepadButton> padBindings;
+#endif
 
     bool dirty;
 
@@ -31,4 +45,6 @@ private slots:
     void SlotClickBrowseBootRom();
     void SlotToggleEnableAudio(bool checked);
     void SlotAudioVolumeChanged(int value);
+    void SlotInputBindKey();
+    void SlotInputBindPad();
 };

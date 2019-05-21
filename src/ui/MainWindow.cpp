@@ -14,17 +14,6 @@
 #include "../Logger.h"
 
 
-const QHash<int, Buttons::Button> keymap {
-    {Qt::Key_W, Buttons::Button::eButtonUp},
-    {Qt::Key_S, Buttons::Button::eButtonDown},
-    {Qt::Key_A, Buttons::Button::eButtonLeft},
-    {Qt::Key_D, Buttons::Button::eButtonRight},
-    {Qt::Key_H, Buttons::Button::eButtonSelect},
-    {Qt::Key_J, Buttons::Button::eButtonStart},
-    {Qt::Key_K, Buttons::Button::eButtonB},
-    {Qt::Key_L, Buttons::Button::eButtonA}
-};
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     graphicsView(NULL),
@@ -38,7 +27,6 @@ MainWindow::MainWindow(QWidget *parent) :
     frameCapSetting(60),
 #ifdef QT_GAMEPAD_LIB
     gamepad(NULL),
-    gamepadKeyNavigation(NULL),
 #endif
     infoWindow(NULL),
     displayInfoWindowAction(NULL),
@@ -71,6 +59,8 @@ MainWindow::MainWindow(QWidget *parent) :
     SetupStatusBar();
     SetupGamepad();
     SetupAudio();
+
+    LoadKeyBindings();
 
     graphicsView = new QGraphicsView(this);
     graphicsView->setFrameStyle(QFrame::NoFrame);
@@ -116,7 +106,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    Buttons::Button button = keymap.value(event->key(), Buttons::Button::eButtonNone);
+    Buttons::Button button = keyboardBindings.value(static_cast<Qt::Key>(event->key()), Buttons::Button::eButtonNone);
     if (button != Buttons::Button::eButtonNone)
     {
         emulator->ButtonPressed(button);
@@ -130,7 +120,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
-    Buttons::Button button = keymap.value(event->key(), Buttons::Button::eButtonNone);
+    Buttons::Button button = keyboardBindings.value(static_cast<Qt::Key>(event->key()), Buttons::Button::eButtonNone);
     if (button != Buttons::Button::eButtonNone)
     {
         emulator->ButtonReleased(button);
@@ -305,17 +295,9 @@ void MainWindow::SetupGamepad()
     }
 
     gamepad = new QGamepad(*gamepads.begin(), this);
-    gamepadKeyNavigation = new QGamepadKeyNavigation(this);
 
-    gamepadKeyNavigation->setGamepad(gamepad);
-    gamepadKeyNavigation->setUpKey(Qt::Key_W);
-    gamepadKeyNavigation->setDownKey(Qt::Key_S);
-    gamepadKeyNavigation->setLeftKey(Qt::Key_A);
-    gamepadKeyNavigation->setRightKey(Qt::Key_D);
-    gamepadKeyNavigation->setButtonSelectKey(Qt::Key_H);
-    gamepadKeyNavigation->setButtonStartKey(Qt::Key_J);
-    gamepadKeyNavigation->setButtonXKey(Qt::Key_K);
-    gamepadKeyNavigation->setButtonAKey(Qt::Key_L);
+    connect(QGamepadManager::instance(), &QGamepadManager::gamepadButtonPressEvent, this, &MainWindow::SlotGamepadPressed);
+    connect(QGamepadManager::instance(), &QGamepadManager::gamepadButtonReleaseEvent, this, &MainWindow::SlotGamepadReleased);
 #endif
 }
 
@@ -357,6 +339,34 @@ void MainWindow::LoadAudioSettings()
     enabledAudioChannels.channel2 = settings.value(SETTINGS_AUDIO_CHANNEL2, true).toBool();
     enabledAudioChannels.channel3 = settings.value(SETTINGS_AUDIO_CHANNEL3, true).toBool();
     enabledAudioChannels.channel4 = settings.value(SETTINGS_AUDIO_CHANNEL4, true).toBool();
+}
+
+
+void MainWindow::LoadKeyBindings()
+{
+    QSettings settings;
+    keyboardBindings = {
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_UP, Qt::Key_W).toInt()), Buttons::eButtonUp},
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_DOWN, Qt::Key_S).toInt()), Buttons::eButtonDown},
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_LEFT, Qt::Key_A).toInt()), Buttons::eButtonLeft},
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_RIGHT, Qt::Key_D).toInt()), Buttons::eButtonRight},
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_B, Qt::Key_K).toInt()), Buttons::eButtonB},
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_A, Qt::Key_L).toInt()), Buttons::eButtonA},
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_START, Qt::Key_J).toInt()), Buttons::eButtonStart},
+        {static_cast<Qt::Key>(settings.value(SETTINGS_INPUT_KEY_SELECT, Qt::Key_H).toInt()), Buttons::eButtonSelect}
+    };
+#ifdef QT_GAMEPAD_LIB
+    gamepadBindings = {
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_UP, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonUp},
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_DOWN, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonDown},
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_LEFT, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonLeft},
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_RIGHT, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonRight},
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_B, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonB},
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_A, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonA},
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_START, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonStart},
+        {static_cast<QGamepadManager::GamepadButton>(settings.value(SETTINGS_INPUT_PAD_SELECT, QGamepadManager::ButtonInvalid).toInt()), Buttons::eButtonSelect}
+    };
+#endif
 }
 
 
@@ -677,6 +687,7 @@ void MainWindow::SlotOpenSettings()
     dialog.exec();
 
     LoadAudioSettings();
+    LoadKeyBindings();
 }
 
 
@@ -707,3 +718,29 @@ void MainWindow::SlotAudioStateChanged(QAudio::State state)
             break;
     }
 }
+
+#ifdef QT_GAMEPAD_LIB
+void MainWindow::SlotGamepadPressed(int deviceId, QGamepadManager::GamepadButton gamepadButton, double value)
+{
+    Q_UNUSED(deviceId);
+    Q_UNUSED(value);
+
+    Buttons::Button button = gamepadBindings.value(gamepadButton, Buttons::Button::eButtonNone);
+    if (button != Buttons::Button::eButtonNone)
+    {
+        emulator->ButtonPressed(button);
+    }
+}
+
+
+void MainWindow::SlotGamepadReleased(int deviceId, QGamepadManager::GamepadButton gamepadButton)
+{
+    Q_UNUSED(deviceId);
+
+    Buttons::Button button = gamepadBindings.value(gamepadButton, Buttons::Button::eButtonNone);
+    if (button != Buttons::Button::eButtonNone)
+    {
+        emulator->ButtonReleased(button);
+    }
+}
+#endif
