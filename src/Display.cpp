@@ -19,8 +19,14 @@ const uint16_t BG_TILE_MAP[] = {0x9800, 0x9C00};
 const uint16_t BG_DATA_OFFSET[] = {0x8800, 0x8000};
 const uint16_t OAM_RAM = 0xFE00;
 const uint16_t OAM_LEN = 0x00A0;
-const uint16_t ClockPerScanline = 456;
+
+const uint16_t CLOCKS_PER_SCANLINE = 456;
+const uint8_t MODE2_CLOCKS = 80;
+const uint8_t MODE3_BASE_CLOCKS = 168;
+
 const uint8_t MAX_SPRITES_PER_SCANLINE = 10;
+const uint8_t SPRITE_X_DISPLAY_OFFSET = 8;
+const uint8_t SPRITE_Y_DISPLAY_OFFSET = 16;
 
 const uint8_t palette[4][3] = {{0xFF, 0xFF, 0xFF}, {0xB0, 0xB0, 0xB0}, {0x68, 0x68, 0x68}, {0x00, 0x00, 0x00}};
 
@@ -69,6 +75,7 @@ Display::Display(Memory *memory, Interrupt *interrupts, DisplayInterface *displa
     regWY(memory->AttachIoRegister(eRegWY, this)),
     regWX(memory->AttachIoRegister(eRegWX, this)),
     displayMode(eMode0HBlank),
+    mode3Clocks(MODE3_BASE_CLOCKS),
     counter(0),
     displayInterface(displayInterface)
 {
@@ -120,6 +127,12 @@ bool Display::WriteByte(uint16_t address, uint8_t byte)
     {
         case eRegLCDC:
             *regLCDC = byte;
+            if ((*regLCDC & eLCDCPower) == 0)
+            {
+                counter = 0;
+                *regLY = 0;
+                SetMode(eMode0HBlank);
+            }
             return true;
         case eRegSTAT:
             // Preserve lower 3 read-only bits, top bit is always set.
@@ -197,43 +210,35 @@ uint8_t Display::ReadByte(uint16_t address) const
 
 void Display::UpdateTimer(uint value)
 {
-    // Clear counter and do nothing if LCD is off.
+    // Do nothing if LCD is off.
     if ((*regLCDC & eLCDCPower) == 0)
-    {
-        counter = 0;
-        *regLY = 0;
-        SetMode(eMode0HBlank);
         return;
-    }
 
     bool oldStatCheck = GetStatCheck();
 
-    // Set display mode bits. This is probably wrong. TCAGBD and GBCPUman have very different values for when the mode switches.
+    // Set display mode bits.
     if (*regLY >= 144)
     {
-        if (counter == 0)
-            SetMode(eMode0HBlank);
-        else
-            SetMode(eMode1VBlank);
+        SetMode(eMode1VBlank);
     }
-    else if (counter == 0 || counter >= 448)
-    {
-        SetMode(eMode0HBlank);
-    }
-    else if (counter >= 4 && counter <= 80)
+    else if (counter < MODE2_CLOCKS)
     {
         SetMode(eMode2SearchingOAM);
     }
-    else if (counter >= 84)
+    else if (counter < MODE2_CLOCKS + mode3Clocks)
     {
         SetMode(eMode3TranferData);
+    }
+    else
+    {
+        SetMode(eMode0HBlank);
     }
 
     // Increase counter
     counter += value;
 
     // Draw scanline when counter reaches an HBlank.
-    if (counter >= ClockPerScanline)
+    if (counter >= CLOCKS_PER_SCANLINE)
         UpdateScanline();
 
     bool newStatCheck = GetStatCheck();
@@ -245,20 +250,60 @@ void Display::UpdateTimer(uint value)
 }
 
 
+uint16_t Display::GetMode3ClockCount(uint8_t scanline)
+{
+    uint16_t base = MODE3_BASE_CLOCKS;
+
+    // Add SCX % 8 to the mode 3 time.
+    base += *regSCX & 7;
+
+    // Drawing a window adds a delay. The pandocs say "at least 6", so this may need to be adjusted later.
+    if ((*regLCDC & eLCDCWindowEnable) && (scanline >= *regWY))
+        base += 6;
+
+    // Add delay for each sprite on this scanline.
+    const uint8_t spriteSize = (*regLCDC & eLCDCSpriteSize) ? 16 : 8;
+    const uint8_t * const oamRam = memory->GetBytePtr(OAM_RAM);
+    for (uint8_t i = 0; i < OAM_LEN; i += 4)
+    {
+        const int16_t yPos = oamRam[i + 0] - SPRITE_Y_DISPLAY_OFFSET;
+        const int16_t xPos = oamRam[i + 1] - SPRITE_X_DISPLAY_OFFSET;
+        if (scanline >= yPos && scanline < (yPos + spriteSize))
+        {
+            uint8_t scx;
+            if ((*regLCDC & eLCDCWindowEnable) && (scanline >= *regWY))
+                scx = 255 - *regWX;
+            else
+                scx = *regSCX;
+
+            // The delay depends on where in the X position the sprite is in relation to tile boundaries.
+            base += 11 - std::min(5, (xPos + scx) & 7);
+        }
+    }
+
+    return base;
+}
+
+
 void Display::SetMode(DisplayModes mode)
 {
+    if (displayMode == mode)
+        return;
+
     displayMode = mode;
 
     // Clear mode bits.
     *regSTAT &= 0xFC;
     *regSTAT |= mode;
+
+    // Figure out how long mode 3 will last. Do this during the first mode (mode 2) per scanline.
+    if (displayMode == eMode2SearchingOAM)
+        mode3Clocks = GetMode3ClockCount(*regLY);
 }
 
 
 void Display::UpdateScanline()
 {
-    //DBG("LY=%u\n", *regLY);
-    
     counter = 0;
 
     if (*regLY < 144)
@@ -269,13 +314,11 @@ void Display::UpdateScanline()
     if (*regLY == 0)
     {
         DrawScreen();
-        //printf("SCY=%u\n", *regSCY);
-        //usleep(16700);
-        //usleep(100);
-        //SDL_Delay(17);
     }
     else if (*regLY == 144)
+    {
         interrupts->RequestInterrupt(eIntVBlank);
+    }
 
     // LY==LYC bit gets updated regardless of LY==LYC check bit.
     if (*regLY == *regLYC)
@@ -401,8 +444,6 @@ void Display::DrawWindowScanline(uint8_t scanline, uint8_t windowX, uint8_t wind
 
 void Display::DrawSprites(uint8_t scanline)
 {
-    const uint8_t xDisplayOffset = 8;
-    const uint8_t yDisplayOffset = 16;
     const uint8_t spriteSize = (*regLCDC & eLCDCSpriteSize) ? 16 : 8;
     const uint8_t * const oamRam = memory->GetBytePtr(OAM_RAM);
     const uint8_t * const spriteData = memory->GetBytePtr(BG_DATA_OFFSET[1]);
@@ -415,8 +456,8 @@ void Display::DrawSprites(uint8_t scanline)
     // Find all sprites on scanline.
     for (uint8_t i = 0; i < OAM_LEN; i += 4)
     {
-        const int16_t yPos = oamRam[i + 0] - yDisplayOffset;
-        const int16_t xPos = oamRam[i + 1] - xDisplayOffset;
+        const int16_t yPos = oamRam[i + 0] - SPRITE_Y_DISPLAY_OFFSET;
+        const int16_t xPos = oamRam[i + 1] - SPRITE_X_DISPLAY_OFFSET;
 
         // Add sprites that are on this scanline.
         if (scanline >= yPos && scanline < (yPos + spriteSize))
@@ -427,7 +468,7 @@ void Display::DrawSprites(uint8_t scanline)
                 break;
 
             // Sprites with a 0 x position aren't displayed, but still count towards the number of sprites drawn.
-            if (xPos + xDisplayOffset > 0)
+            if (xPos + SPRITE_X_DISPLAY_OFFSET > 0)
                 sprites.push_back({xPos, i});
         }
     }
@@ -442,8 +483,8 @@ void Display::DrawSprites(uint8_t scanline)
     for (const SpriteData &sprite : sprites)
     {
         const uint8_t i = sprite.i;
-        const int16_t yPos = oamRam[i + 0] - yDisplayOffset;
-        const int16_t xPos = oamRam[i + 1] - xDisplayOffset;
+        const int16_t yPos = oamRam[i + 0] - SPRITE_Y_DISPLAY_OFFSET;
+        const int16_t xPos = oamRam[i + 1] - SPRITE_X_DISPLAY_OFFSET;
         uint8_t spriteId = oamRam[i + 2];
         const uint8_t spriteAttr = oamRam[i + 3];
         const uint8_t paletteReg = (spriteAttr & eSpriteAttrPalette) ? *regOBP1 : *regOBP0;

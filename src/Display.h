@@ -42,6 +42,7 @@ private:
         uint8_t i;
     };
 
+    uint16_t GetMode3ClockCount(uint8_t scanline);
     void SetMode(DisplayModes mode);
     void UpdateScanline();
 
@@ -73,6 +74,7 @@ private:
     uint8_t *regWX;    // 0xFF4B Window X position
 
     DisplayModes displayMode;
+    uint16_t mode3Clocks;
 
     uint32_t frameBuffer[SCREEN_X * SCREEN_Y];
     uint8_t bgColorMap[SCREEN_X * SCREEN_Y];
