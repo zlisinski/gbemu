@@ -47,6 +47,10 @@ private:
     int mappedRamBank;
     bool batteryBackedRam;
 
+private slots:
+    void SlotDrawFrame();
+
 signals:
     void SignalInfoWindowClosed();
+    void SignalDrawFrame();
 };

@@ -53,6 +53,8 @@ DebuggerWindow::DebuggerWindow(QWidget *parent) :
     connect(this, SIGNAL(SignalDebuggerWindowClosed()), parent, SLOT(SlotDebuggerWindowClosed()));
     connect(this, SIGNAL(SignalUpdateReady(uint16_t)), this, SLOT(SlotProcessUpdate(uint16_t)));
     connect(this, SIGNAL(SignalReenableActions()), this, SLOT(SlotReenableActions()));
+    connect(this, SIGNAL(SignalObjectsChanged()), this, SLOT(SlotObjectsChanged()));
+    connect(this, SIGNAL(SignalMemoryChanged(uint16_t, uint16_t)), this, SLOT(SlotMemoryChanged(uint16_t, uint16_t)));
 }
 
 
@@ -76,27 +78,31 @@ void DebuggerWindow::closeEvent(QCloseEvent *event)
 
 void DebuggerWindow::SetEmulatorObjects(Memory *newMemory, Cpu *newCpu, Interrupt *newInterrupt)
 {
+    //This function runs in the thread context of the Emulator worker thread.
+
     // All values should be NULL or not NULL. If only some are NULL, treat them all as NULL.
     if (newMemory == NULL || newCpu == NULL || newInterrupt == NULL)
     {
         memory = NULL;
         cpu = NULL;
         interrupt = NULL;
-        memoryModel->SetMemory(NULL);
-        return;
+    }
+    else
+    {
+        memory = newMemory;
+        cpu = newCpu;
+        interrupt = newInterrupt;
     }
 
-    memory = newMemory;
-    cpu = newCpu;
-    interrupt = newInterrupt;
-
-    memoryModel->SetMemory(memory);
-    UpdateWidgets(cpu->reg.pc);
+    // Run the rest in current thread context.
+    emit SignalObjectsChanged();
 }
 
 
 bool DebuggerWindow::ShouldRun(uint16_t pc)
 {
+    //This function runs in the thread context of the Emulator worker thread.
+
     // Run if we're in single step mode, or we have a run-to address and we're not there.
     return debuggingEnabled == false || (singleStep == true || (runToAddress != 0xFFFF && pc != runToAddress));
 }
@@ -130,14 +136,10 @@ void DebuggerWindow::SetCurrentOp(uint16_t pc)
 
 void DebuggerWindow::MemoryChanged(uint16_t address, uint16_t len)
 {
-    // Memory has changed, so the disassembled opcodes are no longer valid.
-    disassemblyModel->RemoveRows(address, len);
+    //This function runs in the thread context of the Emulator worker thread.
 
-    // Only update memory table when debugging to avoid slowing things down.
-    if (debuggingEnabled == true)
-    {
-        memoryModel->InvalidateMemory(address, len);
-    }
+    // Run the rest in current thread context.
+    emit SignalMemoryChanged(address, len);
 }
 
 
@@ -324,4 +326,26 @@ void DebuggerWindow::SlotReenableActions()
     ui->actionRunToLine->setEnabled(true);
     ui->actionStep->setEnabled(true);
     ui->actionDisassemble->setEnabled(true);
+}
+
+
+void DebuggerWindow::SlotObjectsChanged()
+{
+    memoryModel->SetMemory(memory);
+
+    if (cpu != NULL)
+        UpdateWidgets(cpu->reg.pc);
+}
+
+
+void DebuggerWindow::SlotMemoryChanged(uint16_t address, uint16_t len)
+{
+    // Memory has changed, so the disassembled opcodes are no longer valid.
+    disassemblyModel->RemoveRows(address, len);
+
+    // Only update memory table when debugging to avoid slowing things down.
+    if (debuggingEnabled == true)
+    {
+        memoryModel->InvalidateMemory(address, len);
+    }
 }

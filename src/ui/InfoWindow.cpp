@@ -38,6 +38,7 @@ InfoWindow::InfoWindow(QWidget *parent) :
     restoreGeometry(settings.value(SETTINGS_INFOWINDOW_GEOMETRY).toByteArray());
 
     connect(this, SIGNAL(SignalInfoWindowClosed()), parent, SLOT(SlotInfoWindowClosed()));
+    connect(this, SIGNAL(SignalDrawFrame()), this, SLOT(SlotDrawFrame()));
 
     DrawFrame();
 }
@@ -51,8 +52,8 @@ InfoWindow::~InfoWindow()
 
 void InfoWindow::DrawFrame()
 {
-    UpdateTileView();
-    UpdateMemoryView();
+    // This should be called from the same thread, but it crashes sometimes without this emit. ¯\_(ツ)_/¯
+    emit SignalDrawFrame();
 }
 
 
@@ -178,4 +179,11 @@ void InfoWindow::SetRadioButton(bool val, QRadioButton *radio0, QRadioButton *ra
         radio1->setChecked(true);
     else
         radio0->setChecked(true);
+}
+
+
+void InfoWindow::SlotDrawFrame()
+{
+    UpdateTileView();
+    UpdateMemoryView();
 }

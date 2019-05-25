@@ -60,9 +60,13 @@ private slots:
     void SlotRunToLine();
     void SlotDisassembleAddress();
     void SlotReenableActions();
+    void SlotObjectsChanged();
+    void SlotMemoryChanged(uint16_t address, uint16_t len);
 
 signals:
     void SignalDebuggerWindowClosed();
     void SignalUpdateReady(uint16_t pc);
     void SignalReenableActions();
+    void SignalObjectsChanged();
+    void SignalMemoryChanged(uint16_t address, uint16_t len);
 };
