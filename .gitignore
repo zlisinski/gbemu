@@ -5,7 +5,7 @@
 build
 data
 docs
-gbemu
+zlgb
 serial.txt
 moc_*.h
 moc_*.cpp

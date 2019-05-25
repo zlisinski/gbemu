@@ -10,7 +10,7 @@ qtHaveModule(gamepad) {
 }
 
 TEMPLATE = app
-TARGET = gbemu
+TARGET = zlgb
 INCLUDEPATH += .
 
 # The following define makes your compiler warn you if you use any

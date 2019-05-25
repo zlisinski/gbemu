@@ -21,7 +21,7 @@ CLASSES_SRC = $(SRC_DIR)/Cpu.cpp \
 	$(SRC_DIR)/MemoryBankController.cpp \
 	$(SRC_DIR)/Utils.cpp \
 	$(SRC_DIR)/Logger.cpp
-MAIN_SRC = $(SRC_DIR)/gbemu.cpp $(CLASSES_SRC)
+MAIN_SRC = $(SRC_DIR)/zlgb.cpp $(CLASSES_SRC)
 
 # Files needed to build unit tests.
 TEST_CLASSES_SRC = $(TEST_DIR)/CpuTest.cpp \
@@ -35,8 +35,8 @@ TEST_SRC = $(TEST_DIR)/main.cpp $(CLASSES_SRC) $(TEST_CLASSES_SRC)
 MAIN_OBJ = $(MAIN_SRC:%.cpp=%.o)
 TEST_OBJ = $(TEST_SRC:%.cpp=%.o)
 
-#MAIN_BIN = gbemu
-TEST_BIN = test-gbemu
+#MAIN_BIN = zlgb
+TEST_BIN = test-zlgb
 
 .PHONY: all clean test
 

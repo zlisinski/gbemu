@@ -54,8 +54,8 @@ Since 18.10 has the libqt5gamepad5 package, you won't need to build your own Qt 
 
 ## Build Emulator
 
-    git clone https://github.com/zlisinski/gbemu.git
-    cd gbemu
+    git clone https://github.com/zlisinski/zlgb.git
+    cd zlgb
     qmake
     make
 
