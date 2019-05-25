@@ -257,7 +257,7 @@ void EmulatorMgr::LoadState(int slot)
     // Create new objects so if there is an error loading, the current game doesn't get killed.
     Memory *newMemory = new Memory(infoInterface, debuggerInterface);
     Interrupt *newInterrupts = new Interrupt(newMemory);
-    Timer *newTimer = new Timer(memory, newInterrupts);
+    Timer *newTimer = new Timer(newMemory, newInterrupts);
     Display *newDisplay = new Display(newMemory, newInterrupts, displayInterface, newTimer);
     Input *newInput = new Input(newMemory, newInterrupts);
     Serial *newSerial = new Serial(newMemory, newInterrupts, newTimer);
