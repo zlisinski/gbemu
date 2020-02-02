@@ -2,7 +2,7 @@
 
 #include <QtWidgets/QDialog>
 
-#include "../InfoInterface.h"
+#include "core/InfoInterface.h"
 
 namespace Ui {
 class InfoWindow;

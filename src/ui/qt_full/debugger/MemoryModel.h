@@ -2,7 +2,7 @@
 
 #include <QtCore/QAbstractTableModel>
 
-#include "../../gbemu.h"
+#include "core/gbemu.h"
 
 class Memory;
 

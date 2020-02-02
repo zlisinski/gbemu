@@ -1,12 +1,13 @@
 #include <memory>
 #include <QtCore/QSettings>
 #include <QtWidgets/QGraphicsPixmapItem>
+
 #include "InfoWindow.h"
 #include "SettingsConstants.h"
 #include "ui_InfoWindow.h"
 #include "UiUtils.h"
 
-#include "../Memory.h"
+#include "core/Memory.h"
 
 const uint8_t palette[4][3] = {{0xFF, 0xFF, 0xFF}, {0xB0, 0xB0, 0xB0}, {0x68, 0x68, 0x68}, {0x00, 0x00, 0x00}};
 const int SCALE = 3;

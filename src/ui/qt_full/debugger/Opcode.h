@@ -2,13 +2,13 @@
 
 #include <QtCore/QString>
 
-#include "../../gbemu.h"
+#include "core/gbemu.h"
 
 class Opcode
 {
 public:
     static Opcode GetOpcode(uint16_t pc, const uint8_t *memory);
-    
+
     QString ToString() const;
     QString GetBytesStr() const {return bytesStr;}
     QString GetOpcodeStr() const {return opcodeStr;}

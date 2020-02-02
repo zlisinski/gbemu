@@ -5,7 +5,7 @@
 #include <QtGamepad/QGamepadManager>
 #endif
 
-#include "../Buttons.h"
+#include "core/Buttons.h"
 
 namespace Ui {
 class KeyBindingDialog;

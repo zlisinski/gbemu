@@ -2,8 +2,8 @@
 
 #include <QtWidgets/QMainWindow>
 
-#include "../../gbemu.h"
-#include "../../DebuggerInterface.h"
+#include "core/gbemu.h"
+#include "core/DebuggerInterface.h"
 
 namespace Ui {
 class DebuggerWindow;

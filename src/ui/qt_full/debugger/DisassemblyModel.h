@@ -4,7 +4,7 @@
 #include <QtCore/QSet>
 #include <vector>
 
-#include "../../gbemu.h"
+#include "core/gbemu.h"
 #include "Opcode.h"
 
 class DisassemblyModel : public QAbstractTableModel

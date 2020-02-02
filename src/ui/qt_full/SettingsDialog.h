@@ -5,7 +5,7 @@
 #endif
 #include <QtWidgets/QDialog>
 
-#include "../Buttons.h"
+#include "core/Buttons.h"
 
 namespace Ui {
 class SettingsDialog;

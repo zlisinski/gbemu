@@ -1,6 +1,7 @@
 #include <QtCore/QString>
 
-#include "../../Memory.h"
+#include "core/Memory.h"
+
 #include "../UiUtils.h"
 #include "MemoryModel.h"
 

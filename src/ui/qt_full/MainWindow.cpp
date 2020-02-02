@@ -2,16 +2,17 @@
 #include <stdint.h>
 #include <thread>
 
-#include "Debugger/DebuggerWindow.h"
+#include "debugger/DebuggerWindow.h"
 #include "InfoWindow.h"
 #include "LogWindow.h"
 #include "MainWindow.h"
 #include "SettingsConstants.h"
 #include "SettingsDialog.h"
 #include "UiUtils.h"
-#include "../EmulatorMgr.h"
-#include "../Input.h"
-#include "../Logger.h"
+
+#include "core/EmulatorMgr.h"
+#include "core/Input.h"
+#include "core/Logger.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :

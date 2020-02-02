@@ -1,9 +1,10 @@
 #include <QtCore/QSettings>
 #include <thread>
 
-#include "../../Cpu.h"
-#include "../../Interrupt.h"
-#include "../../Memory.h"
+#include "core/Cpu.h"
+#include "core/Interrupt.h"
+#include "core/Memory.h"
+
 #include "../SettingsConstants.h"
 #include "../UiUtils.h"
 #include "AddressDialog.h"

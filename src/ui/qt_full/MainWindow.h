@@ -10,11 +10,11 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
 
-#include "../AudioInterface.h"
-#include "../Buttons.h"
-#include "../Display.h"
-#include "../DisplayInterface.h"
-#include "../GameSpeedObserver.h"
+#include "core/AudioInterface.h"
+#include "core/Buttons.h"
+#include "core/Display.h"
+#include "core/DisplayInterface.h"
+#include "core/GameSpeedObserver.h"
 
 class DebuggerWindow;
 class InfoWindow;

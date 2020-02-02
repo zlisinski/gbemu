@@ -5,7 +5,7 @@
 #include <QtWidgets/QDialog>
 #include <vector>
 
-#include "../Logger.h"
+#include "core/Logger.h"
 
 namespace Ui {
 class LogWindow;
