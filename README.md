@@ -14,7 +14,7 @@ Ubuntu 18.04 doesn't include the libqt5gamepad5 package. You'll need to either b
 
 ### Setup without Gamepad support
 
-    sudo apt-get install build-essential cmake qt5-qmake qtbase5-dev qtmultimedia5-dev
+    sudo apt-get install build-essential cmake qtbase5-dev qtmultimedia5-dev libgtest-dev
 
 ### Adding Gamepad support
 
@@ -36,7 +36,7 @@ Add /usr/local/Qt-5.12.1/bin to the front of your $PATH variable.
 
 Since these versions have the libqt5gamepad5 package, you won't need to build your own Qt version.
 
-    sudo apt-get install build-essential cmake libsdl2-dev qt5-qmake qtbase5-dev libqt5gamepad5-dev qtmultimedia5-dev
+    sudo apt-get install build-essential cmake libsdl2-dev qtbase5-dev libqt5gamepad5-dev qtmultimedia5-dev libgtest-dev
 
 ## Build Emulator
 

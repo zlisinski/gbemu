@@ -8,6 +8,10 @@ find_package(Qt5
         Multimedia
         Widgets
 )
+find_package(Qt5
+    OPTIONAL_COMPONENTS
+        Gamepad
+)
 
 include_directories(../../)
 
@@ -28,6 +32,12 @@ target_link_libraries(zlgb
     Qt5::Widgets
     zlgb_core
 )
+
+if (Qt5Gamepad_FOUND)
+    target_link_libraries(zlgb
+        Qt5::Gamepad
+    )
+endif()
 
 target_compile_definitions(zlgb
     PRIVATE QT_DEPRECATED_WARNINGS
